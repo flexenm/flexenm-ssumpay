@@ -96,11 +96,12 @@ export default function AdminProductsPage() {
 
       {modal === 'delete' && (
         <div style={overlay}>
-          <div style={modalBox}>
-            <p style={{ fontWeight: 700, fontSize: 16, textAlign: 'center', marginBottom: 8 }}>상품을 삭제하시겠습니까?</p>
-            <p style={{ color: '#64748b', fontSize: 13, textAlign: 'center', marginBottom: 4 }}>삭제 시 사용자 상품 목록에서 즉시 제거됩니다.</p>
-            <p style={{ color: '#64748b', fontSize: 13, textAlign: 'center', marginBottom: 4 }}>기존 주문 내역은 유지됩니다.</p>
-            <p style={{ color: '#2563eb', fontSize: 12, textAlign: 'center', marginBottom: 24 }}>※ 판매 이력이 있는 상품은 삭제보다 노출 OFF 관장</p>
+          <div style={{ ...modalBox, width: 420, padding: '40px 32px 32px' }}>
+            <p style={{ fontWeight: 700, fontSize: 18, textAlign: 'center', marginBottom: 16 }}>상품을 삭제하시겠습니까?</p>
+            <p style={{ color: '#64748b', fontSize: 14, textAlign: 'center', lineHeight: 1.7, marginBottom: 16 }}>
+              삭제 시 사용자 상품 목록에서 즉시 제거됩니다.<br />기존 주문 내역은 유지됩니다.
+            </p>
+            <p style={{ color: '#94a3b8', fontSize: 12, textAlign: 'center', marginBottom: 32 }}>※ 판매 이력이 있는 상품은 삭제보다 노출 OFF 관장</p>
             <div style={{ display: 'flex', gap: 12 }}>
               <button onClick={() => setModal(null)} style={{ flex: 1, padding: '14px', border: '1px solid #e5e7eb', borderRadius: 8, cursor: 'pointer', background: '#fff', fontSize: 15 }}>취소</button>
               <button onClick={del} style={{ flex: 1, padding: '14px', background: '#1e293b', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 15, fontWeight: 600 }}>삭제</button>
