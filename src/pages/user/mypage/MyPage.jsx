@@ -162,7 +162,7 @@ export default function MyPage() {
             <p style={{ textAlign: 'center', color: '#94a3b8', padding: 60 }}>문의 내역이 없습니다.</p>
           ) : (
             inquiries.map(q => (
-              <div key={q.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '18px 0', borderBottom: '1px solid #e5e7eb', cursor: 'pointer' }}>
+              <div key={q.id} onClick={() => navigate(`/mypage/inquiries/${q.id}`)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '18px 0', borderBottom: '1px solid #e5e7eb', cursor: 'pointer' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                   <span style={{
                     padding: '4px 12px', borderRadius: 16, fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap',

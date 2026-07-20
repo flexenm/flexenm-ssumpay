@@ -14,6 +14,7 @@ import MyPage from '../pages/user/mypage/MyPage'
 import CustomerCenterPage from '../pages/user/customer/CustomerCenterPage'
 import NoticeDetailPage from '../pages/user/customer/NoticeDetailPage'
 import InquiryFormPage from '../pages/user/customer/InquiryFormPage'
+import InquiryDetailPage from '../pages/user/customer/InquiryDetailPage'
 
 import AdminLoginPage from '../pages/admin/auth/AdminLoginPage'
 import DashboardPage from '../pages/admin/dashboard/DashboardPage'
@@ -51,6 +52,7 @@ export const router = createBrowserRouter([
       { path: 'customer', element: <CustomerCenterPage /> },
       { path: 'customer/notices/:id', element: <NoticeDetailPage /> },
       { path: 'customer/inquiries/new', element: <UserGuard><InquiryFormPage /></UserGuard> },
+      { path: 'mypage/inquiries/:id', element: <UserGuard><InquiryDetailPage /></UserGuard> },
     ],
   },
   { path: '/admin/login', element: <AdminLoginPage /> },
