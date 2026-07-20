@@ -39,7 +39,7 @@ router.get('/:id', async ctx => {
 
 router.post('/', async ctx => {
   const { type, title, content } = ctx.request.body
-  if (!type || !title || !content) {
+  if (type === undefined || type === null || type === '' || !title || !content) {
     ctx.status = 400
     ctx.body = { code: 400, message: '문의 유형, 제목, 내용을 입력해주세요.' }
     return
