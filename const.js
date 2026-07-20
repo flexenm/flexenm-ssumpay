@@ -1,0 +1,37 @@
+const MEMBER_STATUS = { NORMAL: 0, BLOCKED: 1 }
+
+const PAYMENT_METHOD = { CARD: 1, BANK: 2 }
+
+const PAYMENT_STATUS = { PENDING: 0, DONE: 1, CANCELLED: 2 }
+
+const CHARGE_STATUS = { PENDING: 0, DONE: 1, REFUNDED: 2 }
+
+const INQUIRY_TYPE = { CHARGE: 1, PAYMENT: 2, CANCEL_REFUND: 3, ETC: 4 }
+
+const INQUIRY_STATUS = { PENDING: 0, ANSWERED: 1 }
+
+const PRODUCT_CATEGORY = {
+  BROADCAST: 'broadcast',
+  GAME: 'game',
+  WEBTOON: 'webtoon',
+  GIFTCARD: 'giftcard'
+}
+
+const PRODUCT_SUBCATEGORY = {
+  FLEX: 'flex',
+  SOOP: 'soop',
+  TOON: 'toon',
+  POPCORN: 'popcorn',
+  PANDA: 'panda'
+}
+
+module.exports = {
+  MEMBER_STATUS,
+  PAYMENT_METHOD,
+  PAYMENT_STATUS,
+  CHARGE_STATUS,
+  INQUIRY_TYPE,
+  INQUIRY_STATUS,
+  PRODUCT_CATEGORY,
+  PRODUCT_SUBCATEGORY
+}
