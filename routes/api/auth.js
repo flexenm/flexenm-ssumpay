@@ -7,6 +7,19 @@ const Member = require('../../entities/Member')
 
 const router = new Router()
 
+// 아이디 중복확인
+router.get('/check-username', async ctx => {
+  const { username } = ctx.query
+  if (!username) {
+    ctx.status = 400
+    ctx.body = { code: 400, message: '아이디를 입력해주세요.' }
+    return
+  }
+
+  const exists = await Member.query().findOne({ username })
+  ctx.body = { code: 200, available: !exists }
+})
+
 router.post('/register', async ctx => {
   const { username, password, name, email, phone } = ctx.request.body
 
@@ -73,14 +86,14 @@ router.post('/login', async ctx => {
 })
 
 router.post('/password/reset', async ctx => {
-  const { email } = ctx.request.body
-  if (!email) {
+  const { username, email } = ctx.request.body
+  if (!username || !email) {
     ctx.status = 400
-    ctx.body = { code: 400, message: '이메일을 입력해주세요.' }
+    ctx.body = { code: 400, message: '아이디와 이메일을 입력해주세요.' }
     return
   }
 
-  const member = await Member.query().findOne({ email })
+  const member = await Member.query().findOne({ username, email })
   if (!member) {
     ctx.body = { code: 200, message: '입력하신 이메일로 임시 비밀번호를 발송했습니다.' }
     return
