@@ -1,4 +1,5 @@
 const Router = require('koa-router')
+const { raw } = require('objection')
 const Notice = require('../../entities/Notice')
 
 const router = new Router()
@@ -28,7 +29,7 @@ router.get('/:id', async ctx => {
     return
   }
 
-  await Notice.query().patchAndFetchById(notice.id, { viewCount: notice.viewCount + 1 })
+  await Notice.query().patch({ viewCount: raw('viewCount + 1') }).where({ id: notice.id })
   ctx.body = { code: 200, data: notice }
 })
 
