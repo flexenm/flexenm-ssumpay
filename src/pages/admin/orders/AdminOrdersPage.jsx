@@ -7,15 +7,15 @@ export default function AdminOrdersPage() {
   const [paymentStatus, setPaymentStatus] = useState('')
   const [chargeStatus, setChargeStatus] = useState('')
 
-  const load = () => {
+  const load = (kw = keyword, ps = paymentStatus, cs = chargeStatus) => {
     const params = {}
-    if (keyword) params.keyword = keyword
-    if (paymentStatus !== '') params.paymentStatus = paymentStatus
-    if (chargeStatus !== '') params.chargeStatus = chargeStatus
+    if (kw) params.keyword = kw
+    if (ps !== '') params.paymentStatus = ps
+    if (cs !== '') params.chargeStatus = cs
     adminOrdersApi.list(params).then(r => setOrders(r.data)).catch(() => {})
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => { load('', '', '') }, [])
 
   const updateCharge = async (id, status) => {
     await adminOrdersApi.updateChargeStatus(id, { chargeStatus: status })
@@ -37,7 +37,7 @@ export default function AdminOrdersPage() {
           <option value="0">충전대기</option>
           <option value="1">충전완료</option>
         </select>
-        <button onClick={load} style={btnStyle}>조회</button>
+        <button onClick={() => load(keyword, paymentStatus, chargeStatus)} style={btnStyle}>조회</button>
       </div>
       <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #e5e7eb', overflow: 'hidden' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>

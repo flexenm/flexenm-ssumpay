@@ -5,10 +5,10 @@ export default function AdminMembersPage() {
   const [members, setMembers] = useState([])
   const [keyword, setKeyword] = useState('')
 
-  const load = () => {
-    adminMembersApi.list({ keyword }).then(r => setMembers(r.data)).catch(() => {})
+  const load = (kw = keyword) => {
+    adminMembersApi.list({ keyword: kw }).then(r => setMembers(r.data)).catch(() => {})
   }
-  useEffect(() => { load() }, [])
+  useEffect(() => { load('') }, [])
 
   const toggleStatus = async (m) => {
     await adminMembersApi.updateStatus(m.id, { status: m.status === 0 ? 1 : 0 })
@@ -19,8 +19,8 @@ export default function AdminMembersPage() {
     <div>
       <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 24 }}>회원 관리</h1>
       <div style={{ background: '#fff', borderRadius: 12, padding: 20, border: '1px solid #e5e7eb', marginBottom: 20, display: 'flex', gap: 12 }}>
-        <input value={keyword} onChange={e => setKeyword(e.target.value)} placeholder="아이디/이름/이메일 검색" style={inputStyle} />
-        <button onClick={load} style={btnStyle}>조회</button>
+        <input value={keyword} onChange={e => setKeyword(e.target.value)} onKeyDown={e => e.key === 'Enter' && load(keyword)} placeholder="아이디/이메일 검색" style={{ ...inputStyle, flex: 1 }} />
+        <button onClick={() => load(keyword)} style={btnStyle}>조회</button>
       </div>
       <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #e5e7eb', overflow: 'hidden' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>

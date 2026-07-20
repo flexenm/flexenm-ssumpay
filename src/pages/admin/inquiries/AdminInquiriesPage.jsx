@@ -6,8 +6,8 @@ export default function AdminInquiriesPage() {
   const [inquiries, setInquiries] = useState([])
   const [status, setStatus] = useState('')
 
-  const load = () => adminInquiriesApi.list({ status }).then(r => setInquiries(r.data)).catch(() => {})
-  useEffect(() => { load() }, [])
+  const load = (s = status) => adminInquiriesApi.list({ status: s }).then(r => setInquiries(r.data)).catch(() => {})
+  useEffect(() => { load('') }, [])
 
   return (
     <div>
@@ -18,7 +18,7 @@ export default function AdminInquiriesPage() {
           <option value="0">답변 대기</option>
           <option value="1">답변 완료</option>
         </select>
-        <button onClick={load} style={btnStyle}>조회</button>
+        <button onClick={() => load(status)} style={btnStyle}>조회</button>
       </div>
       <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #e5e7eb', overflow: 'hidden' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
