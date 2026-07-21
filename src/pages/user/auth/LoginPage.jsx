@@ -14,8 +14,9 @@ export default function LoginPage() {
       const res = await authApi.login(form)
       localStorage.setItem('token', res.token)
       navigate('/')
-    } catch (err) {
-      setError(err.message || '로그인에 실패했습니다.')
+    } catch {
+      // 계정 열거 방지: 계정 없음 / 비밀번호 불일치를 구분하지 않고 항상 동일 메시지 노출
+      setError('아이디 또는 비밀번호가 올바르지 않습니다.')
     }
   }
 
