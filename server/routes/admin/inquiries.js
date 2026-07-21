@@ -9,7 +9,7 @@ router.get('/', async ctx => {
   const { page = 1, limit = 20, status, type } = ctx.query
   const offset = (page - 1) * limit
 
-  let query = Inquiry.query().withGraphJoined('member').orderBy('inquiries.createdAt', 'desc')
+  let query = Inquiry.query().withGraphJoined('member').whereNull('inquiries.deletedAt').orderBy('inquiries.createdAt', 'desc')
   if (status !== undefined) query = query.where('inquiries.status', status)
   if (type !== undefined) query = query.where('inquiries.type', type)
 
