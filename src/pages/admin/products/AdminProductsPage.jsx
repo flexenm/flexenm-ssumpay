@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { adminProductsApi } from '../../../api'
 
-const empty = { name: '', price: '', lexAmount: '', sortOrder: '', isActive: 1, imageUrl: '' }
+const empty = { name: '', price: '', lexAmount: '', sort: '', isActive: 1, imageUrl: '' }
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState([])
@@ -38,7 +38,7 @@ export default function AdminProductsPage() {
       ...form,
       price: Number(form.price),
       lexAmount: Number(form.lexAmount),
-      sortOrder: Number(form.sortOrder),
+      sort: Number(form.sort),
       coinAmount: 0,
       category: form.category || 'broadcast',
       subcategory: form.subcategory || '플렉스',
@@ -89,7 +89,7 @@ export default function AdminProductsPage() {
                       {p.isActive ? 'ON' : 'OFF'}
                     </span>
                   </td>
-                  <td style={tdStyle}>{p.sortOrder}</td>
+                  <td style={tdStyle}>{p.sort}</td>
                   <td style={tdStyle}>
                     <button onClick={() => openEdit(p)} style={{ marginRight: 6, padding: '4px 10px', border: '1px solid #e5e7eb', borderRadius: 6, cursor: 'pointer', fontSize: 12 }}>수정</button>
                     <button onClick={() => openDelete(p)} style={{ padding: '4px 10px', border: '1px solid #fca5a5', color: '#dc2626', borderRadius: 6, cursor: 'pointer', fontSize: 12, background: '#fff' }}>삭제</button>
@@ -198,7 +198,7 @@ function ProductModal({ title, form, setForm, preview, onImage, onRemoveImage, i
           </div>
           <div>
             <label style={labelStyle}>정렬 순서</label>
-            <input type="number" value={form.sortOrder ?? ''} onChange={e => setForm(p => ({ ...p, sortOrder: e.target.value }))}
+            <input type="number" value={form.sort ?? ''} onChange={e => setForm(p => ({ ...p, sort: e.target.value }))}
               placeholder="예) 1" style={inputStyle} />
           </div>
         </div>
