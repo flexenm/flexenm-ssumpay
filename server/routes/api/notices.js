@@ -30,7 +30,7 @@ router.get('/:id', async ctx => {
   }
 
   await Notice.query().patch({ viewCount: raw('viewCount + 1') }).where({ id: notice.id })
-  ctx.body = { code: 200, data: notice }
+  ctx.body = { code: 200, data: { ...notice, viewCount: notice.viewCount + 1 } }
 })
 
 module.exports = router
