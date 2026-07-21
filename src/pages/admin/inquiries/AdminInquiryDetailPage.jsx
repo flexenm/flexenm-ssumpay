@@ -14,9 +14,13 @@ export default function AdminInquiryDetailPage() {
 
   const submit = async () => {
     if (!answer) return alert('답변을 입력해주세요.')
-    await adminInquiriesApi.answer(id, { answer })
-    alert('답변이 등록되었습니다.')
-    navigate('/admin/inquiries')
+    try {
+      await adminInquiriesApi.answer(id, { answer })
+      alert('답변이 등록되었습니다.')
+      navigate('/admin/inquiries')
+    } catch (e) {
+      alert(e?.message || '답변 등록 중 오류가 발생했습니다.')
+    }
   }
 
   if (!inquiry) return <div>로딩중...</div>

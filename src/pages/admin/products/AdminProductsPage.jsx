@@ -9,18 +9,27 @@ export default function AdminProductsPage() {
   const [form, setForm] = useState(empty)
   const [selected, setSelected] = useState(null)
   const [preview, setPreview] = useState(null)
+  const objectUrlRef = useRef(null)
+
+  const revokePreview = () => {
+    if (objectUrlRef.current) { URL.revokeObjectURL(objectUrlRef.current); objectUrlRef.current = null }
+  }
 
   const load = () => adminProductsApi.list().then(r => setProducts(r.data)).catch(() => {})
   useEffect(() => { load() }, [])
+  useEffect(() => () => revokePreview(), [])
 
-  const openCreate = () => { setForm(empty); setPreview(null); setModal('create') }
-  const openEdit = (p) => { setForm(p); setPreview(p.imageUrl || null); setSelected(p); setModal('edit') }
+  const openCreate = () => { revokePreview(); setForm(empty); setPreview(null); setModal('create') }
+  const openEdit = (p) => { revokePreview(); setForm(p); setPreview(p.imageUrl || null); setSelected(p); setModal('edit') }
   const openDelete = (p) => { setSelected(p); setModal('delete') }
 
   const handleImage = (e) => {
     const file = e.target.files[0]
     if (!file) return
-    setPreview(URL.createObjectURL(file))
+    revokePreview()
+    const url = URL.createObjectURL(file)
+    objectUrlRef.current = url
+    setPreview(url)
     setForm(p => ({ ...p, _imageFile: file }))
   }
 
@@ -35,14 +44,23 @@ export default function AdminProductsPage() {
       subcategory: form.subcategory || '플렉스',
     }
     delete data._imageFile
-    if (modal === 'create') await adminProductsApi.create(data)
-    else await adminProductsApi.update(selected.id, data)
-    setModal(null); load()
+    try {
+      if (modal === 'create') await adminProductsApi.create(data)
+      else await adminProductsApi.update(selected.id, data)
+      revokePreview()
+      setModal(null); load()
+    } catch (e) {
+      alert(e?.message || '저장 중 오류가 발생했습니다.')
+    }
   }
 
   const del = async () => {
-    await adminProductsApi.delete(selected.id)
-    setModal(null); load()
+    try {
+      await adminProductsApi.delete(selected.id)
+      setModal(null); load()
+    } catch (e) {
+      alert(e?.message || '삭제 중 오류가 발생했습니다.')
+    }
   }
 
   return (
@@ -87,9 +105,9 @@ export default function AdminProductsPage() {
           title={modal === 'create' ? '상품 등록' : '상품 수정'}
           form={form} setForm={setForm}
           preview={preview} onImage={handleImage}
-          onRemoveImage={() => { setPreview(null); setForm(p => ({ ...p, imageUrl: '' })) }}
+          onRemoveImage={() => { revokePreview(); setPreview(null); setForm(p => ({ ...p, imageUrl: '' })) }}
           isEdit={modal === 'edit'}
-          onClose={() => setModal(null)}
+          onClose={() => { revokePreview(); setModal(null) }}
           onConfirm={save}
         />
       )}

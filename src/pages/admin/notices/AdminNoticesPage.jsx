@@ -15,16 +15,25 @@ export default function AdminNoticesPage() {
   const openCreate = () => { setForm(empty); setModal('create') }
   const openEdit = (n) => { setForm(n); setSelected(n); setModal('edit') }
   const openView = (n) => { setSelected(n); setModal('view') }
+  const openDelete = (n) => { setSelected(n); setModal('delete') }
 
   const save = async () => {
-    if (modal === 'create') await adminNoticesApi.create(form)
-    else await adminNoticesApi.update(selected.id, form)
-    setModal(null); load()
+    try {
+      if (modal === 'create') await adminNoticesApi.create(form)
+      else await adminNoticesApi.update(selected.id, form)
+      setModal(null); load()
+    } catch (e) {
+      alert(e?.message || '저장 중 오류가 발생했습니다.')
+    }
   }
 
-  const del = async (id) => {
-    if (!confirm('삭제하시겠습니까?')) return
-    await adminNoticesApi.delete(id); load()
+  const del = async () => {
+    try {
+      await adminNoticesApi.delete(selected.id)
+      setModal(null); load()
+    } catch (e) {
+      alert(e?.message || '삭제 중 오류가 발생했습니다.')
+    }
   }
 
   return (
@@ -52,7 +61,7 @@ export default function AdminNoticesPage() {
                   <td style={tdStyle}>{new Date(n.createdAt).toLocaleDateString()}</td>
                   <td style={tdStyle}>
                     <button onClick={() => openEdit(n)} style={{ marginRight: 6, padding: '4px 10px', border: '1px solid #e5e7eb', borderRadius: 6, cursor: 'pointer', fontSize: 12 }}>수정</button>
-                    <button onClick={() => del(n.id)} style={{ padding: '4px 10px', border: '1px solid #fca5a5', color: '#dc2626', borderRadius: 6, cursor: 'pointer', fontSize: 12, background: '#fff' }}>삭제</button>
+                    <button onClick={() => openDelete(n)} style={{ padding: '4px 10px', border: '1px solid #fca5a5', color: '#dc2626', borderRadius: 6, cursor: 'pointer', fontSize: 12, background: '#fff' }}>삭제</button>
                   </td>
                 </tr>
               ))}
@@ -102,6 +111,19 @@ export default function AdminNoticesPage() {
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24 }}>
               <button onClick={() => setModal(null)} style={{ padding: '10px 24px', border: '1px solid #e5e7eb', borderRadius: 8, cursor: 'pointer' }}>닫기</button>
               <button onClick={() => openEdit(selected)} style={{ padding: '10px 24px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer' }}>수정</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {modal === 'delete' && selected && (
+        <div style={overlay}>
+          <div style={{ ...card, width: 400, textAlign: 'center' }}>
+            <p style={{ fontWeight: 700, fontSize: 18, marginBottom: 12 }}>공지를 삭제하시겠습니까?</p>
+            <p style={{ color: '#64748b', fontSize: 14, marginBottom: 24 }}>삭제된 공지는 복구할 수 없습니다.</p>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button onClick={() => setModal(null)} style={{ flex: 1, padding: '12px', border: '1px solid #e5e7eb', borderRadius: 8, cursor: 'pointer', background: '#fff' }}>취소</button>
+              <button onClick={del} style={{ flex: 1, padding: '12px', background: '#1e293b', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600 }}>삭제</button>
             </div>
           </div>
         </div>

@@ -56,7 +56,7 @@ export default function CustomerCenterPage() {
             </div>
           )}
           {inquiries.map(q => (
-            <div key={q.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 0', borderBottom: '1px solid #e5e7eb' }}>
+            <div key={q.id} onClick={() => navigate(`/mypage/inquiries/${q.id}`)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 0', borderBottom: '1px solid #e5e7eb', cursor: 'pointer' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <span style={{ padding: '4px 10px', borderRadius: 12, background: q.status === 1 ? '#2563eb' : '#f1f5f9', color: q.status === 1 ? '#fff' : '#94a3b8', fontSize: 12 }}>{q.status === 1 ? '답변 완료' : '답변 대기'}</span>
                 <span>{q.title}</span>

@@ -32,15 +32,23 @@ export default function InquiryDetailPage() {
   }
 
   const saveEdit = async () => {
-    await inquiriesApi.update(id, editForm)
-    const r = await inquiriesApi.get(id)
-    setInquiry(r.data)
-    setEditing(false)
+    try {
+      await inquiriesApi.update(id, editForm)
+      const r = await inquiriesApi.get(id)
+      setInquiry(r.data)
+      setEditing(false)
+    } catch (e) {
+      alert(e?.message || '수정 중 오류가 발생했습니다.')
+    }
   }
 
   const del = async () => {
-    await inquiriesApi.delete(id)
-    navigate(-1)
+    try {
+      await inquiriesApi.delete(id)
+      navigate(-1)
+    } catch (e) {
+      alert(e?.message || '삭제 중 오류가 발생했습니다.')
+    }
   }
 
   if (!inquiry) return <div style={{ padding: 80, textAlign: 'center' }}>로딩중...</div>
