@@ -1,7 +1,7 @@
 const Router = require('koa-router')
-const nodemailer = require('nodemailer')
 const Inquiry = require('../../entities/Inquiry')
 const db = require('../../db')
+const { createTransport, escapeHtml } = require('../../utils/mailer')
 
 const router = new Router()
 
@@ -52,22 +52,17 @@ router.post('/:id/answer', async ctx => {
 
   if (inquiry.member?.email) {
     try {
-      const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: process.env.SMTP_PORT,
-        secure: false,
-        auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
-      })
+      const transporter = createTransport()
       await transporter.sendMail({
         from: `"썸페이" <${process.env.SMTP_USER}>`,
         to: inquiry.member.email,
         subject: '[썸페이] 1:1 문의 답변이 등록되었습니다.',
         html: `
-          <p>${inquiry.member.name}님, 문의하신 내용에 답변이 등록되었습니다.</p>
+          <p>${escapeHtml(inquiry.member.name)}님, 문의하신 내용에 답변이 등록되었습니다.</p>
           <hr/>
-          <p><strong>문의 제목:</strong> ${inquiry.title}</p>
+          <p><strong>문의 제목:</strong> ${escapeHtml(inquiry.title)}</p>
           <p><strong>답변 내용:</strong></p>
-          <p>${answer.replace(/\n/g, '<br/>')}</p>
+          <p>${escapeHtml(answer).replace(/\n/g, '<br/>')}</p>
         `
       })
     } catch (e) {

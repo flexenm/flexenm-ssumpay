@@ -2,13 +2,21 @@ const Router = require('koa-router')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const crypto = require('crypto')
-const nodemailer = require('nodemailer')
 const Member = require('../../entities/Member')
+const rateLimit = require('../../middlewares/rate-limit')
+const { createTransport, escapeHtml } = require('../../utils/mailer')
 
 const router = new Router()
 
+const authLimiter = rateLimit({ windowMs: 60_000, max: 10, message: '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.' })
+
+function validatePassword(password) {
+  if (!password || password.length < 8) return '비밀번호는 8자 이상이어야 합니다.'
+  return null
+}
+
 // 아이디 중복확인
-router.get('/check-username', async ctx => {
+router.get('/check-username', authLimiter, async ctx => {
   const { username } = ctx.query
   if (!username) {
     ctx.status = 400
@@ -20,12 +28,19 @@ router.get('/check-username', async ctx => {
   ctx.body = { code: 200, available: !exists }
 })
 
-router.post('/register', async ctx => {
+router.post('/register', authLimiter, async ctx => {
   const { username, password, name, email, phone } = ctx.request.body
 
   if (!username || !password || !name || !email) {
     ctx.status = 400
     ctx.body = { code: 400, message: '필수 항목을 입력해주세요.' }
+    return
+  }
+
+  const pwError = validatePassword(password)
+  if (pwError) {
+    ctx.status = 400
+    ctx.body = { code: 400, message: pwError }
     return
   }
 
@@ -43,7 +58,7 @@ router.post('/register', async ctx => {
   ctx.body = { code: 201, message: '회원가입이 완료되었습니다.' }
 })
 
-router.post('/login', async ctx => {
+router.post('/login', authLimiter, async ctx => {
   const { username, password } = ctx.request.body
 
   if (!username || !password) {
@@ -85,7 +100,7 @@ router.post('/login', async ctx => {
   }
 })
 
-router.post('/password/reset', async ctx => {
+router.post('/password/reset', authLimiter, async ctx => {
   const { username, email } = ctx.request.body
   if (!username || !email) {
     ctx.status = 400
@@ -93,35 +108,29 @@ router.post('/password/reset', async ctx => {
     return
   }
 
+  // 계정 존재 여부와 무관하게 동일 응답 (열거 방지)
   const member = await Member.query().findOne({ username, email })
-  if (!member) {
-    ctx.body = { code: 200, message: '입력하신 이메일로 임시 비밀번호를 발송했습니다.' }
-    return
-  }
 
-  const tempPassword = crypto.randomBytes(6).toString('hex')
-  const hashed = await bcrypt.hash(tempPassword, 10)
-  await Member.query().patchAndFetchById(member.id, { password: hashed })
+  if (member) {
+    const tempPassword = crypto.randomBytes(6).toString('hex')
+    const hashed = await bcrypt.hash(tempPassword, 10)
+    await Member.query().patchAndFetchById(member.id, { password: hashed })
 
-  try {
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: process.env.SMTP_PORT,
-      secure: false,
-      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
-    })
-    await transporter.sendMail({
-      from: `"썸페이" <${process.env.SMTP_USER}>`,
-      to: email,
-      subject: '[썸페이] 임시 비밀번호 안내',
-      html: `
-        <p>${member.name}님, 임시 비밀번호를 안내드립니다.</p>
-        <p><strong>임시 비밀번호: ${tempPassword}</strong></p>
-        <p>로그인 후 반드시 비밀번호를 변경해주세요.</p>
-      `
-    })
-  } catch (e) {
-    console.error('비밀번호 재설정 이메일 발송 실패:', e.message)
+    try {
+      const transporter = createTransport()
+      await transporter.sendMail({
+        from: `"썸페이" <${process.env.SMTP_USER}>`,
+        to: email,
+        subject: '[썸페이] 임시 비밀번호 안내',
+        html: `
+          <p>${escapeHtml(member.name)}님, 임시 비밀번호를 안내드립니다.</p>
+          <p><strong>임시 비밀번호: ${tempPassword}</strong></p>
+          <p>로그인 후 반드시 비밀번호를 변경해주세요.</p>
+        `
+      })
+    } catch (e) {
+      console.error('비밀번호 재설정 이메일 발송 실패:', e.message)
+    }
   }
 
   ctx.body = { code: 200, message: '입력하신 이메일로 임시 비밀번호를 발송했습니다.' }

@@ -49,8 +49,14 @@ router.patch('/:id/charge-status', async ctx => {
     return
   }
 
-  const updates = { chargeStatus }
-  if (chargeStatus === 1) updates.chargedAt = db.raw('NOW()')
+  if (![0, 1, 2].includes(Number(chargeStatus))) {
+    ctx.status = 400
+    ctx.body = { code: 400, message: '유효하지 않은 충전 상태입니다.' }
+    return
+  }
+
+  const updates = { chargeStatus: Number(chargeStatus) }
+  if (Number(chargeStatus) === 1) updates.chargedAt = db.raw('NOW()')
   if (memo !== undefined) updates.memo = memo
 
   await Order.query().patchAndFetchById(ctx.params.id, updates)
@@ -59,6 +65,12 @@ router.patch('/:id/charge-status', async ctx => {
 
 router.patch('/:id/memo', async ctx => {
   const { memo } = ctx.request.body
+  const order = await Order.query().findById(ctx.params.id)
+  if (!order) {
+    ctx.status = 404
+    ctx.body = { code: 404, message: '주문을 찾을 수 없습니다.' }
+    return
+  }
   await Order.query().patchAndFetchById(ctx.params.id, { memo })
   ctx.body = { code: 200, message: '메모가 저장되었습니다.' }
 })
