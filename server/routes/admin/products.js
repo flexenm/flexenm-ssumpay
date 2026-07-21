@@ -6,7 +6,7 @@ const router = new Router()
 router.get('/', async ctx => {
   const { category, subcategory, isActive } = ctx.query
 
-  let query = Product.query().whereNull('deletedAt').orderBy('sortOrder').orderBy('id')
+  let query = Product.query().whereNull('deletedAt').orderBy('sort').orderBy('id')
   if (category) query = query.where({ category })
   if (subcategory) query = query.where({ subcategory })
   if (isActive !== undefined) query = query.where({ isActive })
@@ -15,7 +15,7 @@ router.get('/', async ctx => {
 })
 
 router.post('/', async ctx => {
-  const { category, subcategory, name, price, lexAmount, coinAmount, sortOrder } = ctx.request.body
+  const { category, subcategory, name, price, lexAmount, coinAmount, sort } = ctx.request.body
   if (!category || !subcategory || !name || price === undefined) {
     ctx.status = 400
     ctx.body = { code: 400, message: '필수 항목을 입력해주세요.' }
@@ -26,7 +26,7 @@ router.post('/', async ctx => {
     category, subcategory, name, price,
     lexAmount: lexAmount || 0,
     coinAmount: coinAmount || 0,
-    sortOrder: sortOrder || 0,
+    sort: sort || 0,
     isActive: 1
   })
 
@@ -42,9 +42,9 @@ router.put('/:id', async ctx => {
     return
   }
 
-  const { category, subcategory, name, price, lexAmount, coinAmount, isActive, sortOrder } = ctx.request.body
+  const { category, subcategory, name, price, lexAmount, coinAmount, isActive, sort } = ctx.request.body
   const updated = await Product.query().patchAndFetchById(ctx.params.id, {
-    category, subcategory, name, price, lexAmount, coinAmount, isActive, sortOrder
+    category, subcategory, name, price, lexAmount, coinAmount, isActive, sort
   })
 
   ctx.body = { code: 200, data: updated }

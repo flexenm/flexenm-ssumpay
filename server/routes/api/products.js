@@ -6,7 +6,7 @@ const router = new Router()
 router.get('/', async ctx => {
   const { category, subcategory } = ctx.query
 
-  let query = Product.query().where({ isActive: 1 }).whereNull('deletedAt').orderBy('sortOrder').orderBy('id')
+  let query = Product.query().where({ isActive: 1 }).whereNull('deletedAt').orderBy('sort').orderBy('id')
   if (category) query = query.where({ category })
   if (subcategory) query = query.where({ subcategory })
 
