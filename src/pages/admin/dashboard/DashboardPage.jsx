@@ -12,7 +12,7 @@ export default function DashboardPage() {
 
   const stats = [
     { label: '전체 회원', value: `${data.totalMembers}건` },
-    { label: '오늘 주문 금액', value: `${(data.todayOrders * 0).toLocaleString() || '0'}원` },
+    { label: '오늘 주문 건수', value: `${(data.todayOrderCount ?? 0).toLocaleString()}건` },
     { label: '충전 대기', value: `${data.pendingCharges}건` },
     { label: '미답변 문의', value: `${data.pendingInquiries}건` },
   ]
