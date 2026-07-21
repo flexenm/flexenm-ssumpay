@@ -4,9 +4,10 @@ import { adminInquiriesApi } from '../../../api'
 
 export default function AdminInquiriesPage() {
   const [inquiries, setInquiries] = useState([])
+  const [loading, setLoading] = useState(true)
   const [status, setStatus] = useState('')
 
-  const load = (s = status) => adminInquiriesApi.list({ status: s }).then(r => setInquiries(r.data)).catch(() => {})
+  const load = (s = status) => { setLoading(true); return adminInquiriesApi.list({ status: s }).then(r => setInquiries(r.data)).catch(() => {}).finally(() => setLoading(false)) }
   useEffect(() => { load('') }, [])
 
   return (
@@ -28,7 +29,9 @@ export default function AdminInquiriesPage() {
             ))}
           </tr></thead>
           <tbody>
-            {inquiries.length === 0
+            {loading
+              ? <tr><td colSpan={6} style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>불러오는 중...</td></tr>
+              : inquiries.length === 0
               ? <tr><td colSpan={6} style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>데이터가 없습니다.</td></tr>
               : inquiries.map(q => (
                 <tr key={q.id} style={{ borderBottom: '1px solid #f1f5f9' }}>

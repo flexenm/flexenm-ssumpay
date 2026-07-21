@@ -7,11 +7,13 @@ export default function CustomerCenterPage() {
   const [tab, setTab] = useState(0)
   const [notices, setNotices] = useState([])
   const [inquiries, setInquiries] = useState([])
+  const [loading, setLoading] = useState(true)
   const isLoggedIn = !!localStorage.getItem('token')
   const navigate = useNavigate()
 
   useEffect(() => {
-    noticesApi.list().then(r => setNotices(r.data)).catch(() => {})
+    setLoading(true)
+    noticesApi.list().then(r => setNotices(r.data)).catch(() => {}).finally(() => setLoading(false))
     if (isLoggedIn) inquiriesApi.list().then(r => setInquiries(r.data)).catch(() => {})
   }, [])
 
@@ -31,7 +33,9 @@ export default function CustomerCenterPage() {
       </div>
 
       {tab === 0 && (
-        notices.length === 0
+        loading
+          ? <div style={{ textAlign: 'center', padding: 80, background: '#f8fafc', borderRadius: 12, color: '#94a3b8' }}>불러오는 중...</div>
+          : notices.length === 0
           ? <div style={{ textAlign: 'center', padding: 80, background: '#f8fafc', borderRadius: 12, color: '#94a3b8' }}>
               <p style={{ fontSize: 32, marginBottom: 8 }}>!</p>등록된 공지사항이 없습니다.
             </div>

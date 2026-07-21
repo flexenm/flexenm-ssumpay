@@ -5,11 +5,12 @@ const empty = { title: '', content: '', isPinned: false, isActive: 1 }
 
 export default function AdminNoticesPage() {
   const [notices, setNotices] = useState([])
+  const [loading, setLoading] = useState(true)
   const [modal, setModal] = useState(null)
   const [form, setForm] = useState(empty)
   const [selected, setSelected] = useState(null)
 
-  const load = () => adminNoticesApi.list().then(r => setNotices(r.data)).catch(() => {})
+  const load = () => { setLoading(true); return adminNoticesApi.list().then(r => setNotices(r.data)).catch(() => {}).finally(() => setLoading(false)) }
   useEffect(() => { load() }, [])
 
   const openCreate = () => { setForm(empty); setModal('create') }
@@ -50,7 +51,9 @@ export default function AdminNoticesPage() {
             ))}
           </tr></thead>
           <tbody>
-            {notices.length === 0
+            {loading
+              ? <tr><td colSpan={6} style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>불러오는 중...</td></tr>
+              : notices.length === 0
               ? <tr><td colSpan={6} style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>공지사항이 없습니다.</td></tr>
               : notices.map(n => (
                 <tr key={n.id} style={{ borderBottom: '1px solid #f1f5f9' }}>

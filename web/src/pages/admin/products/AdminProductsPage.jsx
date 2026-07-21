@@ -5,6 +5,7 @@ const empty = { name: '', price: '', lexAmount: '', sort: '', isActive: 1, image
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState([])
+  const [loading, setLoading] = useState(true)
   const [modal, setModal] = useState(null)
   const [form, setForm] = useState(empty)
   const [selected, setSelected] = useState(null)
@@ -15,7 +16,7 @@ export default function AdminProductsPage() {
     if (objectUrlRef.current) { URL.revokeObjectURL(objectUrlRef.current); objectUrlRef.current = null }
   }
 
-  const load = () => adminProductsApi.list().then(r => setProducts(r.data)).catch(() => {})
+  const load = () => { setLoading(true); return adminProductsApi.list().then(r => setProducts(r.data)).catch(() => {}).finally(() => setLoading(false)) }
   useEffect(() => { load() }, [])
   useEffect(() => () => revokePreview(), [])
 
@@ -77,7 +78,9 @@ export default function AdminProductsPage() {
             ))}
           </tr></thead>
           <tbody>
-            {products.length === 0
+            {loading
+              ? <tr><td colSpan={6} style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>불러오는 중...</td></tr>
+              : products.length === 0
               ? <tr><td colSpan={6} style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>상품이 없습니다.</td></tr>
               : products.map(p => (
                 <tr key={p.id} style={{ borderBottom: '1px solid #f1f5f9' }}>

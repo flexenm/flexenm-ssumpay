@@ -3,10 +3,12 @@ import { adminMembersApi } from '../../../api'
 
 export default function AdminMembersPage() {
   const [members, setMembers] = useState([])
+  const [loading, setLoading] = useState(true)
   const [keyword, setKeyword] = useState('')
 
   const load = (kw = keyword) => {
-    adminMembersApi.list({ keyword: kw }).then(r => setMembers(r.data)).catch(() => {})
+    setLoading(true)
+    adminMembersApi.list({ keyword: kw }).then(r => setMembers(r.data)).catch(() => {}).finally(() => setLoading(false))
   }
   useEffect(() => { load('') }, [])
 
@@ -30,7 +32,9 @@ export default function AdminMembersPage() {
             ))}
           </tr></thead>
           <tbody>
-            {members.length === 0
+            {loading
+              ? <tr><td colSpan={8} style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>불러오는 중...</td></tr>
+              : members.length === 0
               ? <tr><td colSpan={8} style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>데이터가 없습니다.</td></tr>
               : members.map(m => (
                 <tr key={m.id} style={{ borderBottom: '1px solid #f1f5f9' }}>

@@ -3,6 +3,7 @@ import { adminOrdersApi } from '../../../api'
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState([])
+  const [loading, setLoading] = useState(true)
   const [keyword, setKeyword] = useState('')
   const [paymentStatus, setPaymentStatus] = useState('')
   const [chargeStatus, setChargeStatus] = useState('')
@@ -12,7 +13,8 @@ export default function AdminOrdersPage() {
     if (kw) params.keyword = kw
     if (ps !== '') params.paymentStatus = ps
     if (cs !== '') params.chargeStatus = cs
-    adminOrdersApi.list(params).then(r => setOrders(r.data)).catch(() => {})
+    setLoading(true)
+    adminOrdersApi.list(params).then(r => setOrders(r.data)).catch(() => {}).finally(() => setLoading(false))
   }
 
   useEffect(() => { load('', '', '') }, [])
@@ -47,7 +49,9 @@ export default function AdminOrdersPage() {
             ))}
           </tr></thead>
           <tbody>
-            {orders.length === 0
+            {loading
+              ? <tr><td colSpan={8} style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>불러오는 중...</td></tr>
+              : orders.length === 0
               ? <tr><td colSpan={8} style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>데이터가 없습니다.</td></tr>
               : orders.map(o => (
                 <tr key={o.id} style={{ borderBottom: '1px solid #f1f5f9' }}>

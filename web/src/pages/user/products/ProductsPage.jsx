@@ -15,11 +15,16 @@ export default function ProductsPage() {
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const [products, setProducts] = useState([])
+  const [loading, setLoading] = useState(true)
   const [category, setCategory] = useState(params.get('category') || null)
   const [subcategory, setSubcategory] = useState(null)
 
   useEffect(() => {
-    productsApi.list({ category, subcategory }).then(r => setProducts(r.data)).catch(() => setProducts([]))
+    setLoading(true)
+    productsApi.list({ category, subcategory })
+      .then(r => setProducts(r.data))
+      .catch(() => setProducts([]))
+      .finally(() => setLoading(false))
   }, [category, subcategory])
 
   const currentCat = categories.find(c => c.key === category)
@@ -69,7 +74,9 @@ export default function ProductsPage() {
           <p style={{ marginBottom: 16, fontWeight: 600 }}>
             {currentCat?.label || '전체'} 상품 <span style={{ background: '#2563eb', color: '#fff', borderRadius: 12, padding: '2px 10px', fontSize: 13 }}>{products.length}개</span>
           </p>
-          {products.length === 0 ? (
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: 80, color: '#94a3b8' }}>불러오는 중...</div>
+          ) : products.length === 0 ? (
             <div style={{ textAlign: 'center', padding: 80, color: '#94a3b8' }}>상품이 없습니다.</div>
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>

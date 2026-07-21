@@ -11,6 +11,7 @@ export default function MyPage() {
   const [info, setInfo] = useState(null)
   const [orders, setOrders] = useState([])
   const [inquiries, setInquiries] = useState([])
+  const [loading, setLoading] = useState(false)
   const [pwForm, setPwForm] = useState({ currentPassword: '', newPassword: '', newPasswordConfirm: '' })
   const [pwError, setPwError] = useState('')
   const [pwSuccess, setPwSuccess] = useState('')
@@ -21,8 +22,14 @@ export default function MyPage() {
   }, [])
 
   useEffect(() => {
-    if (tab === 1) ordersApi.my().then(r => setOrders(r.data)).catch(() => {})
-    if (tab === 2) inquiriesApi.list().then(r => setInquiries(r.data)).catch(() => {})
+    if (tab === 1) {
+      setLoading(true)
+      ordersApi.my().then(r => setOrders(r.data)).catch(() => {}).finally(() => setLoading(false))
+    }
+    if (tab === 2) {
+      setLoading(true)
+      inquiriesApi.list().then(r => setInquiries(r.data)).catch(() => {}).finally(() => setLoading(false))
+    }
   }, [tab])
 
   const changePassword = async (e) => {
@@ -114,7 +121,9 @@ export default function MyPage() {
       {/* 구매 내역 */}
       {tab === 1 && (
         <div>
-          {orders.length === 0 ? (
+          {loading ? (
+            <p style={{ textAlign: 'center', color: '#94a3b8', padding: 60 }}>불러오는 중...</p>
+          ) : orders.length === 0 ? (
             <p style={{ textAlign: 'center', color: '#94a3b8', padding: 60 }}>구매 내역이 없습니다.</p>
           ) : (
             <table style={{ width: '100%', borderCollapse: 'collapse', background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, overflow: 'hidden' }}>
@@ -158,7 +167,9 @@ export default function MyPage() {
               <PenLine size={15} /> 문의하기
             </button>
           </div>
-          {inquiries.length === 0 ? (
+          {loading ? (
+            <p style={{ textAlign: 'center', color: '#94a3b8', padding: 60 }}>불러오는 중...</p>
+          ) : inquiries.length === 0 ? (
             <p style={{ textAlign: 'center', color: '#94a3b8', padding: 60 }}>문의 내역이 없습니다.</p>
           ) : (
             inquiries.map(q => (
