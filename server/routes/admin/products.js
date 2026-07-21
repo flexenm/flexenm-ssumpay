@@ -6,7 +6,7 @@ const router = new Router()
 router.get('/', async ctx => {
   const { category, subcategory, isActive } = ctx.query
 
-  let query = Product.query().orderBy('sortOrder').orderBy('id')
+  let query = Product.query().whereNull('deletedAt').orderBy('sortOrder').orderBy('id')
   if (category) query = query.where({ category })
   if (subcategory) query = query.where({ subcategory })
   if (isActive !== undefined) query = query.where({ isActive })
@@ -51,8 +51,8 @@ router.put('/:id', async ctx => {
 })
 
 router.delete('/:id', async ctx => {
-  await Product.query().patchAndFetchById(ctx.params.id, { isActive: 0 })
-  ctx.body = { code: 200, message: '상품이 비활성화되었습니다.' }
+  await Product.query().patchById(ctx.params.id, { deletedAt: new Date().toISOString() })
+  ctx.body = { code: 200, message: '상품이 삭제되었습니다.' }
 })
 
 module.exports = router

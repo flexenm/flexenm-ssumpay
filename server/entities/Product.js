@@ -16,7 +16,8 @@ class Product extends Model {
         lexAmount: { type: 'integer', minimum: 0 },
         coinAmount: { type: 'integer', minimum: 0 },
         isActive: { type: 'integer', enum: [0, 1] },
-        sortOrder: { type: 'integer' }
+        sortOrder: { type: 'integer' },
+        deletedAt: { type: ['string', 'null'] }
       }
     }
   }
