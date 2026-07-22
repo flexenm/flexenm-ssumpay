@@ -27,7 +27,7 @@ router.get('/', async ctx => {
     code: 200,
     data: {
       totalMembers: totalMembers.cnt,
-      todayOrders: todayOrders.cnt,
+      todayOrderCount: todayOrders.cnt,
       pendingCharges: pendingCharges.cnt,
       pendingInquiries: pendingInquiries.cnt,
       salesByDay

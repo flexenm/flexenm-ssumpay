@@ -16,7 +16,19 @@ class Product extends Model {
         lexAmount: { type: 'integer', minimum: 0 },
         coinAmount: { type: 'integer', minimum: 0 },
         isActive: { type: 'integer', enum: [0, 1] },
-        sortOrder: { type: 'integer' }
+        sort: { type: 'integer' },
+        deletedAt: { type: ['string', 'null'] }
+      }
+    }
+  }
+
+  static get relationMappings() {
+    const Order = require('./Order')
+    return {
+      orders: {
+        relation: Model.HasManyRelation,
+        modelClass: Order,
+        join: { from: 'products.id', to: 'orders.productId' }
       }
     }
   }

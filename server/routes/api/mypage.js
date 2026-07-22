@@ -38,6 +38,12 @@ router.patch('/password', async ctx => {
     return
   }
 
+  if (newPassword.length < 8) {
+    ctx.status = 400
+    ctx.body = { code: 400, message: '새 비밀번호는 8자 이상이어야 합니다.' }
+    return
+  }
+
   const member = await Member.query().findById(ctx.state.member.id)
   const isValid = await bcrypt.compare(currentPassword, member.password)
   if (!isValid) {

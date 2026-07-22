@@ -1,0 +1,1 @@
+ALTER TABLE products CHANGE sortOrder sort INT NOT NULL DEFAULT 0;

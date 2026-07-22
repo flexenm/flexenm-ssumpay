@@ -27,7 +27,8 @@
     "mysql": "^2.18.1",
     "mysql2": "^2.3.3",
     "nodemailer": "^6.9.7",
-    "objection": "^2.2.0"
+    "objection": "^2.2.0",
+    "rate-limiter-flexible": "^11.2.0"
   },
   "devDependencies": {
     "nodemon": "^2.0.0"

@@ -14,11 +14,12 @@ router.get('/', async ctx => {
   const [items, total] = await Promise.all([
     Inquiry.query()
       .where({ memberId })
+      .whereNull('deletedAt')
       .select('id', 'type', 'title', 'status', 'createdAt', 'answeredAt')
       .orderBy('createdAt', 'desc')
       .limit(limit)
       .offset(offset),
-    Inquiry.query().where({ memberId }).resultSize()
+    Inquiry.query().where({ memberId }).whereNull('deletedAt').resultSize()
   ])
 
   ctx.body = { code: 200, data: items, total, page: Number(page), limit: Number(limit) }
@@ -28,6 +29,7 @@ router.get('/:id', async ctx => {
   const inquiry = await Inquiry.query()
     .findById(ctx.params.id)
     .where({ memberId: ctx.state.member.id })
+    .whereNull('deletedAt')
 
   if (!inquiry) {
     ctx.status = 404
@@ -39,7 +41,7 @@ router.get('/:id', async ctx => {
 
 router.post('/', async ctx => {
   const { type, title, content } = ctx.request.body
-  if (!type || !title || !content) {
+  if (type === undefined || type === null || type === '' || !title || !content) {
     ctx.status = 400
     ctx.body = { code: 400, message: '문의 유형, 제목, 내용을 입력해주세요.' }
     return
@@ -57,6 +59,7 @@ router.put('/:id', async ctx => {
   const inquiry = await Inquiry.query()
     .findById(ctx.params.id)
     .where({ memberId: ctx.state.member.id })
+    .whereNull('deletedAt')
 
   if (!inquiry) {
     ctx.status = 404
@@ -78,6 +81,7 @@ router.delete('/:id', async ctx => {
   const inquiry = await Inquiry.query()
     .findById(ctx.params.id)
     .where({ memberId: ctx.state.member.id })
+    .whereNull('deletedAt')
 
   if (!inquiry) {
     ctx.status = 404
@@ -90,7 +94,7 @@ router.delete('/:id', async ctx => {
     return
   }
 
-  await Inquiry.query().deleteById(inquiry.id)
+  await Inquiry.query().patchById(inquiry.id, { deletedAt: new Date().toISOString() })
   ctx.body = { code: 200, message: '문의가 삭제되었습니다.' }
 })
 
