@@ -30,10 +30,10 @@ export default function ForgotPasswordPage() {
           <div style={modalStyle} onClick={e => e.stopPropagation()}>
             <h3 style={{ fontSize: 20, fontWeight: 700, marginBottom: 16, textAlign: 'center' }}>비밀번호 찾기 안내</h3>
             <p style={{ fontSize: 15, lineHeight: 1.6, color: '#334155', textAlign: 'center' }}>
-              입력하신 정보로 가입된 계정이 있다면,<br />임시 비밀번호를 메일로 보내드렸습니다.
+              입력하신 정보로 가입된 계정이 있다면,<br />비밀번호 재설정 링크를 메일로 보내드렸습니다.
             </p>
             <p style={{ fontSize: 13, lineHeight: 1.6, color: '#94a3b8', textAlign: 'center', marginTop: 12 }}>
-              메일이 도착하지 않으면 아이디와 이메일을<br />다시 확인해주세요.
+              링크는 30분간 유효합니다. 메일이 도착하지 않으면<br />아이디와 이메일을 다시 확인해주세요.
             </p>
             <button onClick={() => navigate('/login')} style={btnStyle}>로그인으로 돌아가기</button>
           </div>

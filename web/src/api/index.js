@@ -25,6 +25,7 @@ export const authApi = {
   register: (data) => handle(api.post('/api/auth/register', data)),
   login: (data) => handle(api.post('/api/auth/login', data)),
   resetPassword: (data) => handle(api.post('/api/auth/password/reset', data)),
+  confirmResetPassword: (data) => handle(api.post('/api/auth/password/reset/confirm', data)),
 }
 
 // Products
