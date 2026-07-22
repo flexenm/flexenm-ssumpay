@@ -1,5 +1,7 @@
 -- ssumpay DB 초기 스키마
 
+-- CLI import 시 한글 깨짐 방지 (연결 charset 강제)
+SET NAMES utf8mb4;
 CREATE DATABASE IF NOT EXISTS ssumpay DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE ssumpay;
 

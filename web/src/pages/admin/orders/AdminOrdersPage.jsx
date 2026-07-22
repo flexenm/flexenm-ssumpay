@@ -45,7 +45,7 @@ export default function AdminOrdersPage() {
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead><tr style={{ background: '#f8fafc' }}>
             {['주문번호', '회원아이디', 'FlexTV 아이디', '상품', '금액', '결제상태', '충전상태', '관리'].map(h => (
-              <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: 13, fontWeight: 600 }}>{h}</th>
+              <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap' }}>{h}</th>
             ))}
           </tr></thead>
           <tbody>
@@ -64,7 +64,7 @@ export default function AdminOrdersPage() {
                   <td style={tdStyle}><Badge v={o.chargeStatus} t={{ 0: '충전대기', 1: '충전완료' }} /></td>
                   <td style={tdStyle}>
                     {o.chargeStatus === 0 && (
-                      <button onClick={() => updateCharge(o.id, 1)} style={{ padding: '4px 12px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12 }}>충전완료</button>
+                      <button onClick={() => updateCharge(o.id, 1)} style={{ padding: '4px 12px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12, whiteSpace: 'nowrap' }}>충전완료</button>
                     )}
                   </td>
                 </tr>
@@ -79,9 +79,9 @@ export default function AdminOrdersPage() {
 function Badge({ v, t }) {
   const colors = { 0: '#f1f5f9', 1: '#dcfce7' }
   const textColors = { 0: '#94a3b8', 1: '#16a34a' }
-  return <span style={{ padding: '4px 10px', borderRadius: 12, background: colors[v], color: textColors[v], fontSize: 12 }}>{t[v]}</span>
+  return <span style={{ display: 'inline-block', padding: '4px 10px', borderRadius: 12, background: colors[v], color: textColors[v], fontSize: 12, whiteSpace: 'nowrap' }}>{t[v]}</span>
 }
 
 const inputStyle = { padding: '8px 12px', border: '1px solid #e5e7eb', borderRadius: 8, fontSize: 14, outline: 'none' }
 const btnStyle = { padding: '8px 20px', background: '#1e293b', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 14 }
-const tdStyle = { padding: '12px 16px', fontSize: 13 }
+const tdStyle = { padding: '12px 16px', fontSize: 13, whiteSpace: 'nowrap' }
