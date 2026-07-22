@@ -7,6 +7,7 @@ import HomePage from '../pages/user/home/HomePage'
 import LoginPage from '../pages/user/auth/LoginPage'
 import RegisterPage from '../pages/user/auth/RegisterPage'
 import ForgotPasswordPage from '../pages/user/auth/ForgotPasswordPage'
+import ResetPasswordPage from '../pages/user/auth/ResetPasswordPage'
 import ProductsPage from '../pages/user/products/ProductsPage'
 import OrderPage from '../pages/user/order/OrderPage'
 import OrderCompletePage from '../pages/user/order/OrderCompletePage'
@@ -45,6 +46,7 @@ export const router = createBrowserRouter([
       { path: 'login', element: <LoginPage /> },
       { path: 'register', element: <RegisterPage /> },
       { path: 'forgot-password', element: <ForgotPasswordPage /> },
+      { path: 'reset-password', element: <ResetPasswordPage /> },
       { path: 'products', element: <ProductsPage /> },
       { path: 'order/:productId', element: <UserGuard><OrderPage /></UserGuard> },
       { path: 'order/complete/:orderNo', element: <UserGuard><OrderCompletePage /></UserGuard> },
