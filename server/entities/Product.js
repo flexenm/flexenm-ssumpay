@@ -21,6 +21,17 @@ class Product extends Model {
       }
     }
   }
+
+  static get relationMappings() {
+    const Order = require('./Order')
+    return {
+      orders: {
+        relation: Model.HasManyRelation,
+        modelClass: Order,
+        join: { from: 'products.id', to: 'orders.productId' }
+      }
+    }
+  }
 }
 
 module.exports = Product

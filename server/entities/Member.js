@@ -19,6 +19,23 @@ class Member extends Model {
       }
     }
   }
+
+  static get relationMappings() {
+    const Order = require('./Order')
+    const Inquiry = require('./Inquiry')
+    return {
+      orders: {
+        relation: Model.HasManyRelation,
+        modelClass: Order,
+        join: { from: 'members.id', to: 'orders.memberId' }
+      },
+      inquiries: {
+        relation: Model.HasManyRelation,
+        modelClass: Inquiry,
+        join: { from: 'members.id', to: 'inquiries.memberId' }
+      }
+    }
+  }
 }
 
 module.exports = Member
