@@ -1,6 +1,8 @@
 -- 상품 샘플 시드 데이터 (개발/데모용)
 -- broadcast 는 lexAmount, 그 외 카테고리는 coinAmount 지급
 
+-- CLI import 시 한글 깨짐 방지 (연결 charset 강제)
+SET NAMES utf8mb4;
 USE ssumpay;
 
 INSERT INTO products (category, subcategory, name, price, lexAmount, coinAmount, isActive, sort) VALUES
