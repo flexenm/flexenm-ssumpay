@@ -1,3 +1,8 @@
 server/node_modules/
 server/.env
 *.log
+.claude
+.playwright-mcp
+docs
+node_modules
+dist

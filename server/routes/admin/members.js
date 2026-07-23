@@ -18,7 +18,7 @@ router.get('/', async ctx => {
         .orWhere('email', 'like', `%${keyword}%`)
     })
   }
-  if (status !== undefined) query = query.where({ status })
+  if (status) query = query.where({ status })
 
   const [items, total] = await Promise.all([
     query.clone().limit(limit).offset(offset),
