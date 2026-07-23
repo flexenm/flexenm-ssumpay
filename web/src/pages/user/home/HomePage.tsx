@@ -83,7 +83,7 @@ export default function HomePage() {
           {categories.map((c) => (
             <div
               key={c.key}
-              onClick={() => navigate(`/products?category=${c.key}`)}
+              onClick={() => navigate(`/products/${c.key}`)}
               className="flex cursor-pointer flex-col items-center rounded-[20px] bg-page px-6 py-10 text-center transition-shadow duration-200 hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)]"
             >
               <img src={c.img} alt={c.label} className="mb-5 h-[88px] w-[88px] object-contain" />
@@ -93,7 +93,7 @@ export default function HomePage() {
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
-                  navigate(`/products?category=${c.key}`);
+                  navigate(`/products/${c.key}`);
                 }}
                 className="inline-flex cursor-pointer items-center gap-1 rounded-full border border-primary bg-transparent px-4 py-1.5 text-[13px] font-medium text-primary transition-colors hover:bg-primary hover:text-white"
               >

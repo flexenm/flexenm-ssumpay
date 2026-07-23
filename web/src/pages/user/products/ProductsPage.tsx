@@ -1,97 +1,42 @@
-import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams, Navigate, Link } from "react-router-dom";
+import { ChevronDown, ChevronRight, AlertCircle } from "lucide-react";
+import { useProducts } from "../../../hooks/useProducts";
 import {
-  LayoutGrid,
-  Tv2,
-  Gamepad2,
-  BookOpen,
-  Gift,
-  ChevronDown,
-  ChevronRight,
-  AlertCircle,
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
-import { productsApi } from "../../../api";
-import type { Product } from "../../../types";
+  productCategories,
+  resolveCategory,
+  resolveSub,
+} from "../../../config/productCategories";
 import EmptyState from "../../../components/ui/EmptyState";
-import bannerBroadcast from "../../../assets/img/banner-broadcast.png";
-import bannerGame from "../../../assets/img/banner-game.png";
-import bannerWebtoon from "../../../assets/img/banner-webtoon.png";
-import bannerGiftcard from "../../../assets/img/banner-giftcard.png";
 import productSample from "../../../assets/img/product-sample.png";
-
-type Category = {
-  key: string | null;
-  label: string;
-  desc: string;
-  Icon: LucideIcon;
-  banner: string;
-  subs?: string[];
-};
-
-const categories: Category[] = [
-  {
-    key: null,
-    label: "전체상품",
-    desc: "다양한 상품을 확인해보세요",
-    Icon: LayoutGrid,
-    banner: bannerBroadcast,
-  },
-  {
-    key: "broadcast",
-    label: "방송",
-    desc: "다양한 방송 플랫폼 관련 상품을 확인해보세요",
-    Icon: Tv2,
-    banner: bannerBroadcast,
-    subs: ["플렉스티비", "SOOP", "투네이션", "팝콘티비", "팬더"],
-  },
-  {
-    key: "game",
-    label: "게임",
-    desc: "다양한 게임 플랫폼 관련 상품을 확인해보세요",
-    Icon: Gamepad2,
-    banner: bannerGame,
-  },
-  {
-    key: "webtoon",
-    label: "웹툰",
-    desc: "다양한 웹툰 플랫폼 관련 상품을 확인해보세요",
-    Icon: BookOpen,
-    banner: bannerWebtoon,
-  },
-  {
-    key: "giftcard",
-    label: "상품권",
-    desc: "다양한 상품권 관련 상품을 확인해보세요",
-    Icon: Gift,
-    banner: bannerGiftcard,
-  },
-];
 
 export default function ProductsPage() {
   const navigate = useNavigate();
-  const [params] = useSearchParams();
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [category, setCategory] = useState<string | null>(
-    params.get("category") || null,
-  );
-  const [subcategory, setSubcategory] = useState<string | null>(null);
+  // URL 이 곧 상태다. /products/:category/:sub
+  const { category: categorySlug, sub: subSlug } = useParams<{
+    category?: string;
+    sub?: string;
+  }>();
 
-  useEffect(() => {
-    setLoading(true);
-    productsApi
-      .list({
-        category: category ?? undefined,
-        subcategory: subcategory ?? undefined,
-      })
-      .then((r) => setProducts(r.data))
-      .catch(() => setProducts([]))
-      .finally(() => setLoading(false));
-  }, [category, subcategory]);
+  const currentCat = resolveCategory(categorySlug);
+  // 잘못된 카테고리 slug → 전체상품으로 리다이렉트
+  if (!currentCat) return <Navigate to="/products" replace />;
 
-  const currentCat = categories.find((c) => c.key === category) ?? categories[0];
-  const listTitle = subcategory ?? currentCat.label;
+  const currentSub = resolveSub(currentCat, subSlug);
+  // 카테고리엔 있으나 잘못된 하위 slug → 카테고리 목록으로 리다이렉트
+  if (subSlug && !currentSub) {
+    return <Navigate to={`/products/${currentCat.slug}`} replace />;
+  }
+
+  const {
+    data: products = [],
+    isLoading,
+    isError,
+  } = useProducts({
+    category: currentCat.category ?? undefined,
+    subcategory: currentSub?.subcategory,
+  });
+
+  const listTitle = currentSub?.label ?? currentCat.label;
 
   return (
     <div>
@@ -99,11 +44,47 @@ export default function ProductsPage() {
       <section className="w-full bg-hero">
         <div className="mx-auto flex h-[370px] max-w-[1200px] items-center justify-between px-6">
           <div className="flex flex-col">
-            {/* Breadcrumb inside banner */}
+            {/* Breadcrumb — 설정에서 파생 */}
             <nav className="flex items-center gap-1 text-[14px] tracking-[-0.5px]">
-              <span className="text-ink/40">홈</span>
+              <Link to="/" className="text-ink/40 hover:text-ink/60">
+                홈
+              </Link>
               <ChevronRight className="size-3.5 text-ink/40" strokeWidth={2} />
-              <span className="text-ink/60">상품목록</span>
+              <Link
+                to="/products"
+                className={
+                  currentCat.slug ? "text-ink/40 hover:text-ink/60" : "text-ink/60"
+                }
+              >
+                전체상품
+              </Link>
+              {currentCat.slug && (
+                <>
+                  <ChevronRight
+                    className="size-3.5 text-ink/40"
+                    strokeWidth={2}
+                  />
+                  <Link
+                    to={`/products/${currentCat.slug}`}
+                    className={
+                      currentSub
+                        ? "text-ink/40 hover:text-ink/60"
+                        : "text-ink/60"
+                    }
+                  >
+                    {currentCat.label}
+                  </Link>
+                </>
+              )}
+              {currentSub && (
+                <>
+                  <ChevronRight
+                    className="size-3.5 text-ink/40"
+                    strokeWidth={2}
+                  />
+                  <span className="text-ink/60">{currentSub.label}</span>
+                </>
+              )}
             </nav>
             <h1 className="mt-10 text-[48px] font-bold leading-none tracking-[-0.5px] text-ink">
               {currentCat.label}
@@ -128,16 +109,15 @@ export default function ProductsPage() {
             카테고리
           </p>
           <div className="flex flex-col gap-0.5 px-3 pb-4">
-            {categories.map((c) => {
-              const active = category === c.key;
+            {productCategories.map((c) => {
+              const active = c.slug === currentCat.slug;
               return (
                 <div key={c.label}>
                   <button
                     type="button"
-                    onClick={() => {
-                      setCategory(c.key);
-                      setSubcategory(null);
-                    }}
+                    onClick={() =>
+                      navigate(c.slug ? `/products/${c.slug}` : "/products")
+                    }
                     className={`flex w-full items-center justify-between rounded-[10px] p-3 text-left ${
                       active ? "bg-primary-soft" : ""
                     }`}
@@ -156,7 +136,7 @@ export default function ProductsPage() {
                         {c.label}
                       </span>
                     </span>
-                    {c.subs && (
+                    {c.subs.length > 0 && (
                       <ChevronDown
                         size={16}
                         strokeWidth={2}
@@ -168,13 +148,15 @@ export default function ProductsPage() {
                   </button>
 
                   {active &&
-                    c.subs?.map((s) => {
-                      const subActive = subcategory === s;
+                    c.subs.map((s) => {
+                      const subActive = s.slug === currentSub?.slug;
                       return (
                         <button
-                          key={s}
+                          key={s.slug}
                           type="button"
-                          onClick={() => setSubcategory(s)}
+                          onClick={() =>
+                            navigate(`/products/${c.slug}/${s.slug}`)
+                          }
                           className="flex w-full items-center gap-2.5 rounded-lg py-2.5 pl-8 pr-3 text-left"
                         >
                           <span
@@ -187,7 +169,7 @@ export default function ProductsPage() {
                               subActive ? "text-primary" : "text-ink/70"
                             }`}
                           >
-                            {s}
+                            {s.label}
                           </span>
                         </button>
                       );
@@ -210,9 +192,9 @@ export default function ProductsPage() {
             </span>
           </div>
 
-          {loading ? (
+          {isLoading ? (
             <div className="py-24 text-center text-ink/40">불러오는 중...</div>
-          ) : products.length === 0 ? (
+          ) : isError || products.length === 0 ? (
             <EmptyState
               icon={<AlertCircle />}
               title="해당 서비스는 오픈 준비 중입니다."

@@ -2,8 +2,9 @@ import { useState, useEffect } from "react";
 import type { ReactNode } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { CreditCard, Mail } from "lucide-react";
-import { productsApi, ordersApi } from "../../../api";
-import type { Product, PaymentMethod } from "../../../types";
+import { ordersApi } from "../../../api";
+import { useProduct } from "../../../hooks/useProducts";
+import type { PaymentMethod } from "../../../types";
 
 interface OrderForm {
   flexUsername: string;
@@ -19,7 +20,7 @@ const PAYMENT_OPTIONS: { value: PaymentMethod; label: string; Icon: typeof Credi
 export default function OrderPage() {
   const { productId } = useParams<{ productId: string }>();
   const navigate = useNavigate();
-  const [product, setProduct] = useState<Product | null>(null);
+  const { data: product, isError } = useProduct(productId);
   const [form, setForm] = useState<OrderForm>({
     flexUsername: "",
     flexPassword: "",
@@ -28,13 +29,10 @@ export default function OrderPage() {
   const [agreed, setAgreed] = useState(false);
   const [error, setError] = useState("");
 
+  // 없는 상품 등 조회 실패 → 목록으로
   useEffect(() => {
-    if (!productId) return;
-    productsApi
-      .get(productId)
-      .then((r) => setProduct(r.data))
-      .catch(() => navigate("/products"));
-  }, [productId]);
+    if (isError) navigate("/products");
+  }, [isError, navigate]);
 
   const submit = async () => {
     if (!form.flexUsername) {
