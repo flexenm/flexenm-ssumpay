@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { authApi } from "@/api";
+import { PASSWORD_REGEX, ERROR_MSG } from "@/utils/validators";
 
 export default function ResetPasswordPage() {
   const navigate = useNavigate();
@@ -18,8 +19,8 @@ export default function ResetPasswordPage() {
     if (submitting) return;
     setError("");
 
-    if (form.newPassword.length < 8) {
-      setError("새 비밀번호는 8자 이상이어야 합니다.");
+    if (!PASSWORD_REGEX.test(form.newPassword)) {
+      setError(ERROR_MSG.password);
       return;
     }
     if (form.newPassword !== form.confirmPassword) {
@@ -104,9 +105,12 @@ export default function ResetPasswordPage() {
               onChange={(e) =>
                 setForm((p) => ({ ...p, newPassword: e.target.value }))
               }
-              placeholder="8자 이상"
+              placeholder="8자 이상, 영문+숫자+특수문자"
               className={inputClass}
             />
+            {form.newPassword && !PASSWORD_REGEX.test(form.newPassword) && (
+              <p className="mt-1.5 text-xs text-red-500">{ERROR_MSG.password}</p>
+            )}
           </div>
           <div>
             <label className={labelClass}>

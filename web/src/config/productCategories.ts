@@ -33,6 +33,7 @@ export interface ProductCategoryConfig {
   desc: string;
   Icon: LucideIcon;
   banner: string;
+  comingSoon?: boolean; // true = 오픈 준비 중(상품 유무와 무관하게 준비중 노출)
   subs: ProductSubConfig[];
 }
 
@@ -67,6 +68,7 @@ export const productCategories: ProductCategoryConfig[] = [
     desc: "다양한 게임 플랫폼 관련 상품을 확인해보세요",
     Icon: Gamepad2,
     banner: bannerGame,
+    comingSoon: true,
     subs: [
       { slug: "lol", label: "리그오브레전드", subcategory: "lol" },
       { slug: "maple", label: "메이플스토리", subcategory: "maple" },

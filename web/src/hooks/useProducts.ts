@@ -6,10 +6,13 @@ import { productsApi } from "@/api";
 export function useProducts(params?: {
   category?: string;
   subcategory?: string;
+  enabled?: boolean;
 }) {
+  const { enabled = true, ...listParams } = params ?? {};
   return useQuery({
-    queryKey: ["products", params?.category ?? null, params?.subcategory ?? null],
-    queryFn: async () => (await productsApi.list(params)).data,
+    queryKey: ["products", listParams.category ?? null, listParams.subcategory ?? null],
+    queryFn: async () => (await productsApi.list(listParams)).data,
+    enabled,
     staleTime: 60 * 1000,
   });
 }
