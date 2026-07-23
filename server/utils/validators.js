@@ -6,6 +6,18 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // 이름: 한글·영문 2~20자, 공백은 중간에만 허용 (실명 필드)
 const NAME_REGEX = /^[가-힣a-zA-Z][가-힣a-zA-Z\s]{0,18}[가-힣a-zA-Z]$/;
 
+const dns = require('dns').promises
+
+async function hasMxRecord(email) {
+  const domain = email.split('@')[1]
+  try {
+    const mx = await dns.resolveMx(domain)
+    return mx.length > 0
+  } catch {
+    return false
+  }
+}
+
 // 대소문자만 다른 이메일이 별도 계정으로 가입되지 않도록
 // 검증·중복확인·저장 전에 반드시 정규화를 거친다.
 function normalizeEmail(email) {
@@ -46,6 +58,7 @@ module.exports = {
   EMAIL_REGEX,
   NAME_REGEX,
   normalizeEmail,
+  hasMxRecord,
   validateUsername,
   validatePassword,
   validateEmail,
