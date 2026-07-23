@@ -158,6 +158,10 @@ export interface LoginResponse extends BaseResponse {
   member: AuthUser;
 }
 
+export interface MeResponse extends BaseResponse {
+  member: AuthUser;
+}
+
 export interface CheckUsernameResponse extends BaseResponse {
   available: boolean;
 }
@@ -171,6 +175,10 @@ export interface AdminUser {
 export interface AdminLoginResponse extends BaseResponse {
   token: string;
   expiresIn: number; // 토큰 만료까지 남은 초. 쿠키 maxAge 동기화에 사용
+  admin: AdminUser;
+}
+
+export interface AdminMeResponse extends BaseResponse {
   admin: AdminUser;
 }
 

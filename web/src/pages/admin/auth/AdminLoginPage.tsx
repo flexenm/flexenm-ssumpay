@@ -2,7 +2,8 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { adminAuthApi } from "../../../api";
-import { setAdminAccessToken, setAdminInfo } from "../../../utils/cookie";
+import { setAdminAccessToken } from "../../../utils/cookie";
+import { refreshAdminMe } from "../../../hooks/useAdminMe";
 
 export default function AdminLoginPage() {
   const navigate = useNavigate();
@@ -15,7 +16,8 @@ export default function AdminLoginPage() {
     try {
       const res = await adminAuthApi.login(form);
       setAdminAccessToken(res.token, res.expiresIn);
-      setAdminInfo(res.admin, res.expiresIn);
+      // 이전 세션의 관리자 정보 캐시를 무효화 → 가드/레이아웃이 새 계정으로 다시 조회
+      refreshAdminMe();
       navigate("/admin/dashboard");
     } catch (err) {
       setError(

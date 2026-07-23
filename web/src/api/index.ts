@@ -2,6 +2,7 @@ import type { AxiosResponse } from "axios";
 import { api, adminApi } from "./fetch";
 import type {
   AdminLoginResponse,
+  AdminMeResponse,
   BaseResponse,
   CheckUsernameResponse,
   DashboardSummary,
@@ -10,6 +11,7 @@ import type {
   ListResponse,
   LoginResponse,
   Member,
+  MeResponse,
   Notice,
   Order,
   PaymentMethod,
@@ -117,6 +119,7 @@ export const authApi = {
     handle<BaseResponse>(api.post("/api/auth/register", data)),
   login: (data: LoginInput) =>
     handle<LoginResponse>(api.post("/api/auth/login", data)),
+  me: () => handle<MeResponse>(api.get("/api/my/profile")),
   resetPassword: (data: ResetPasswordInput) =>
     handle<BaseResponse>(api.post("/api/auth/password/reset", data)),
   confirmResetPassword: (data: ConfirmResetPasswordInput) =>
@@ -184,6 +187,7 @@ export const inquiriesApi = {
 export const adminAuthApi = {
   login: (data: LoginInput) =>
     handle<AdminLoginResponse>(adminApi.post("/admin/auth/login", data)),
+  me: () => handle<AdminMeResponse>(adminApi.get("/admin/my/profile")),
 };
 
 export const adminDashboardApi = {

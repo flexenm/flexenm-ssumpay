@@ -1,5 +1,6 @@
 import { Outlet, Link, useNavigate } from "react-router-dom";
 import { getAccessToken, removeAccessToken } from "../../utils/cookie";
+import { removeMe } from "../../hooks/useMe";
 
 export default function UserLayout() {
   const navigate = useNavigate();
@@ -7,6 +8,8 @@ export default function UserLayout() {
 
   const logout = () => {
     removeAccessToken();
+    // 캐시에 남은 내 정보 제거 → 다른 계정 재로그인 시 이전 정보가 남지 않도록
+    removeMe();
     navigate("/login");
   };
 

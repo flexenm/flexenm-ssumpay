@@ -1,6 +1,13 @@
 import type { ReactNode } from "react";
 import { createBrowserRouter, Navigate } from "react-router-dom";
-import { getAccessToken, getAdminAccessToken } from "../utils/cookie";
+import {
+  getAccessToken,
+  getAdminAccessToken,
+  removeAccessToken,
+  removeAdminAccessToken,
+} from "../utils/cookie";
+import { useMe } from "../hooks/useMe";
+import { useAdminMe } from "../hooks/useAdminMe";
 
 import UserLayout from "../components/layout/UserLayout";
 import AdminLayout from "../components/layout/AdminLayout";
@@ -28,15 +35,30 @@ import AdminNoticesPage from "../pages/admin/notices/AdminNoticesPage";
 import AdminInquiriesPage from "../pages/admin/inquiries/AdminInquiriesPage";
 import AdminInquiryDetailPage from "../pages/admin/inquiries/AdminInquiryDetailPage";
 
-const isUser = () => !!getAccessToken();
-const isAdmin = () => !!getAdminAccessToken();
-
+// 가드는 쿠키 존재만 보지 않고 서버 /me 응답으로 실제 인증 상태를 확인한다.
+// 순서 주의: 쿠키 체크를 먼저(없으면 즉시 리다이렉트) → 그다음 로딩 → 에러 판정.
+// enabled:false 인 쿼리는 v5 에서 status:'pending' 이라, 쿠키 체크가 앞서지 않으면
+// 무한 로딩에 빠진다.
 function UserGuard({ children }: { children: ReactNode }) {
-  return isUser() ? children : <Navigate to="/login" replace />;
+  const { isPending, isError, data } = useMe();
+  if (!getAccessToken()) return <Navigate to="/login" replace />;
+  if (isPending) return null;
+  if (isError || !data) {
+    removeAccessToken();
+    return <Navigate to="/login" replace />;
+  }
+  return children;
 }
 
 function AdminGuard({ children }: { children: ReactNode }) {
-  return isAdmin() ? children : <Navigate to="/admin/login" replace />;
+  const { isPending, isError, data } = useAdminMe();
+  if (!getAdminAccessToken()) return <Navigate to="/admin/login" replace />;
+  if (isPending) return null;
+  if (isError || !data) {
+    removeAdminAccessToken();
+    return <Navigate to="/admin/login" replace />;
+  }
+  return children;
 }
 
 export const router = createBrowserRouter([

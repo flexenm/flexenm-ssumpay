@@ -1,9 +1,6 @@
 import { Outlet, Link, useNavigate, useLocation } from "react-router-dom";
-import {
-  getAdminInfo,
-  removeAdminAccessToken,
-  removeAdminInfo,
-} from "../../utils/cookie";
+import { removeAdminAccessToken } from "../../utils/cookie";
+import { useAdminMe, removeAdminMe } from "../../hooks/useAdminMe";
 
 const menus = [
   { path: "/admin/dashboard", label: "대시보드" },
@@ -17,11 +14,12 @@ const menus = [
 export default function AdminLayout() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const admin = getAdminInfo();
+  const { data: admin } = useAdminMe();
 
   const logout = () => {
     removeAdminAccessToken();
-    removeAdminInfo();
+    // 캐시에 남은 관리자 정보 제거 → 다른 계정 재로그인 시 이전 이름이 보이지 않도록
+    removeAdminMe();
     navigate("/admin/login");
   };
 
@@ -46,7 +44,7 @@ export default function AdminLayout() {
           })}
         </nav>
         <div className="border-t border-slate-700 px-5 py-4 text-[13px] text-slate-400">
-          <div>{admin.name || "Admin"}</div>
+          <div>{admin?.name || "Admin"}</div>
           <button
             onClick={logout}
             className="mt-2 cursor-pointer border-none bg-transparent p-0 text-[13px] text-red-500"

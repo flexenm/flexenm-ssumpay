@@ -3,6 +3,7 @@ import type { FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { authApi } from "../../../api";
 import { setAccessToken } from "../../../utils/cookie";
+import { refreshMe } from "../../../hooks/useMe";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -15,6 +16,8 @@ export default function LoginPage() {
     try {
       const res = await authApi.login(form);
       setAccessToken(res.token, res.expiresIn);
+      // 이전 세션의 내 정보 캐시를 무효화 → 가드가 새 계정으로 다시 조회
+      refreshMe();
       navigate("/");
     } catch {
       // 계정 열거 방지: 계정 없음 / 비밀번호 불일치를 구분하지 않고 항상 동일 메시지 노출
