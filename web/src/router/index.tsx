@@ -5,36 +5,36 @@ import {
   getAdminAccessToken,
   removeAccessToken,
   removeAdminAccessToken,
-} from "../utils/cookie";
-import { useMe } from "../hooks/useMe";
-import { useAdminMe } from "../hooks/useAdminMe";
+} from "@/utils/cookie";
+import { useMe } from "@/hooks/useMe";
+import { useAdminMe } from "@/hooks/useAdminMe";
 
-import UserLayout from "../components/layout/UserLayout";
-import AdminLayout from "../components/layout/AdminLayout";
+import UserLayout from "@/components/layout/UserLayout";
+import AdminLayout from "@/components/layout/AdminLayout";
 
-import HomePage from "../pages/user/home/HomePage";
-import LoginPage from "../pages/user/auth/LoginPage";
-import RegisterPage from "../pages/user/auth/RegisterPage";
-import ForgotPasswordPage from "../pages/user/auth/ForgotPasswordPage";
-import ResetPasswordPage from "../pages/user/auth/ResetPasswordPage";
-import ProductsPage from "../pages/user/products/ProductsPage";
-import OrderPage from "../pages/user/order/OrderPage";
-import OrderCompletePage from "../pages/user/order/OrderCompletePage";
-import MyPage from "../pages/user/mypage/MyPage";
-import CustomerCenterPage from "../pages/user/customer/CustomerCenterPage";
-import NoticeDetailPage from "../pages/user/customer/NoticeDetailPage";
-import InquiryFormPage from "../pages/user/customer/InquiryFormPage";
-import InquiryDetailPage from "../pages/user/customer/InquiryDetailPage";
+import HomePage from "@/pages/user/home/HomePage";
+import LoginPage from "@/pages/user/auth/LoginPage";
+import RegisterPage from "@/pages/user/auth/RegisterPage";
+import ForgotPasswordPage from "@/pages/user/auth/ForgotPasswordPage";
+import ResetPasswordPage from "@/pages/user/auth/ResetPasswordPage";
+import ProductsPage from "@/pages/user/products/ProductsPage";
+import OrderPage from "@/pages/user/order/OrderPage";
+import OrderCompletePage from "@/pages/user/order/OrderCompletePage";
+import MyPage from "@/pages/user/mypage/MyPage";
+import CustomerCenterPage from "@/pages/user/customer/CustomerCenterPage";
+import NoticeDetailPage from "@/pages/user/customer/NoticeDetailPage";
+import InquiryFormPage from "@/pages/user/customer/InquiryFormPage";
+import InquiryDetailPage from "@/pages/user/customer/InquiryDetailPage";
 
-import AdminLoginPage from "../pages/admin/auth/AdminLoginPage";
-import DashboardPage from "../pages/admin/dashboard/DashboardPage";
-import AdminOrdersPage from "../pages/admin/orders/AdminOrdersPage";
-import AdminProductsPage from "../pages/admin/products/AdminProductsPage";
-import AdminMembersPage from "../pages/admin/members/AdminMembersPage";
-import AdminNoticesPage from "../pages/admin/notices/AdminNoticesPage";
-import AdminNoticeFormPage from "../pages/admin/notices/AdminNoticeFormPage";
-import AdminInquiriesPage from "../pages/admin/inquiries/AdminInquiriesPage";
-import AdminInquiryDetailPage from "../pages/admin/inquiries/AdminInquiryDetailPage";
+import AdminLoginPage from "@/pages/admin/auth/AdminLoginPage";
+import DashboardPage from "@/pages/admin/dashboard/DashboardPage";
+import AdminOrdersPage from "@/pages/admin/orders/AdminOrdersPage";
+import AdminProductsPage from "@/pages/admin/products/AdminProductsPage";
+import AdminMembersPage from "@/pages/admin/members/AdminMembersPage";
+import AdminNoticesPage from "@/pages/admin/notices/AdminNoticesPage";
+import AdminNoticeFormPage from "@/pages/admin/notices/AdminNoticeFormPage";
+import AdminInquiriesPage from "@/pages/admin/inquiries/AdminInquiriesPage";
+import AdminInquiryDetailPage from "@/pages/admin/inquiries/AdminInquiryDetailPage";
 
 // 가드는 쿠키 존재만 보지 않고 서버 /me 응답으로 실제 인증 상태를 확인한다.
 // 순서 주의: 쿠키 체크를 먼저(없으면 즉시 리다이렉트) → 그다음 로딩 → 에러 판정.

@@ -2,8 +2,8 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronDown } from "lucide-react";
-import { inquiriesApi } from "../../../api";
-import type { CreateInquiryInput } from "../../../api";
+import { inquiriesApi } from "@/api";
+import type { CreateInquiryInput } from "@/api";
 
 export default function InquiryFormPage() {
   const navigate = useNavigate();

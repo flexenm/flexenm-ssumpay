@@ -2,10 +2,10 @@ import { useState, useEffect } from "react";
 import type { FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronRight, Lock, PenLine } from "lucide-react";
-import { mypageApi, ordersApi, inquiriesApi } from "../../../api";
-import type { Member, Order, Inquiry } from "../../../types";
-import SegmentedTabs from "../../../components/ui/SegmentedTabs";
-import Pagination from "../../../components/ui/Pagination";
+import { mypageApi, ordersApi, inquiriesApi } from "@/api";
+import type { Member, Order, Inquiry } from "@/types";
+import SegmentedTabs from "@/components/ui/SegmentedTabs";
+import Pagination from "@/components/ui/Pagination";
 
 const tabItems = [
   { key: "0", label: "내 정보" },

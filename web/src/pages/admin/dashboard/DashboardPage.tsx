@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { adminDashboardApi, adminOrdersApi } from "../../../api";
-import type { DashboardSummary, Order } from "../../../types";
-import DummyBadge from "../../../components/ui/DummyBadge";
+import { adminDashboardApi, adminOrdersApi } from "@/api";
+import type { DashboardSummary, Order } from "@/types";
+import DummyBadge from "@/components/ui/DummyBadge";
 
 const CHARGE_LABEL: Record<number, string> = {
   0: "대기",

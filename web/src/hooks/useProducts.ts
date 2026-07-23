@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { productsApi } from "../api";
+import { productsApi } from "@/api";
 
 // 상품 목록. category/subcategory 파라미터별로 캐시를 분리한다.
 // 전체상품은 파라미터 없이 호출된다.

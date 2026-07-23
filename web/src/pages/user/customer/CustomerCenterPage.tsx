@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Bookmark, ChevronRight, PenLine, Info, AlertCircle } from "lucide-react";
-import { noticesApi, inquiriesApi } from "../../../api";
-import type { Notice, Inquiry } from "../../../types";
-import { getAccessToken } from "../../../utils/cookie";
-import SegmentedTabs from "../../../components/ui/SegmentedTabs";
-import Pagination from "../../../components/ui/Pagination";
-import EmptyState from "../../../components/ui/EmptyState";
+import { noticesApi, inquiriesApi } from "@/api";
+import type { Notice, Inquiry } from "@/types";
+import { getAccessToken } from "@/utils/cookie";
+import SegmentedTabs from "@/components/ui/SegmentedTabs";
+import Pagination from "@/components/ui/Pagination";
+import EmptyState from "@/components/ui/EmptyState";
 
 const PER_PAGE = 10;
 

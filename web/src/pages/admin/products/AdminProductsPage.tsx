@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import type { ChangeEvent, Dispatch, SetStateAction } from "react";
-import { adminProductsApi } from "../../../api";
-import type { Product } from "../../../types";
+import { adminProductsApi } from "@/api";
+import type { Product } from "@/types";
 
 interface ProductFormState {
   id?: number;

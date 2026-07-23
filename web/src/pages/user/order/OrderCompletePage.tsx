@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Check, Info } from "lucide-react";
-import { ordersApi } from "../../../api";
-import type { Order } from "../../../types";
+import { ordersApi } from "@/api";
+import type { Order } from "@/types";
 
 export default function OrderCompletePage() {
   const { orderNo } = useParams<{ orderNo: string }>();

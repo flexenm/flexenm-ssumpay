@@ -1,6 +1,6 @@
 import { Outlet, Link, useNavigate } from "react-router-dom";
-import { getAccessToken, removeAccessToken } from "../../utils/cookie";
-import { removeMe } from "../../hooks/useMe";
+import { getAccessToken, removeAccessToken } from "@/utils/cookie";
+import { removeMe } from "@/hooks/useMe";
 
 export default function UserLayout() {
   const navigate = useNavigate();

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { adminNoticesApi } from "../../../api";
-import type { NoticeInput } from "../../../api";
+import { adminNoticesApi } from "@/api";
+import type { NoticeInput } from "@/api";
 
 interface NoticeForm {
   title: string;

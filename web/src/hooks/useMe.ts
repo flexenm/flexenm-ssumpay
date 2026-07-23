@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { authApi } from "../api";
-import { getAccessToken } from "../utils/cookie";
-import { queryClient } from "../queryClient";
+import { authApi } from "@/api";
+import { getAccessToken } from "@/utils/cookie";
+import { queryClient } from "@/queryClient";
 
 // 현재 로그인 사용자 정보. 서버 /api/my/profile 로 토큰 유효성까지 확인한다.
 // 쿠키가 없으면 요청 자체를 보내지 않는다(enabled). 위조/만료 토큰은 401 → isError.

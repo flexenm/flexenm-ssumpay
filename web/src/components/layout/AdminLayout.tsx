@@ -1,6 +1,6 @@
 import { Outlet, Link, useNavigate, useLocation } from "react-router-dom";
-import { removeAdminAccessToken } from "../../utils/cookie";
-import { useAdminMe, removeAdminMe } from "../../hooks/useAdminMe";
+import { removeAdminAccessToken } from "@/utils/cookie";
+import { useAdminMe, removeAdminMe } from "@/hooks/useAdminMe";
 
 const menus = [
   { path: "/admin/dashboard", label: "대시보드" },

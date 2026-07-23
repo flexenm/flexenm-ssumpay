@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { adminInquiriesApi } from "../../../api";
-import type { ListParams } from "../../../api";
-import { INQUIRY_STATUS } from "../../../types";
-import type { Inquiry, Member } from "../../../types";
+import { adminInquiriesApi } from "@/api";
+import type { ListParams } from "@/api";
+import { INQUIRY_STATUS } from "@/types";
+import type { Inquiry, Member } from "@/types";
 
 interface AdminInquiry extends Inquiry {
   member?: Member;

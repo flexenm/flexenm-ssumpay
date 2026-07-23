@@ -1,13 +1,13 @@
 import { useNavigate, useParams, Navigate, Link } from "react-router-dom";
 import { ChevronDown, ChevronRight, AlertCircle } from "lucide-react";
-import { useProducts } from "../../../hooks/useProducts";
+import { useProducts } from "@/hooks/useProducts";
 import {
   productCategories,
   resolveCategory,
   resolveSub,
-} from "../../../config/productCategories";
-import EmptyState from "../../../components/ui/EmptyState";
-import productSample from "../../../assets/img/product-sample.png";
+} from "@/config/productCategories";
+import EmptyState from "@/components/ui/EmptyState";
+import productSample from "@/assets/img/product-sample.png";
 
 export default function ProductsPage() {
   const navigate = useNavigate();

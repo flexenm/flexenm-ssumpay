@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { authApi } from "../../../api";
+import { authApi } from "@/api";
 
 const PHONE_PREFIXES = ["010", "011", "016", "017", "018", "019"];
 

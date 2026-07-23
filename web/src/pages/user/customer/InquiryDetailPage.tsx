@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Tag, MoreVertical } from "lucide-react";
-import { inquiriesApi } from "../../../api";
-import type { Inquiry } from "../../../types";
+import { inquiriesApi } from "@/api";
+import type { Inquiry } from "@/types";
 
 const typeLabel: Record<number, string> = {
   1: "충전",

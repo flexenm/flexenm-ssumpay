@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { authApi } from "../../../api";
+import { authApi } from "@/api";
 
 export default function ResetPasswordPage() {
   const navigate = useNavigate();

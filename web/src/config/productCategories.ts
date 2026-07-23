@@ -1,9 +1,9 @@
 import type { LucideIcon } from "lucide-react";
 import { LayoutGrid, Tv2, Gamepad2, BookOpen, Gift } from "lucide-react";
-import bannerBroadcast from "../assets/img/banner-broadcast.png";
-import bannerGame from "../assets/img/banner-game.png";
-import bannerWebtoon from "../assets/img/banner-webtoon.png";
-import bannerGiftcard from "../assets/img/banner-giftcard.png";
+import bannerBroadcast from "@/assets/img/banner-broadcast.png";
+import bannerGame from "@/assets/img/banner-game.png";
+import bannerWebtoon from "@/assets/img/banner-webtoon.png";
+import bannerGiftcard from "@/assets/img/banner-giftcard.png";
 
 /**
  * 상품 카테고리 단일 소스(SSOT).

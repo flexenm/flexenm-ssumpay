@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { adminMembersApi } from "../../../api";
-import { MEMBER_STATUS } from "../../../types";
-import type { Member } from "../../../types";
-import DummyBadge from "../../../components/ui/DummyBadge";
+import { adminMembersApi } from "@/api";
+import { MEMBER_STATUS } from "@/types";
+import type { Member } from "@/types";
+import DummyBadge from "@/components/ui/DummyBadge";
 
 const fmtDateTime = (s: string) => {
   const d = new Date(s);

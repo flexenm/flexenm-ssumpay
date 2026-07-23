@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Bookmark } from "lucide-react";
-import { noticesApi } from "../../../api";
-import type { Notice } from "../../../types";
+import { noticesApi } from "@/api";
+import type { Notice } from "@/types";
 
 const fmtDate = (s: string) => {
   const d = new Date(s);

@@ -2,9 +2,9 @@ import { useState, useEffect } from "react";
 import type { ReactNode } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { CreditCard, Mail } from "lucide-react";
-import { ordersApi } from "../../../api";
-import { useProduct } from "../../../hooks/useProducts";
-import type { PaymentMethod } from "../../../types";
+import { ordersApi } from "@/api";
+import { useProduct } from "@/hooks/useProducts";
+import type { PaymentMethod } from "@/types";
 
 interface OrderForm {
   flexUsername: string;

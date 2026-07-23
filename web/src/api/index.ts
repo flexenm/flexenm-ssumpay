@@ -16,7 +16,7 @@ import type {
   Order,
   PaymentMethod,
   Product,
-} from "../types";
+} from "@/types";
 
 const handle = <T>(promise: Promise<AxiosResponse<T>>): Promise<T> =>
   promise

@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { adminOrdersApi } from "../../../api";
-import type { AdminOrderListParams } from "../../../api";
-import type { Order } from "../../../types";
-import DummyBadge from "../../../components/ui/DummyBadge";
+import { adminOrdersApi } from "@/api";
+import type { AdminOrderListParams } from "@/api";
+import type { Order } from "@/types";
+import DummyBadge from "@/components/ui/DummyBadge";
 
 const PAYMENT_LABEL: Record<number, string> = {
   0: "대기",

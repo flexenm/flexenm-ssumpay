@@ -1,9 +1,9 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { adminAuthApi } from "../../../api";
-import { setAdminAccessToken } from "../../../utils/cookie";
-import { refreshAdminMe } from "../../../hooks/useAdminMe";
+import { adminAuthApi } from "@/api";
+import { setAdminAccessToken } from "@/utils/cookie";
+import { refreshAdminMe } from "@/hooks/useAdminMe";
 
 export default function AdminLoginPage() {
   const navigate = useNavigate();

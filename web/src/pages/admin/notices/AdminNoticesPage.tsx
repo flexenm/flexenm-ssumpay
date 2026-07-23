@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { adminNoticesApi } from "../../../api";
-import type { Notice } from "../../../types";
+import { adminNoticesApi } from "@/api";
+import type { Notice } from "@/types";
 
 type ModalType = "view" | "delete";
 

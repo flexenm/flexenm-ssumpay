@@ -1,11 +1,11 @@
 import { useNavigate } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
-import heroMain from "../../../assets/img/hero-main.png";
-import heroEllipse from "../../../assets/img/hero-ellipse.svg";
-import catBroadcast from "../../../assets/img/cat-broadcast.png";
-import catGame from "../../../assets/img/cat-game.png";
-import catWebtoon from "../../../assets/img/cat-webtoon.png";
-import catGiftcard from "../../../assets/img/cat-giftcard.png";
+import heroMain from "@/assets/img/hero-main.png";
+import heroEllipse from "@/assets/img/hero-ellipse.svg";
+import catBroadcast from "@/assets/img/cat-broadcast.png";
+import catGame from "@/assets/img/cat-game.png";
+import catWebtoon from "@/assets/img/cat-webtoon.png";
+import catGiftcard from "@/assets/img/cat-giftcard.png";
 
 const categories = [
   {

@@ -1,9 +1,9 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { authApi } from "../../../api";
-import { setAccessToken } from "../../../utils/cookie";
-import { refreshMe } from "../../../hooks/useMe";
+import { authApi } from "@/api";
+import { setAccessToken } from "@/utils/cookie";
+import { refreshMe } from "@/hooks/useMe";
 
 export default function LoginPage() {
   const navigate = useNavigate();

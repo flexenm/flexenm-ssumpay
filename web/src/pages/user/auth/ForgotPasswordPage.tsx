@@ -1,8 +1,8 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { authApi } from "../../../api";
-import emailSentImg from "../../../assets/img/email-sent.png";
+import { authApi } from "@/api";
+import emailSentImg from "@/assets/img/email-sent.png";
 
 export default function ForgotPasswordPage() {
   const navigate = useNavigate();
