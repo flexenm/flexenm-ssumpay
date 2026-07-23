@@ -23,6 +23,14 @@
   --color-ink: #222222;            /* 본문 텍스트 */
   --color-line: #eaeaea;           /* 행 구분선 */
   --color-hero: #ebf1ff;           /* 히어로 배경 */
+
+  /* 어드민 전용 (모노크롬 — 사용자 파랑 팔레트와 분리) */
+  --color-admin: #212121;          /* 헤더·버튼·주요 액션(니어블랙) */
+  --color-admin-muted: #737373;    /* 보조 텍스트·비활성 메뉴 */
+  --color-admin-line: #e6e6e6;     /* 사이드바 구분선·행 구분선 */
+  --color-admin-head: #f2f2f2;     /* 테이블 헤더 배경 */
+  --color-admin-bg: #fafafa;       /* 사이드바·인풋 배경 */
+  --color-admin-border: #cccccc;   /* 인풋·아웃라인 버튼 테두리 */
 }
 
 html,
