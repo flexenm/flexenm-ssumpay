@@ -2,7 +2,14 @@ import { useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { authApi } from "@/api";
-import { USERNAME_REGEX, PASSWORD_REGEX, ERROR_MSG } from "@/utils/validators";
+import {
+  USERNAME_REGEX,
+  PASSWORD_REGEX,
+  EMAIL_REGEX,
+  NAME_REGEX,
+  ERROR_MSG,
+  normalizeEmail,
+} from "@/utils/validators";
 
 const PHONE_PREFIXES = ["010", "011", "016", "017", "018", "019"];
 
@@ -50,14 +57,24 @@ export default function RegisterPage() {
       setError("비밀번호가 일치하지 않습니다.");
       return;
     }
+    const name = form.name.trim();
+    if (!NAME_REGEX.test(name)) {
+      setError(ERROR_MSG.name);
+      return;
+    }
+    const email = normalizeEmail(form.email);
+    if (!EMAIL_REGEX.test(email)) {
+      setError(ERROR_MSG.email);
+      return;
+    }
     const phoneValue = `${phone.prefix}-${phone.mid}-${phone.last}`;
     try {
       await authApi.register({
         username: form.username,
         password: form.password,
-        name: form.name,
+        name,
         phone: phoneValue,
-        email: form.email,
+        email,
       });
       alert("회원가입이 완료되었습니다.");
       navigate("/login");
