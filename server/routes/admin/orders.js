@@ -10,8 +10,8 @@ router.get('/', async ctx => {
 
   let query = Order.query().withGraphJoined('member').orderBy('orders.createdAt', 'desc')
 
-  if (paymentStatus !== undefined) query = query.where('orders.paymentStatus', paymentStatus)
-  if (chargeStatus !== undefined) query = query.where('orders.chargeStatus', chargeStatus)
+  if (paymentStatus) query = query.where('orders.paymentStatus', paymentStatus)
+  if (chargeStatus) query = query.where('orders.chargeStatus', chargeStatus)
   if (keyword) {
     query = query.where(q => {
       q.where('orders.orderNo', 'like', `%${keyword}%`)
