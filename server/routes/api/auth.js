@@ -7,7 +7,13 @@ const Member = require("../../entities/Member");
 const PasswordResetToken = require("../../entities/PasswordResetToken");
 const rateLimit = require("../../middlewares/rate-limit");
 const { createTransport, escapeHtml } = require("../../utils/mailer");
-const { validateUsername, validatePassword } = require("../../utils/validators");
+const {
+  validateUsername,
+  validatePassword,
+  validateEmail,
+  validateName,
+  normalizeEmail,
+} = require("../../utils/validators");
 
 const router = new Router();
 
@@ -49,7 +55,12 @@ router.get("/check-username", authLimiter, async (ctx) => {
 });
 
 router.post("/register", authLimiter, async (ctx) => {
-  const { username, password, name, email, phone } = ctx.request.body;
+  const { username, password, phone } = ctx.request.body;
+  const name =
+    typeof ctx.request.body.name === "string"
+      ? ctx.request.body.name.trim()
+      : ctx.request.body.name;
+  const email = normalizeEmail(ctx.request.body.email);
 
   if (!username || !password || !name || !email) {
     ctx.status = 400;
@@ -68,6 +79,20 @@ router.post("/register", authLimiter, async (ctx) => {
   if (pwError) {
     ctx.status = 400;
     ctx.body = { code: 400, message: pwError };
+    return;
+  }
+
+  const nameError = validateName(name);
+  if (nameError) {
+    ctx.status = 400;
+    ctx.body = { code: 400, message: nameError };
+    return;
+  }
+
+  const emailError = validateEmail(email);
+  if (emailError) {
+    ctx.status = 400;
+    ctx.body = { code: 400, message: emailError };
     return;
   }
 
@@ -154,7 +179,9 @@ router.post("/login", authLimiter, async (ctx) => {
 
 // 비밀번호 재설정 링크 요청
 router.post("/password/reset", authLimiter, async (ctx) => {
-  const { username, email } = ctx.request.body;
+  const { username } = ctx.request.body;
+  // 가입 시 소문자로 저장되므로 조회 전에도 동일하게 정규화
+  const email = normalizeEmail(ctx.request.body.email);
   if (!username || !email) {
     ctx.status = 400;
     ctx.body = { code: 400, message: "아이디와 이메일을 입력해주세요." };
