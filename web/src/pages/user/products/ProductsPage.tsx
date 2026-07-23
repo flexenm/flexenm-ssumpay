@@ -27,6 +27,8 @@ export default function ProductsPage() {
     return <Navigate to={`/products/${currentCat.slug}`} replace />;
   }
 
+  const comingSoon = currentCat.comingSoon ?? false;
+
   const {
     data: products = [],
     isLoading,
@@ -34,6 +36,7 @@ export default function ProductsPage() {
   } = useProducts({
     category: currentCat.category ?? undefined,
     subcategory: currentSub?.subcategory,
+    enabled: !comingSoon,
   });
 
   const listTitle = currentSub?.label ?? currentCat.label;
@@ -192,7 +195,13 @@ export default function ProductsPage() {
             </span>
           </div>
 
-          {isLoading ? (
+          {comingSoon ? (
+            <EmptyState
+              icon={<AlertCircle />}
+              title="해당 서비스는 오픈 준비 중입니다."
+              description="이용에 불편을 드려 죄송합니다."
+            />
+          ) : isLoading ? (
             <div className="py-24 text-center text-ink/40">불러오는 중...</div>
           ) : isError || products.length === 0 ? (
             <EmptyState
