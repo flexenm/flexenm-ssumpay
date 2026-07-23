@@ -1,5 +1,5 @@
 import { useNavigate, useParams, Navigate, Link } from "react-router-dom";
-import { ChevronDown, ChevronRight, AlertCircle } from "lucide-react";
+import { ChevronRight, AlertCircle } from "lucide-react";
 import { useProducts } from "@/hooks/useProducts";
 import {
   productCategories,
@@ -115,69 +115,29 @@ export default function ProductsPage() {
             {productCategories.map((c) => {
               const active = c.slug === currentCat.slug;
               return (
-                <div key={c.label}>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      navigate(c.slug ? `/products/${c.slug}` : "/products")
-                    }
-                    className={`flex w-full items-center justify-between rounded-[10px] p-3 text-left ${
-                      active ? "bg-primary-soft" : ""
+                <button
+                  key={c.label}
+                  type="button"
+                  onClick={() =>
+                    navigate(c.slug ? `/products/${c.slug}` : "/products")
+                  }
+                  className={`flex w-full items-center gap-2.5 rounded-[10px] p-3 text-left ${
+                    active ? "bg-primary-soft" : ""
+                  }`}
+                >
+                  <c.Icon
+                    size={16}
+                    strokeWidth={1.8}
+                    className={active ? "text-primary" : "text-ink"}
+                  />
+                  <span
+                    className={`text-[15px] font-semibold tracking-[-0.5px] ${
+                      active ? "text-primary" : "text-ink"
                     }`}
                   >
-                    <span className="flex items-center gap-2.5">
-                      <c.Icon
-                        size={16}
-                        strokeWidth={1.8}
-                        className={active ? "text-primary" : "text-ink"}
-                      />
-                      <span
-                        className={`text-[15px] font-semibold tracking-[-0.5px] ${
-                          active ? "text-primary" : "text-ink"
-                        }`}
-                      >
-                        {c.label}
-                      </span>
-                    </span>
-                    {c.subs.length > 0 && (
-                      <ChevronDown
-                        size={16}
-                        strokeWidth={2}
-                        className={`text-ink/40 transition-transform ${
-                          active ? "rotate-180" : ""
-                        }`}
-                      />
-                    )}
-                  </button>
-
-                  {active &&
-                    c.subs.map((s) => {
-                      const subActive = s.slug === currentSub?.slug;
-                      return (
-                        <button
-                          key={s.slug}
-                          type="button"
-                          onClick={() =>
-                            navigate(`/products/${c.slug}/${s.slug}`)
-                          }
-                          className="flex w-full items-center gap-2.5 rounded-lg py-2.5 pl-8 pr-3 text-left"
-                        >
-                          <span
-                            className={`size-[5px] shrink-0 rounded-full ${
-                              subActive ? "bg-primary" : "bg-ink/30"
-                            }`}
-                          />
-                          <span
-                            className={`text-[14px] font-medium tracking-[-0.5px] ${
-                              subActive ? "text-primary" : "text-ink/70"
-                            }`}
-                          >
-                            {s.label}
-                          </span>
-                        </button>
-                      );
-                    })}
-                </div>
+                    {c.label}
+                  </span>
+                </button>
               );
             })}
           </div>
