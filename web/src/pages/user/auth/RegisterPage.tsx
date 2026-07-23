@@ -2,6 +2,16 @@ import { useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { authApi } from "@/api";
+import { setAccessToken } from "@/utils/cookie";
+import { refreshMe } from "@/hooks/useMe";
+import {
+  USERNAME_REGEX,
+  PASSWORD_REGEX,
+  EMAIL_REGEX,
+  NAME_REGEX,
+  ERROR_MSG,
+  normalizeEmail,
+} from "@/utils/validators";
 
 const PHONE_PREFIXES = ["010", "011", "016", "017", "018", "019"];
 
@@ -15,28 +25,48 @@ export default function RegisterPage() {
     email: "",
   });
   const [phone, setPhone] = useState({ prefix: "010", mid: "", last: "" });
-  const [usernameOk, setUsernameOk] = useState<boolean | null>(null);
+  const [usernameStatus, setUsernameStatus] = useState<null | 'invalid' | 'taken' | 'ok'>(null);
   const [error, setError] = useState("");
 
   const checkUsername = async () => {
     if (!form.username) return;
+    if (!USERNAME_REGEX.test(form.username)) {
+      setUsernameStatus('invalid');
+      return;
+    }
+    setError("");
     try {
       const res = await authApi.checkUsername(form.username);
-      setUsernameOk(res.available);
+      setUsernameStatus(res.available ? 'ok' : 'taken');
     } catch {
-      setUsernameOk(false);
+      setUsernameStatus(null);
+      setError("중복확인에 실패했습니다. 잠시 후 다시 시도해주세요.");
     }
   };
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
-    if (!usernameOk) {
+    if (usernameStatus !== 'ok') {
       setError("아이디 중복확인을 해주세요.");
+      return;
+    }
+    if (!PASSWORD_REGEX.test(form.password)) {
+      setError(ERROR_MSG.password);
       return;
     }
     if (form.password !== form.passwordConfirm) {
       setError("비밀번호가 일치하지 않습니다.");
+      return;
+    }
+    const name = form.name.trim();
+    if (!NAME_REGEX.test(name)) {
+      setError(ERROR_MSG.name);
+      return;
+    }
+    const email = normalizeEmail(form.email);
+    if (!EMAIL_REGEX.test(email)) {
+      setError(ERROR_MSG.email);
       return;
     }
     const phoneValue = `${phone.prefix}-${phone.mid}-${phone.last}`;
@@ -44,12 +74,25 @@ export default function RegisterPage() {
       await authApi.register({
         username: form.username,
         password: form.password,
-        name: form.name,
+        name,
         phone: phoneValue,
-        email: form.email,
+        email,
       });
-      alert("회원가입이 완료되었습니다.");
-      navigate("/login");
+      // 가입 완료 후 같은 계정으로 자동 로그인
+      try {
+        const res = await authApi.login({
+          username: form.username,
+          password: form.password,
+        });
+        setAccessToken(res.token, res.expiresIn);
+        refreshMe();
+        alert("회원가입이 완료되었습니다.");
+        navigate("/");
+      } catch {
+        // 자동 로그인 실패 시(레이트리밋 등) 수동 로그인으로 유도
+        alert("회원가입이 완료되었습니다. 로그인해주세요.");
+        navigate("/login");
+      }
     } catch (err) {
       setError((err as { message?: string })?.message || "회원가입에 실패했습니다.");
     }
@@ -58,7 +101,7 @@ export default function RegisterPage() {
   const set =
     (key: keyof typeof form) => (e: ChangeEvent<HTMLInputElement>) => {
       setForm((p) => ({ ...p, [key]: e.target.value }));
-      if (key === "username") setUsernameOk(null);
+      if (key === "username") setUsernameStatus(null);
     };
 
   const setPhonePart =
@@ -98,15 +141,14 @@ export default function RegisterPage() {
                 중복확인
               </button>
             </div>
-            {usernameOk === true && (
-              <p className="mt-1.5 text-xs text-[#22c55e]">
-                사용 가능한 아이디입니다.
-              </p>
+            {usernameStatus === 'ok' && (
+              <p className="mt-1.5 text-xs text-[#22c55e]">사용 가능한 아이디입니다.</p>
             )}
-            {usernameOk === false && (
-              <p className="mt-1.5 text-xs text-red-500">
-                이미 사용 중인 아이디입니다.
-              </p>
+            {usernameStatus === 'taken' && (
+              <p className="mt-1.5 text-xs text-red-500">이미 사용 중인 아이디입니다.</p>
+            )}
+            {usernameStatus === 'invalid' && (
+              <p className="mt-1.5 text-xs text-red-500">{ERROR_MSG.username}</p>
             )}
           </div>
           <div>
@@ -120,6 +162,11 @@ export default function RegisterPage() {
               placeholder="비밀번호 입력 (8자 이상, 영문+숫자+특수문자)"
               className={inputClass}
             />
+            {form.password && !PASSWORD_REGEX.test(form.password) && (
+              <p className="mt-1.5 text-xs text-red-500">
+                8자 이상, 영문·숫자·특수문자를 각각 1개 이상 포함해야 합니다.
+              </p>
+            )}
           </div>
           <div>
             <label className={labelClass}>

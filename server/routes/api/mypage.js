@@ -1,6 +1,7 @@
 const Router = require("koa-router");
 const bcrypt = require("bcrypt");
 const Member = require("../../entities/Member");
+const { validatePassword, validateName } = require("../../utils/validators");
 
 const router = new Router();
 
@@ -21,7 +22,22 @@ router.get("/", async (ctx) => {
 });
 
 router.patch("/", async (ctx) => {
-  const { name, phone, flexUsername } = ctx.request.body;
+  const { phone, flexUsername } = ctx.request.body;
+  const name =
+    typeof ctx.request.body.name === "string"
+      ? ctx.request.body.name.trim()
+      : ctx.request.body.name;
+
+  // 이름을 변경하는 경우 회원가입과 동일한 규칙 적용
+  if (name) {
+    const nameError = validateName(name);
+    if (nameError) {
+      ctx.status = 400;
+      ctx.body = { code: 400, message: nameError };
+      return;
+    }
+  }
+
   const updated = await Member.query().patchAndFetchById(ctx.state.member.id, {
     ...(name && { name }),
     ...(phone !== undefined && { phone }),
@@ -53,9 +69,10 @@ router.patch("/password", async (ctx) => {
     return;
   }
 
-  if (newPassword.length < 8) {
+  const pwError = validatePassword(newPassword);
+  if (pwError) {
     ctx.status = 400;
-    ctx.body = { code: 400, message: "새 비밀번호는 8자 이상이어야 합니다." };
+    ctx.body = { code: 400, message: pwError };
     return;
   }
 
