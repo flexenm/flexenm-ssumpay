@@ -2,11 +2,9 @@ import { useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { authApi } from "@/api";
+import { USERNAME_REGEX, PASSWORD_REGEX, ERROR_MSG } from "@/utils/validators";
 
 const PHONE_PREFIXES = ["010", "011", "016", "017", "018", "019"];
-
-const USERNAME_REGEX = /^(?!(?:[0-9]+)$)[a-zA-Z0-9]{4,16}$/;
-const PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[~`!?@#$%^&*()\-+=]).{8,}$/;
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -18,34 +16,34 @@ export default function RegisterPage() {
     email: "",
   });
   const [phone, setPhone] = useState({ prefix: "010", mid: "", last: "" });
-  const [usernameOk, setUsernameOk] = useState<boolean | null>(null);
+  const [usernameStatus, setUsernameStatus] = useState<null | 'invalid' | 'taken' | 'ok'>(null);
   const [error, setError] = useState("");
 
   const checkUsername = async () => {
     if (!form.username) return;
     if (!USERNAME_REGEX.test(form.username)) {
-      setUsernameOk(null);
-      setError("아이디는 4~16자 영문+숫자 조합이어야 합니다. (숫자만 불가)");
+      setUsernameStatus('invalid');
       return;
     }
     setError("");
     try {
       const res = await authApi.checkUsername(form.username);
-      setUsernameOk(res.available);
+      setUsernameStatus(res.available ? 'ok' : 'taken');
     } catch {
-      setUsernameOk(false);
+      setUsernameStatus(null);
+      setError("중복확인에 실패했습니다. 잠시 후 다시 시도해주세요.");
     }
   };
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
-    if (!usernameOk) {
+    if (usernameStatus !== 'ok') {
       setError("아이디 중복확인을 해주세요.");
       return;
     }
     if (!PASSWORD_REGEX.test(form.password)) {
-      setError("비밀번호는 8자 이상, 영문·숫자·특수문자를 각각 1개 이상 포함해야 합니다.");
+      setError(ERROR_MSG.password);
       return;
     }
     if (form.password !== form.passwordConfirm) {
@@ -71,7 +69,7 @@ export default function RegisterPage() {
   const set =
     (key: keyof typeof form) => (e: ChangeEvent<HTMLInputElement>) => {
       setForm((p) => ({ ...p, [key]: e.target.value }));
-      if (key === "username") setUsernameOk(null);
+      if (key === "username") setUsernameStatus(null);
     };
 
   const setPhonePart =
@@ -111,15 +109,14 @@ export default function RegisterPage() {
                 중복확인
               </button>
             </div>
-            {usernameOk === true && (
-              <p className="mt-1.5 text-xs text-[#22c55e]">
-                사용 가능한 아이디입니다.
-              </p>
+            {usernameStatus === 'ok' && (
+              <p className="mt-1.5 text-xs text-[#22c55e]">사용 가능한 아이디입니다.</p>
             )}
-            {usernameOk === false && (
-              <p className="mt-1.5 text-xs text-red-500">
-                이미 사용 중인 아이디입니다.
-              </p>
+            {usernameStatus === 'taken' && (
+              <p className="mt-1.5 text-xs text-red-500">이미 사용 중인 아이디입니다.</p>
+            )}
+            {usernameStatus === 'invalid' && (
+              <p className="mt-1.5 text-xs text-red-500">{ERROR_MSG.username}</p>
             )}
           </div>
           <div>

@@ -7,6 +7,7 @@ const Member = require("../../entities/Member");
 const PasswordResetToken = require("../../entities/PasswordResetToken");
 const rateLimit = require("../../middlewares/rate-limit");
 const { createTransport, escapeHtml } = require("../../utils/mailer");
+const { validateUsername, validatePassword } = require("../../utils/validators");
 
 const router = new Router();
 
@@ -25,23 +26,6 @@ const RESET_TOKEN_TTL_MS = 30 * 60 * 1000;
 // DB가 유출되어도 저장된 값만으로는 재설정 링크를 만들 수 없다.
 function hashToken(token) {
   return crypto.createHash("sha256").update(token).digest("hex");
-}
-
-const USERNAME_REGEX = /^(?!(?:[0-9]+)$)[a-zA-Z0-9]{4,16}$/;
-const PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[~`!?@#$%^&*()\-+=]).{8,}$/;
-
-function validateUsername(username) {
-  if (!username) return "아이디를 입력해주세요.";
-  if (!USERNAME_REGEX.test(username))
-    return "아이디는 4~16자 영문+숫자 조합이어야 합니다. (숫자만 불가)";
-  return null;
-}
-
-function validatePassword(password) {
-  if (!password) return "비밀번호를 입력해주세요.";
-  if (!PASSWORD_REGEX.test(password))
-    return "비밀번호는 8자 이상, 영문·숫자·특수문자를 각각 1개 이상 포함해야 합니다.";
-  return null;
 }
 
 // 아이디 중복확인
