@@ -27,9 +27,20 @@ function hashToken(token) {
   return crypto.createHash("sha256").update(token).digest("hex");
 }
 
+const USERNAME_REGEX = /^(?!(?:[0-9]+)$)[a-zA-Z0-9]{4,16}$/;
+const PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[~`!?@#$%^&*()\-+=]).{8,}$/;
+
+function validateUsername(username) {
+  if (!username) return "아이디를 입력해주세요.";
+  if (!USERNAME_REGEX.test(username))
+    return "아이디는 4~16자 영문+숫자 조합이어야 합니다. (숫자만 불가)";
+  return null;
+}
+
 function validatePassword(password) {
-  if (!password || password.length < 8)
-    return "비밀번호는 8자 이상이어야 합니다.";
+  if (!password) return "비밀번호를 입력해주세요.";
+  if (!PASSWORD_REGEX.test(password))
+    return "비밀번호는 8자 이상, 영문·숫자·특수문자를 각각 1개 이상 포함해야 합니다.";
   return null;
 }
 
@@ -39,6 +50,13 @@ router.get("/check-username", authLimiter, async (ctx) => {
   if (!username) {
     ctx.status = 400;
     ctx.body = { code: 400, message: "아이디를 입력해주세요." };
+    return;
+  }
+
+  const unError = validateUsername(username);
+  if (unError) {
+    ctx.status = 400;
+    ctx.body = { code: 400, message: unError };
     return;
   }
 
@@ -52,6 +70,13 @@ router.post("/register", authLimiter, async (ctx) => {
   if (!username || !password || !name || !email) {
     ctx.status = 400;
     ctx.body = { code: 400, message: "필수 항목을 입력해주세요." };
+    return;
+  }
+
+  const unError = validateUsername(username);
+  if (unError) {
+    ctx.status = 400;
+    ctx.body = { code: 400, message: unError };
     return;
   }
 
