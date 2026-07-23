@@ -1,89 +1,191 @@
-import { useState, useEffect } from 'react'
-import { adminOrdersApi } from '../../../api'
-import type { AdminOrderListParams } from '../../../api'
-import type { Order } from '../../../types'
+import { useState, useEffect } from "react";
+import { adminOrdersApi } from "../../../api";
+import type { AdminOrderListParams } from "../../../api";
+import type { Order } from "../../../types";
+import DummyBadge from "../../../components/ui/DummyBadge";
+
+const PAYMENT_LABEL: Record<number, string> = {
+  0: "대기",
+  1: "완료",
+  2: "취소",
+};
+
+const CHARGE_LABEL: Record<number, string> = {
+  0: "대기",
+  1: "완료",
+  2: "환불",
+};
+
+// Order.paymentMethod (백엔드 실제 필드, PAYMENT_METHOD = { CARD: 1, BANK: 2 })
+const METHOD_LABEL: Record<number, string> = {
+  1: "신용카드",
+  2: "무통장입금",
+};
+
+const formatDateTime = (iso: string) => {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(
+    d.getDate(),
+  )} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+};
 
 export default function AdminOrdersPage() {
-  const [orders, setOrders] = useState<Order[]>([])
-  const [loading, setLoading] = useState(true)
-  const [keyword, setKeyword] = useState('')
-  const [paymentStatus, setPaymentStatus] = useState('')
-  const [chargeStatus, setChargeStatus] = useState('')
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [keyword, setKeyword] = useState("");
+  const [chargeStatus, setChargeStatus] = useState("");
+  // 기간 필터는 백엔드 연동 전 클라이언트 UI 전용 (더미)
+  const [period, setPeriod] = useState("7");
 
-  const load = (kw = keyword, ps = paymentStatus, cs = chargeStatus) => {
-    const params: { keyword?: string; paymentStatus?: string; chargeStatus?: string } = {}
-    if (kw) params.keyword = kw
-    if (ps !== '') params.paymentStatus = ps
-    if (cs !== '') params.chargeStatus = cs
-    setLoading(true)
-    adminOrdersApi.list(params as unknown as AdminOrderListParams).then(r => setOrders(r.data)).catch(() => {}).finally(() => setLoading(false))
-  }
+  const load = (kw = keyword, cs = chargeStatus) => {
+    const params: AdminOrderListParams = {};
+    if (kw) params.keyword = kw;
+    if (cs !== "") params.chargeStatus = Number(cs);
+    setLoading(true);
+    adminOrdersApi
+      .list(params)
+      .then((r) => setOrders(r.data))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  };
 
-  useEffect(() => { load('', '', '') }, [])
+  useEffect(() => {
+    load("", "");
+  }, []);
 
   const updateCharge = async (id: number, status: number) => {
-    await adminOrdersApi.updateChargeStatus(id, { chargeStatus: status })
-    load()
-  }
+    await adminOrdersApi.updateChargeStatus(id, { chargeStatus: status });
+    load();
+  };
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">주문/충전 관리</h1>
-      <div className="bg-white rounded-xl p-5 border border-gray-200 mb-5 flex gap-3 items-center flex-wrap">
-        <input value={keyword} onChange={e => setKeyword(e.target.value)} placeholder="주문번호/아이디 검색" className={inputClass} />
-        <select value={paymentStatus} onChange={e => setPaymentStatus(e.target.value)} className={inputClass}>
-          <option value="">결제상태 전체</option>
-          <option value="0">미결제</option>
-          <option value="1">결제완료</option>
+      <h1 className="mb-6 text-2xl font-bold text-ink">주문·충전 조회</h1>
+
+      <div className="mb-5 flex flex-wrap items-center gap-3">
+        <div className="flex items-center gap-2">
+          <select
+            value={period}
+            onChange={(e) => setPeriod(e.target.value)}
+            className={selectClass}
+          >
+            <option value="7">기간: 최근 7일</option>
+            <option value="30">기간: 최근 30일</option>
+            <option value="90">기간: 최근 90일</option>
+          </select>
+          <DummyBadge />
+        </div>
+        <select
+          value={chargeStatus}
+          onChange={(e) => setChargeStatus(e.target.value)}
+          className={selectClass}
+        >
+          <option value="">충전 상태: 전체</option>
+          <option value="0">충전 상태: 대기</option>
+          <option value="1">충전 상태: 완료</option>
+          <option value="2">충전 상태: 환불</option>
         </select>
-        <select value={chargeStatus} onChange={e => setChargeStatus(e.target.value)} className={inputClass}>
-          <option value="">충전상태 전체</option>
-          <option value="0">충전대기</option>
-          <option value="1">충전완료</option>
-        </select>
-        <button onClick={() => load(keyword, paymentStatus, chargeStatus)} className={btnClass}>조회</button>
+        <input
+          value={keyword}
+          onChange={(e) => setKeyword(e.target.value)}
+          placeholder="주문번호 / 회원 / 플렉스티비 아이디 검색"
+          className={`${inputClass} min-w-[320px] flex-1`}
+        />
+        <button
+          onClick={() => load(keyword, chargeStatus)}
+          className="h-[52px] cursor-pointer rounded-lg bg-admin px-8 text-[15px] font-semibold text-white"
+        >
+          검색
+        </button>
       </div>
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <table className="w-full border-collapse">
-          <thead><tr className="bg-slate-50">
-            {['주문번호', '회원아이디', 'FlexTV 아이디', '상품', '금액', '결제상태', '충전상태', '관리'].map(h => (
-              <th key={h} className="px-4 py-3 text-left text-[13px] font-semibold whitespace-nowrap">{h}</th>
-            ))}
-          </tr></thead>
-          <tbody>
-            {loading
-              ? <tr><td colSpan={8} className="p-10 text-center text-slate-400">불러오는 중...</td></tr>
-              : orders.length === 0
-              ? <tr><td colSpan={8} className="p-10 text-center text-slate-400">데이터가 없습니다.</td></tr>
-              : orders.map(o => (
-                <tr key={o.id} className="border-b border-slate-100">
-                  <td className={tdClass}>{o.orderNo}</td>
-                  <td className={tdClass}>{o.member?.username || '-'}</td>
-                  <td className={tdClass}>{o.flexUsername}</td>
-                  <td className={tdClass}>{o.productName}</td>
-                  <td className={tdClass}>{o.price?.toLocaleString()}원</td>
-                  <td className={tdClass}><Badge v={o.paymentStatus} t={{ 0: '미결제', 1: '결제완료' }} /></td>
-                  <td className={tdClass}><Badge v={o.chargeStatus} t={{ 0: '충전대기', 1: '충전완료' }} /></td>
-                  <td className={tdClass}>
-                    {o.chargeStatus === 0 && (
-                      <button onClick={() => updateCharge(o.id, 1)} className="px-3 py-1 bg-blue-600 text-white border-none rounded-md cursor-pointer text-xs whitespace-nowrap">충전완료</button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-          </tbody>
-        </table>
+
+      <table className="w-full border-collapse">
+        <thead>
+          <tr className="bg-admin-head">
+            <th className={thClass}>주문번호</th>
+            <th className={thClass}>일시</th>
+            <th className={thClass}>회원</th>
+            <th className={thClass}>플렉스티비 ID</th>
+            <th className={thClass}>상품</th>
+            <th className={thClass}>결제 수단</th>
+            <th className={thClass}>금액</th>
+            <th className={thClass}>결제</th>
+            <th className={thClass}>충전</th>
+          </tr>
+        </thead>
+        <tbody>
+          {loading ? (
+            <tr>
+              <td colSpan={9} className="p-10 text-center text-admin-muted">
+                불러오는 중...
+              </td>
+            </tr>
+          ) : orders.length === 0 ? (
+            <tr>
+              <td colSpan={9} className="p-10 text-center text-admin-muted">
+                데이터가 없습니다.
+              </td>
+            </tr>
+          ) : (
+            orders.map((o) => (
+              <tr key={o.id} className="border-b border-admin-line">
+                <td className={tdClass}>{o.orderNo}</td>
+                <td className={tdClass}>{formatDateTime(o.createdAt)}</td>
+                <td className={tdClass}>{o.member?.username || "-"}</td>
+                <td className={tdClass}>{o.flexUsername || "-"}</td>
+                <td className={tdClass}>{o.productName}</td>
+                <td className={tdClass}>
+                  {METHOD_LABEL[o.paymentMethod] ?? "-"}
+                </td>
+                <td className={tdClass}>{o.price?.toLocaleString()}원</td>
+                <td className={tdClass}>
+                  <span
+                    className={
+                      o.paymentStatus === 0
+                        ? "font-semibold text-admin"
+                        : "text-admin-muted"
+                    }
+                  >
+                    {PAYMENT_LABEL[o.paymentStatus] ?? "-"}
+                  </span>
+                </td>
+                <td className={tdClass}>
+                  {o.chargeStatus === 0 ? (
+                    <button
+                      onClick={() => updateCharge(o.id, 1)}
+                      className="cursor-pointer font-semibold text-admin hover:underline"
+                    >
+                      충전완료
+                    </button>
+                  ) : (
+                    <span className="text-admin-muted">
+                      {CHARGE_LABEL[o.chargeStatus] ?? "-"}
+                    </span>
+                  )}
+                </td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
+
+      <div className="mt-4 space-y-1 text-[13px] text-admin-muted">
+        <p>
+          ※ [충전완료] 클릭 시 충전 상태 변경 → 사용자 구매 내역에 반영 (완료 알림
+          이메일 선택)
+        </p>
+        <p>※ 취소/환불은 PG사 관리자에서 처리 후 이 화면에서 상태 변경</p>
       </div>
     </div>
-  )
+  );
 }
 
-function Badge({ v, t }: { v: number; t: Record<number, string> }) {
-  const bg: Record<number, string> = { 0: 'bg-slate-100', 1: 'bg-green-100' }
-  const text: Record<number, string> = { 0: 'text-slate-400', 1: 'text-[#16a34a]' }
-  return <span className={`inline-block px-2.5 py-1 rounded-xl text-xs whitespace-nowrap ${bg[v]} ${text[v]}`}>{t[v]}</span>
-}
-
-const inputClass = 'px-3 py-2 border border-gray-200 rounded-lg text-sm outline-none'
-const btnClass = 'px-5 py-2 bg-slate-800 text-white border-none rounded-lg cursor-pointer text-sm'
-const tdClass = 'px-4 py-3 text-[13px] whitespace-nowrap'
+const inputClass =
+  "h-[52px] rounded-lg border border-admin-border bg-admin-bg px-4 text-[15px] text-ink placeholder:text-[#a6a6a6] outline-none";
+const selectClass =
+  "h-[52px] rounded-lg border border-admin-border bg-admin-bg px-4 text-[15px] text-ink outline-none";
+const thClass =
+  "h-[52px] px-4 text-left text-[14px] font-medium text-admin-muted whitespace-nowrap";
+const tdClass = "px-4 py-3 text-[14px] text-ink whitespace-nowrap";

@@ -1,61 +1,144 @@
-import { useState, useEffect } from 'react'
-import { adminMembersApi } from '../../../api'
-import type { Member } from '../../../types'
+import { useState, useEffect } from "react";
+import { adminMembersApi } from "../../../api";
+import { MEMBER_STATUS } from "../../../types";
+import type { Member } from "../../../types";
+import DummyBadge from "../../../components/ui/DummyBadge";
+
+const fmtDateTime = (s: string) => {
+  const d = new Date(s);
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+};
+
+// 백엔드 미제공 필드 더미값. member.id 기반으로 안정적인 값을 생성한다.
+const dummyOrderCount = (id: number) => `${id % 6}건`;
+const dummyLastAccess = (id: number) => {
+  const d = new Date(2026, 6, 14 - (id % 4));
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}.${p(d.getMonth() + 1)}.${p(d.getDate())}`;
+};
+
+const TH = "px-5 h-[52px] text-left text-[14px] font-medium text-admin-muted";
+const TD = "px-5 py-4 text-[14px] text-ink";
 
 export default function AdminMembersPage() {
-  const [members, setMembers] = useState<Member[]>([])
-  const [loading, setLoading] = useState(true)
-  const [keyword, setKeyword] = useState('')
+  const [members, setMembers] = useState<Member[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [keyword, setKeyword] = useState("");
 
   const load = (kw = keyword) => {
-    setLoading(true)
-    adminMembersApi.list({ keyword: kw }).then(r => setMembers(r.data)).catch(() => {}).finally(() => setLoading(false))
-  }
-  useEffect(() => { load('') }, [])
+    setLoading(true);
+    adminMembersApi
+      .list({ keyword: kw })
+      .then((r) => setMembers(r.data))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  };
+  useEffect(() => {
+    load("");
+  }, []);
 
   const toggleStatus = async (m: Member) => {
-    await adminMembersApi.updateStatus(m.id, { status: m.status === 0 ? 1 : 0 })
-    load()
-  }
+    await adminMembersApi.updateStatus(m.id, {
+      status:
+        m.status === MEMBER_STATUS.NORMAL
+          ? MEMBER_STATUS.BLOCKED
+          : MEMBER_STATUS.NORMAL,
+    });
+    load();
+  };
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">회원 관리</h1>
-      <div className="bg-white rounded-xl p-5 border border-gray-200 mb-5 flex gap-3">
-        <input value={keyword} onChange={e => setKeyword(e.target.value)} onKeyDown={e => e.key === 'Enter' && load(keyword)} placeholder="아이디/이메일 검색" className="px-3 py-2 border border-gray-200 rounded-lg text-sm outline-none flex-1" />
-        <button onClick={() => load(keyword)} className="px-5 py-2 bg-slate-800 text-white border-none rounded-lg cursor-pointer text-sm">조회</button>
+      <h1 className="mb-8 text-[24px] font-bold text-admin">회원 관리</h1>
+
+      <div className="mb-6 flex gap-3">
+        <input
+          value={keyword}
+          onChange={(e) => setKeyword(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && load(keyword)}
+          placeholder="아이디 / 이메일 검색"
+          className="h-[52px] w-[420px] max-w-full rounded-lg border border-admin-border bg-admin-bg px-4 text-[15px] text-ink outline-none placeholder:text-[#a6a6a6]"
+        />
+        <button
+          onClick={() => load(keyword)}
+          className="h-[52px] w-[110px] rounded-lg bg-admin text-[15px] font-medium text-white"
+        >
+          검색
+        </button>
       </div>
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+
+      <div className="overflow-x-auto">
         <table className="w-full border-collapse">
-          <thead><tr className="bg-slate-50">
-            {['아이디', '이름', '이메일', '전화번호', 'FlexTV', '가입일', '상태', '관리'].map(h => (
-              <th key={h} className="px-4 py-3 text-left text-[13px] font-semibold">{h}</th>
-            ))}
-          </tr></thead>
+          <thead>
+            <tr className="bg-admin-head">
+              <th className={TH}>아이디</th>
+              <th className={TH}>이메일</th>
+              <th className={TH}>가입일</th>
+              <th className={TH}>
+                <span className="inline-flex items-center gap-1.5">
+                  누적 주문
+                  <DummyBadge />
+                </span>
+              </th>
+              <th className={TH}>
+                <span className="inline-flex items-center gap-1.5">
+                  최근 접속
+                  <DummyBadge />
+                </span>
+              </th>
+              <th className={TH}>상태</th>
+              <th className={TH}>관리</th>
+            </tr>
+          </thead>
           <tbody>
-            {loading
-              ? <tr><td colSpan={8} className="p-10 text-center text-slate-400">불러오는 중...</td></tr>
-              : members.length === 0
-              ? <tr><td colSpan={8} className="p-10 text-center text-slate-400">데이터가 없습니다.</td></tr>
-              : members.map(m => (
-                <tr key={m.id} className="border-b border-slate-100">
-                  <td className="px-4 py-3 text-[13px]">{m.username}</td>
-                  <td className="px-4 py-3 text-[13px]">{m.name}</td>
-                  <td className="px-4 py-3 text-[13px]">{m.email}</td>
-                  <td className="px-4 py-3 text-[13px]">{m.phone || '-'}</td>
-                  <td className="px-4 py-3 text-[13px]">{m.flexUsername || '-'}</td>
-                  <td className="px-4 py-3 text-[13px]">{new Date(m.createdAt).toLocaleDateString()}</td>
-                  <td className="px-4 py-3 text-[13px]"><span className={`px-2.5 py-[3px] rounded-[10px] text-xs ${m.status === 0 ? 'bg-green-100 text-[#16a34a]' : 'bg-red-100 text-[#dc2626]'}`}>{m.status === 0 ? '정상' : '차단'}</span></td>
-                  <td className="px-4 py-3 text-[13px]">
-                    <button onClick={() => toggleStatus(m)} className={`px-3 py-1 border-none rounded-md cursor-pointer text-xs ${m.status === 0 ? 'bg-red-100 text-[#dc2626]' : 'bg-green-100 text-[#16a34a]'}`}>
-                      {m.status === 0 ? '차단' : '차단해제'}
+            {loading ? (
+              <tr>
+                <td
+                  colSpan={7}
+                  className="p-10 text-center text-[14px] text-admin-muted"
+                >
+                  불러오는 중...
+                </td>
+              </tr>
+            ) : members.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={7}
+                  className="p-10 text-center text-[14px] text-admin-muted"
+                >
+                  데이터가 없습니다.
+                </td>
+              </tr>
+            ) : (
+              members.map((m) => (
+                <tr key={m.id} className="border-b border-admin-line">
+                  <td className={TD}>{m.username}</td>
+                  <td className={TD}>{m.email}</td>
+                  <td className={TD}>{fmtDateTime(m.createdAt)}</td>
+                  <td className={TD}>{dummyOrderCount(m.id)}</td>
+                  <td className={TD}>{dummyLastAccess(m.id)}</td>
+                  <td className={TD}>
+                    {m.status === MEMBER_STATUS.NORMAL ? "정상" : "정지"}
+                  </td>
+                  <td className={TD}>
+                    <button
+                      onClick={() => toggleStatus(m)}
+                      className="text-[14px] text-admin-muted hover:text-admin hover:underline"
+                    >
+                      {m.status === MEMBER_STATUS.NORMAL ? "정지" : "해제"}
                     </button>
                   </td>
                 </tr>
-              ))}
+              ))
+            )}
           </tbody>
         </table>
       </div>
+
+      <p className="mt-6 text-[14px] text-admin-muted">
+        ※ 행 클릭 시 회원 상세(주문 내역 포함) · 상태 변경(정상/정지) 가능
+      </p>
     </div>
-  )
+  );
 }

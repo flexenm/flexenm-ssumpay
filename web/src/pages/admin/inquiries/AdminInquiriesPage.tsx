@@ -1,59 +1,165 @@
-import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
-import { adminInquiriesApi } from '../../../api'
-import type { ListParams } from '../../../api'
-import type { Inquiry, Member } from '../../../types'
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { adminInquiriesApi } from "../../../api";
+import type { ListParams } from "../../../api";
+import { INQUIRY_STATUS } from "../../../types";
+import type { Inquiry, Member } from "../../../types";
 
 interface AdminInquiry extends Inquiry {
-  member?: Member
+  member?: Member;
 }
 
-export default function AdminInquiriesPage() {
-  const [inquiries, setInquiries] = useState<AdminInquiry[]>([])
-  const [loading, setLoading] = useState(true)
-  const [status, setStatus] = useState('')
+const typeLabel: Record<number, string> = {
+  1: "충전",
+  2: "결제",
+  3: "취소·환불",
+  4: "기타",
+};
 
-  const load = (s = status) => { setLoading(true); return adminInquiriesApi.list({ status: s } as ListParams).then(r => setInquiries(r.data)).catch(() => {}).finally(() => setLoading(false)) }
-  useEffect(() => { load('') }, [])
+const fmtDateTime = (s: string) => {
+  const d = new Date(s);
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+};
+
+const TH = "px-5 h-[52px] text-left text-[14px] font-medium text-admin-muted";
+const TD = "px-5 py-4 text-[14px] text-ink";
+
+export default function AdminInquiriesPage() {
+  const navigate = useNavigate();
+  const [inquiries, setInquiries] = useState<AdminInquiry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [type, setType] = useState("");
+  const [status, setStatus] = useState("");
+  const [keyword, setKeyword] = useState("");
+  const [appliedKeyword, setAppliedKeyword] = useState("");
+
+  // 유형·상태는 백엔드 파라미터(server/routes/admin/inquiries.js)로 조회한다.
+  const load = (s = status, t = type) => {
+    setLoading(true);
+    return adminInquiriesApi
+      .list({ status: s, type: t } as ListParams)
+      .then((r) => setInquiries(r.data))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  };
+  useEffect(() => {
+    load("", "");
+  }, []);
+
+  const search = () => {
+    setAppliedKeyword(keyword);
+    load(status, type);
+  };
+
+  // 아이디 검색은 백엔드 미지원이라 클라이언트 측에서 필터한다.
+  const filtered = appliedKeyword
+    ? inquiries.filter((q) =>
+        (q.member?.username ?? "").includes(appliedKeyword),
+      )
+    : inquiries;
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">1:1 문의 관리</h1>
-      <div className="bg-white rounded-xl p-5 border border-gray-200 mb-5 flex gap-3">
-        <select value={status} onChange={e => setStatus(e.target.value)} className="px-3 py-2 border border-gray-200 rounded-lg text-sm outline-none">
-          <option value="">전체</option>
-          <option value="0">답변 대기</option>
-          <option value="1">답변 완료</option>
+      <h1 className="mb-8 text-[24px] font-bold text-admin">1:1 문의 관리</h1>
+
+      <div className="mb-6 flex flex-wrap gap-3">
+        <select
+          value={type}
+          onChange={(e) => setType(e.target.value)}
+          className="h-[52px] w-[200px] rounded-lg border border-admin-border bg-admin-bg px-4 text-[15px] text-ink outline-none"
+        >
+          <option value="">유형: 전체</option>
+          <option value="1">유형: 충전</option>
+          <option value="2">유형: 결제</option>
+          <option value="3">유형: 취소·환불</option>
+          <option value="4">유형: 기타</option>
         </select>
-        <button onClick={() => load(status)} className="px-5 py-2 bg-slate-800 text-white border-none rounded-lg cursor-pointer text-sm">조회</button>
+        <select
+          value={status}
+          onChange={(e) => setStatus(e.target.value)}
+          className="h-[52px] w-[200px] rounded-lg border border-admin-border bg-admin-bg px-4 text-[15px] text-ink outline-none"
+        >
+          <option value="">상태: 전체</option>
+          <option value="0">상태: 답변 대기</option>
+          <option value="1">상태: 답변 완료</option>
+        </select>
+        <input
+          value={keyword}
+          onChange={(e) => setKeyword(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && search()}
+          placeholder="아이디"
+          className="h-[52px] w-[420px] max-w-full rounded-lg border border-admin-border bg-admin-bg px-4 text-[15px] text-ink outline-none placeholder:text-[#a6a6a6]"
+        />
+        <button
+          onClick={search}
+          className="h-[52px] w-[110px] rounded-lg bg-admin text-[15px] font-medium text-white"
+        >
+          검색
+        </button>
       </div>
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+
+      <div className="overflow-x-auto">
         <table className="w-full border-collapse">
-          <thead><tr className="bg-slate-50">
-            {['상태', '유형', '제목', '회원', '등록일', '답변일'].map(h => (
-              <th key={h} className="px-4 py-3 text-left text-[13px] font-semibold">{h}</th>
-            ))}
-          </tr></thead>
+          <thead>
+            <tr className="bg-admin-head">
+              <th className={`${TH} w-[90px]`}>번호</th>
+              <th className={`${TH} w-[140px]`}>유형</th>
+              <th className={TH}>제목</th>
+              <th className={`${TH} w-[180px]`}>아이디</th>
+              <th className={`${TH} w-[220px]`}>등록일</th>
+              <th className={`${TH} w-[140px]`}>상태</th>
+            </tr>
+          </thead>
           <tbody>
-            {loading
-              ? <tr><td colSpan={6} className="p-10 text-center text-slate-400">불러오는 중...</td></tr>
-              : inquiries.length === 0
-              ? <tr><td colSpan={6} className="p-10 text-center text-slate-400">데이터가 없습니다.</td></tr>
-              : inquiries.map(q => (
-                <tr key={q.id} className="border-b border-slate-100">
-                  <td className="px-4 py-3 text-[13px]"><span className={`px-2.5 py-[3px] rounded-[10px] text-xs ${q.status === 1 ? 'bg-green-100 text-[#16a34a]' : 'bg-[#fef9c3] text-[#ca8a04]'}`}>{q.status === 1 ? '답변완료' : '답변대기'}</span></td>
-                  <td className="px-4 py-3 text-[13px]">{q.type}</td>
-                  <td className="px-4 py-3 text-[13px]">
-                    <Link to={`/admin/inquiries/${q.id}`} className="text-blue-600 no-underline">{q.title}</Link>
-                  </td>
-                  <td className="px-4 py-3 text-[13px]">{q.member?.username || '-'}</td>
-                  <td className="px-4 py-3 text-[13px]">{new Date(q.createdAt).toLocaleDateString()}</td>
-                  <td className="px-4 py-3 text-[13px]">{q.answeredAt ? new Date(q.answeredAt).toLocaleDateString() : '-'}</td>
-                </tr>
-              ))}
+            {loading ? (
+              <tr>
+                <td
+                  colSpan={6}
+                  className="p-10 text-center text-[14px] text-admin-muted"
+                >
+                  불러오는 중...
+                </td>
+              </tr>
+            ) : filtered.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={6}
+                  className="p-10 text-center text-[14px] text-admin-muted"
+                >
+                  데이터가 없습니다.
+                </td>
+              </tr>
+            ) : (
+              filtered.map((q) => {
+                const answered = q.status === INQUIRY_STATUS.ANSWERED;
+                return (
+                  <tr
+                    key={q.id}
+                    onClick={() => navigate(`/admin/inquiries/${q.id}`)}
+                    className="cursor-pointer border-b border-admin-line hover:bg-admin-bg"
+                  >
+                    <td className={TD}>{q.id}</td>
+                    <td className={TD}>{typeLabel[q.type] ?? q.type}</td>
+                    <td className={TD}>{q.title}</td>
+                    <td className={TD}>{q.member?.username || "-"}</td>
+                    <td className={TD}>{fmtDateTime(q.createdAt)}</td>
+                    <td
+                      className={`${TD} ${answered ? "text-admin-muted" : "font-semibold text-admin"}`}
+                    >
+                      {answered ? "답변 완료" : "답변 대기"}
+                    </td>
+                  </tr>
+                );
+              })
+            )}
           </tbody>
         </table>
       </div>
+
+      <p className="mt-6 text-[14px] text-admin-muted">
+        ※ 행 클릭 시 답변 화면으로 이동 · 답변 대기 건은 굵게/강조 표시
+      </p>
     </div>
-  )
+  );
 }

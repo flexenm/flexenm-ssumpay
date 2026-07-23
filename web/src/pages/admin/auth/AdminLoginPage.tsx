@@ -27,9 +27,9 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-slate-50">
-      <div className="bg-white rounded-2xl p-12 w-[380px] shadow-[0_4px_24px_rgba(0,0,0,0.08)]">
-        <h2 className="text-center text-[22px] font-bold mb-8">
+    <div className="flex min-h-screen items-center justify-center bg-admin-bg">
+      <div className="w-[600px] max-w-[calc(100%-32px)] rounded-2xl border border-admin-border bg-white p-12">
+        <h2 className="mb-8 text-center text-[26px] font-bold text-ink">
           ssumpay ADMIN
         </h2>
         <form onSubmit={submit} className="flex flex-col gap-3">
@@ -38,7 +38,7 @@ export default function AdminLoginPage() {
             onChange={(e) =>
               setForm((p) => ({ ...p, username: e.target.value }))
             }
-            placeholder="아이디"
+            placeholder="관리자 아이디"
             className={inputClass}
           />
           <input
@@ -50,29 +50,31 @@ export default function AdminLoginPage() {
             placeholder="비밀번호"
             className={inputClass}
           />
-          {error && <p className="text-red-500 text-[13px]">{error}</p>}
+          {error && <p className="text-[13px] text-red-500">{error}</p>}
           <button
             type="submit"
-            className="p-3.5 bg-slate-800 text-white border-none rounded-lg text-[15px] font-semibold cursor-pointer mt-2"
+            className="mt-2 h-[56px] cursor-pointer rounded-lg bg-admin text-[17px] font-semibold text-white"
           >
             로그인
           </button>
         </form>
-        <div className="mt-6 rounded-lg border border-blue-100 bg-blue-50 p-4 text-[13px] text-slate-600">
-          <p className="mb-2 font-semibold text-slate-700">테스트 계정</p>
+        <p className="mt-4 text-center text-[13px] text-[#a6a6a6]">
+          ※ 허용된 관리자 계정만 접근 가능 (IP 접근 제한 권장)
+        </p>
+        <div className="mt-6 rounded-lg border border-admin-line bg-admin-bg p-4 text-[13px] text-admin-muted">
+          <p className="mb-2 font-semibold text-ink">테스트 계정</p>
           <p>
-            아이디: <span className="font-medium text-slate-800">admin</span>
+            아이디: <span className="font-medium text-ink">admin</span>
           </p>
           <p>
-            비밀번호:{" "}
-            <span className="font-medium text-slate-800">admin1234</span>
+            비밀번호: <span className="font-medium text-ink">admin1234</span>
           </p>
           <button
             type="button"
             onClick={() =>
               setForm({ username: "admin", password: "admin1234" })
             }
-            className="mt-3 cursor-pointer rounded-md border border-blue-200 bg-white px-3 py-1.5 text-xs font-medium text-blue-600"
+            className="mt-3 cursor-pointer rounded-md border border-admin-border bg-white px-3 py-1.5 text-xs font-medium text-ink"
           >
             자동입력
           </button>
@@ -83,4 +85,4 @@ export default function AdminLoginPage() {
 }
 
 const inputClass =
-  "px-4 py-3 border border-gray-200 rounded-lg text-sm outline-none";
+  "h-[52px] rounded-lg border border-admin-border bg-admin-bg px-4 text-[15px] text-ink placeholder:text-[#a6a6a6] outline-none";
