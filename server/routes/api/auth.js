@@ -13,6 +13,7 @@ const {
   validateEmail,
   validateName,
   normalizeEmail,
+  hasMxRecord,
 } = require("../../utils/validators");
 
 const router = new Router();
@@ -93,6 +94,13 @@ router.post("/register", authLimiter, async (ctx) => {
   if (emailError) {
     ctx.status = 400;
     ctx.body = { code: 400, message: emailError };
+    return;
+  }
+
+  const mxValid = await hasMxRecord(email);
+  if (!mxValid) {
+    ctx.status = 400;
+    ctx.body = { code: 400, message: "존재하지 않는 이메일 도메인입니다." };
     return;
   }
 
