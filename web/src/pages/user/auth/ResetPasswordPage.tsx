@@ -2,8 +2,7 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { authApi } from "@/api";
-
-const PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[~`!?@#$%^&*()\-+=]).{8,}$/;
+import { PASSWORD_REGEX, ERROR_MSG } from "@/utils/validators";
 
 export default function ResetPasswordPage() {
   const navigate = useNavigate();
@@ -21,7 +20,7 @@ export default function ResetPasswordPage() {
     setError("");
 
     if (!PASSWORD_REGEX.test(form.newPassword)) {
-      setError("비밀번호는 8자 이상, 영문·숫자·특수문자를 각각 1개 이상 포함해야 합니다.");
+      setError(ERROR_MSG.password);
       return;
     }
     if (form.newPassword !== form.confirmPassword) {
@@ -110,9 +109,7 @@ export default function ResetPasswordPage() {
               className={inputClass}
             />
             {form.newPassword && !PASSWORD_REGEX.test(form.newPassword) && (
-              <p className="mt-1.5 text-xs text-red-500">
-                8자 이상, 영문·숫자·특수문자를 각각 1개 이상 포함해야 합니다.
-              </p>
+              <p className="mt-1.5 text-xs text-red-500">{ERROR_MSG.password}</p>
             )}
           </div>
           <div>
