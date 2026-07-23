@@ -5,6 +5,9 @@ import { authApi } from "@/api";
 
 const PHONE_PREFIXES = ["010", "011", "016", "017", "018", "019"];
 
+const USERNAME_REGEX = /^(?!(?:[0-9]+)$)[a-zA-Z0-9]{4,16}$/;
+const PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[~`!?@#$%^&*()\-+=]).{8,}$/;
+
 export default function RegisterPage() {
   const navigate = useNavigate();
   const [form, setForm] = useState({
@@ -20,6 +23,12 @@ export default function RegisterPage() {
 
   const checkUsername = async () => {
     if (!form.username) return;
+    if (!USERNAME_REGEX.test(form.username)) {
+      setUsernameOk(null);
+      setError("아이디는 4~16자 영문+숫자 조합이어야 합니다. (숫자만 불가)");
+      return;
+    }
+    setError("");
     try {
       const res = await authApi.checkUsername(form.username);
       setUsernameOk(res.available);
@@ -33,6 +42,10 @@ export default function RegisterPage() {
     setError("");
     if (!usernameOk) {
       setError("아이디 중복확인을 해주세요.");
+      return;
+    }
+    if (!PASSWORD_REGEX.test(form.password)) {
+      setError("비밀번호는 8자 이상, 영문·숫자·특수문자를 각각 1개 이상 포함해야 합니다.");
       return;
     }
     if (form.password !== form.passwordConfirm) {
@@ -120,6 +133,11 @@ export default function RegisterPage() {
               placeholder="비밀번호 입력 (8자 이상, 영문+숫자+특수문자)"
               className={inputClass}
             />
+            {form.password && !PASSWORD_REGEX.test(form.password) && (
+              <p className="mt-1.5 text-xs text-red-500">
+                8자 이상, 영문·숫자·특수문자를 각각 1개 이상 포함해야 합니다.
+              </p>
+            )}
           </div>
           <div>
             <label className={labelClass}>
