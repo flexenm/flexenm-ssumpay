@@ -2,6 +2,8 @@ import { useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { authApi } from "@/api";
+import { setAccessToken } from "@/utils/cookie";
+import { refreshMe } from "@/hooks/useMe";
 import {
   USERNAME_REGEX,
   PASSWORD_REGEX,
@@ -76,8 +78,21 @@ export default function RegisterPage() {
         phone: phoneValue,
         email,
       });
-      alert("회원가입이 완료되었습니다.");
-      navigate("/login");
+      // 가입 완료 후 같은 계정으로 자동 로그인
+      try {
+        const res = await authApi.login({
+          username: form.username,
+          password: form.password,
+        });
+        setAccessToken(res.token, res.expiresIn);
+        refreshMe();
+        alert("회원가입이 완료되었습니다.");
+        navigate("/");
+      } catch {
+        // 자동 로그인 실패 시(레이트리밋 등) 수동 로그인으로 유도
+        alert("회원가입이 완료되었습니다. 로그인해주세요.");
+        navigate("/login");
+      }
     } catch (err) {
       setError((err as { message?: string })?.message || "회원가입에 실패했습니다.");
     }
