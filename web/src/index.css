@@ -1,7 +1,28 @@
 @import "tailwindcss";
 
+/* Pretendard (self-hosted variable font) */
+@font-face {
+  font-family: "Pretendard Variable";
+  font-weight: 45 920;
+  font-style: normal;
+  font-display: swap;
+  src: url("./assets/fonts/PretendardVariable.woff2") format("woff2-variations");
+}
+
+/* Figma 디자인 토큰 → Tailwind 유틸(bg-primary, text-ink, border-line ...) 생성 */
 @theme {
-  --font-sans: system-ui, "Segoe UI", Roboto, sans-serif;
+  --font-sans: "Pretendard Variable", Pretendard, system-ui, "Segoe UI", Roboto, sans-serif;
+
+  --color-primary: #1e59e8;        /* 로고·헤더·뱃지·가격·별표 */
+  --color-primary-tab: #2b53ed;    /* 탭 활성 */
+  --color-primary-soft: #f3f5fe;   /* 탭 컨테이너·아이콘 배지·상품카드 */
+  --color-navy: #1c2934;           /* 다크 버튼 */
+  --color-navy-rule: #1c2634;      /* 섹션 진한 구분선·푸터 */
+  --color-field: #f4f4f4;          /* 채움형 인풋·답변 박스 */
+  --color-page: #f6f7fa;           /* 페이지·안내 배경 */
+  --color-ink: #222222;            /* 본문 텍스트 */
+  --color-line: #eaeaea;           /* 행 구분선 */
+  --color-hero: #ebf1ff;           /* 히어로 배경 */
 }
 
 html,
@@ -13,4 +34,6 @@ body,
 body {
   margin: 0;
   font-family: var(--font-sans);
+  color: var(--color-ink);
+  background: #fff;
 }
