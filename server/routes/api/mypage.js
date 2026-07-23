@@ -2,6 +2,8 @@ const Router = require("koa-router");
 const bcrypt = require("bcrypt");
 const Member = require("../../entities/Member");
 
+const PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[~`!?@#$%^&*()\-+=]).{8,}$/;
+
 const router = new Router();
 
 router.get("/", async (ctx) => {
@@ -53,9 +55,9 @@ router.patch("/password", async (ctx) => {
     return;
   }
 
-  if (newPassword.length < 8) {
+  if (!PASSWORD_REGEX.test(newPassword)) {
     ctx.status = 400;
-    ctx.body = { code: 400, message: "새 비밀번호는 8자 이상이어야 합니다." };
+    ctx.body = { code: 400, message: "새 비밀번호는 8자 이상, 영문·숫자·특수문자를 각각 1개 이상 포함해야 합니다." };
     return;
   }
 
