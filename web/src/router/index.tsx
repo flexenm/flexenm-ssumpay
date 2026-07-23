@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 
 import UserLayout from '../components/layout/UserLayout'
@@ -29,11 +30,11 @@ import AdminInquiryDetailPage from '../pages/admin/inquiries/AdminInquiryDetailP
 const isUser = () => !!localStorage.getItem('token')
 const isAdmin = () => !!localStorage.getItem('adminToken')
 
-function UserGuard({ children }) {
+function UserGuard({ children }: { children: ReactNode }) {
   return isUser() ? children : <Navigate to="/login" replace />
 }
 
-function AdminGuard({ children }) {
+function AdminGuard({ children }: { children: ReactNode }) {
   return isAdmin() ? children : <Navigate to="/admin/login" replace />
 }
 
