@@ -75,7 +75,7 @@ export default function OrderCompletePage() {
       {/* 버튼 */}
       <div className="mt-10 flex justify-center gap-4">
         <button
-          onClick={() => navigate("/mypage")}
+          onClick={() => navigate("/mypage?tab=1")}
           className="cursor-pointer rounded-lg border-2 border-navy bg-white px-8 py-3 text-[15px] font-semibold text-ink"
         >
           구매 내역 보기
