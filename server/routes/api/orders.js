@@ -1,16 +1,51 @@
 const Router = require("koa-router");
+const axios = require("axios");
 const Order = require("../../entities/Order");
 const Product = require("../../entities/Product");
+
+const FLEXTV_API_URL = process.env.FLEXTV_API_URL;
+
+async function verifyFlexAccount(loginId, password) {
+  if (!FLEXTV_API_URL) throw Object.assign(new Error("FlexTV 서비스 연결 설정이 없습니다."), { status: 503 });
+  try {
+    // FlexTV 웹이 실제로 쓰는 signin 엔드포인트. 성공 시 200 + 회원정보, 실패 시 401.
+    const res = await axios.post(`${FLEXTV_API_URL}/v2/api/auth/signin`, {
+      loginId,
+      password,
+      loginKeep: false,
+      saveId: false,
+      device: "PCWEB",
+    });
+    return res.status === 200 && !!res.data?.id;
+  } catch (e) {
+    const status = e.response?.status;
+    if (status === 400 || status === 401) return false;
+    console.error("[verifyFlexAccount] FlexTV signin failed:", status, e.response?.data ?? e.message);
+    throw Object.assign(new Error("FlexTV 계정 확인 중 오류가 발생했습니다."), { status: 502 });
+  }
+}
 
 const router = new Router();
 
 router.post("/", async (ctx) => {
-  const { productId, flexUsername, paymentMethod = 1 } = ctx.request.body;
+  const { productId, flexUsername, flexPassword, paymentMethod = 1 } = ctx.request.body;
   const memberId = ctx.state.member.id;
 
-  if (!productId || !flexUsername) {
+  if (!productId || !flexUsername || !flexPassword) {
     ctx.status = 400;
-    ctx.body = { code: 400, message: "상품과 FlexTV 아이디를 입력해주세요." };
+    ctx.body = { code: 400, message: "상품, FlexTV 아이디, 비밀번호를 입력해주세요." };
+    return;
+  }
+
+  const isValid = await verifyFlexAccount(flexUsername, flexPassword).catch((e) => {
+    ctx.status = e.status || 502;
+    ctx.body = { code: e.status || 502, message: e.message };
+    return null;
+  });
+  if (isValid === null) return;
+  if (!isValid) {
+    ctx.status = 401;
+    ctx.body = { code: 401, message: "FlexTV 아이디 또는 비밀번호가 올바르지 않습니다." };
     return;
   }
 
