@@ -73,9 +73,14 @@ export interface CreateInquiryInput {
   type: number;
   title: string;
   content: string;
+  image?: File | null;
 }
 
-export type UpdateInquiryInput = Partial<CreateInquiryInput>;
+export interface UpdateInquiryInput {
+  title?: string;
+  content?: string;
+  image?: File | null;
+}
 
 export interface ProductInput {
   category: string;
@@ -99,6 +104,10 @@ export interface ListParams {
   page?: number;
   limit?: number;
   keyword?: string;
+}
+
+export interface AdminNoticeListParams extends ListParams {
+  isPinned?: 0 | 1;
 }
 
 export interface AdminOrderListParams extends ListParams {
@@ -174,10 +183,26 @@ export const inquiriesApi = {
     handle<ListResponse<Inquiry>>(api.get("/api/inquiries", { params })),
   get: (id: number | string) =>
     handle<DataResponse<Inquiry>>(api.get(`/api/inquiries/${id}`)),
-  create: (data: CreateInquiryInput) =>
-    handle<DataResponse<Inquiry>>(api.post("/api/inquiries", data)),
-  update: (id: number | string, data: UpdateInquiryInput) =>
-    handle<DataResponse<Inquiry>>(api.put(`/api/inquiries/${id}`, data)),
+  create: ({ image, ...rest }: CreateInquiryInput) => {
+    const fd = new FormData();
+    (Object.entries(rest) as [string, unknown][]).forEach(([k, v]) =>
+      fd.append(k, String(v)),
+    );
+    if (image) fd.append("image", image);
+    return handle<DataResponse<Inquiry>>(
+      api.post("/api/inquiries", fd, { headers: { "Content-Type": "multipart/form-data" } }),
+    );
+  },
+  update: (id: number | string, { image, ...rest }: UpdateInquiryInput) => {
+    const fd = new FormData();
+    (Object.entries(rest) as [string, unknown][]).forEach(([k, v]) => {
+      if (v !== undefined) fd.append(k, String(v));
+    });
+    if (image) fd.append("image", image);
+    return handle<DataResponse<Inquiry>>(
+      api.put(`/api/inquiries/${id}`, fd, { headers: { "Content-Type": "multipart/form-data" } }),
+    );
+  },
   delete: (id: number | string) =>
     handle<BaseResponse>(api.delete(`/api/inquiries/${id}`)),
 };
@@ -231,7 +256,7 @@ export const adminMembersApi = {
 };
 
 export const adminNoticesApi = {
-  list: (params?: ListParams) =>
+  list: (params?: AdminNoticeListParams) =>
     handle<ListResponse<Notice>>(adminApi.get("/admin/notices", { params })),
   get: (id: number | string) =>
     handle<DataResponse<Notice>>(adminApi.get(`/admin/notices/${id}`)),

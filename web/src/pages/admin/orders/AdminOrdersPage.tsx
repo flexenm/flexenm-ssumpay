@@ -99,6 +99,7 @@ export default function AdminOrdersPage() {
         <input
           value={keyword}
           onChange={(e) => setKeyword(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && load(keyword, chargeStatus, period)}
           placeholder="주문번호 / 회원 / 플렉스티비 아이디"
           className={`${inputClass} w-[360px] max-w-full`}
         />

@@ -136,6 +136,7 @@ export interface Inquiry {
   type: InquiryType;
   title: string;
   content: string;
+  imageUrl: string | null;
   status: InquiryStatus;
   answer: string | null;
   answeredAt: string | null;

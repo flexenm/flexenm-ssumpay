@@ -1,5 +1,7 @@
 const Router = require("koa-router");
+const multer = require("@koa/multer");
 const Inquiry = require("../../entities/Inquiry");
+const { uploadInquiryImage } = require("../../utils/storage");
 
 const TITLE_MAX = 50;
 const CONTENT_MAX = 1000;
@@ -11,6 +13,8 @@ function validateInquiryText(title, content) {
     return `내용은 1~${CONTENT_MAX}자 이내로 작성해주세요.`;
   return null;
 }
+
+const upload = multer({ storage: multer.memoryStorage() });
 
 const router = new Router();
 
@@ -53,7 +57,7 @@ router.get("/:id", async (ctx) => {
   ctx.body = { code: 200, data: inquiry };
 });
 
-router.post("/", async (ctx) => {
+router.post("/", upload.fields([{ name: "image", maxCount: 1 }]), async (ctx) => {
   const { type, title, content } = ctx.request.body;
   if (type === undefined || type === null || type === "" || !title || !content) {
     ctx.status = 400;
@@ -68,11 +72,24 @@ router.post("/", async (ctx) => {
     return;
   }
 
+  const imageFile = ctx.files?.image?.[0] ?? null;
+  let imageUrl = null;
+  if (imageFile) {
+    try {
+      imageUrl = await uploadInquiryImage(imageFile.buffer);
+    } catch (e) {
+      ctx.status = e.status || 500;
+      ctx.body = { code: e.status || 500, message: e.message || "이미지 업로드에 실패했습니다." };
+      return;
+    }
+  }
+
   const inquiry = await Inquiry.query().insertAndFetch({
     memberId: ctx.state.member.id,
     type,
     title,
     content,
+    imageUrl,
     status: 0,
   });
 
@@ -80,7 +97,7 @@ router.post("/", async (ctx) => {
   ctx.body = { code: 201, data: inquiry };
 });
 
-router.put("/:id", async (ctx) => {
+router.put("/:id", upload.fields([{ name: "image", maxCount: 1 }]), async (ctx) => {
   const inquiry = await Inquiry.query()
     .findById(ctx.params.id)
     .where({ memberId: ctx.state.member.id })
@@ -114,10 +131,20 @@ router.put("/:id", async (ctx) => {
     return;
   }
 
-  const updated = await Inquiry.query().patchAndFetchById(inquiry.id, {
-    title,
-    content,
-  });
+  const patch = { title, content };
+
+  const imageFile = ctx.files?.image?.[0] ?? null;
+  if (imageFile) {
+    try {
+      patch.imageUrl = await uploadInquiryImage(imageFile.buffer);
+    } catch (e) {
+      ctx.status = e.status || 500;
+      ctx.body = { code: e.status || 500, message: e.message || "이미지 업로드에 실패했습니다." };
+      return;
+    }
+  }
+
+  const updated = await Inquiry.query().patchAndFetchById(inquiry.id, patch);
   ctx.body = { code: 200, data: updated };
 });
 
