@@ -101,6 +101,10 @@ export interface ListParams {
   keyword?: string;
 }
 
+export interface AdminNoticeListParams extends ListParams {
+  isPinned?: 0 | 1;
+}
+
 export interface AdminOrderListParams extends ListParams {
   paymentStatus?: number;
   chargeStatus?: number;
@@ -231,7 +235,7 @@ export const adminMembersApi = {
 };
 
 export const adminNoticesApi = {
-  list: (params?: ListParams) =>
+  list: (params?: AdminNoticeListParams) =>
     handle<ListResponse<Notice>>(adminApi.get("/admin/notices", { params })),
   get: (id: number | string) =>
     handle<DataResponse<Notice>>(adminApi.get(`/admin/notices/${id}`)),
