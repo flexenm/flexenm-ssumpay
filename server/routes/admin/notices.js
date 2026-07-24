@@ -4,11 +4,12 @@ const Notice = require('../../entities/Notice')
 const router = new Router()
 
 router.get('/', async ctx => {
-  const { page = 1, limit = 20, keyword } = ctx.query
+  const { page = 1, limit = 20, keyword, isPinned } = ctx.query
   const offset = (page - 1) * limit
 
   let query = Notice.query().orderBy('isPinned', 'desc').orderBy('createdAt', 'desc')
   if (keyword) query = query.where('title', 'like', `%${keyword}%`)
+  if (isPinned !== undefined && isPinned !== '') query = query.where({ isPinned })
 
   const [items, total] = await Promise.all([
     query.clone().limit(limit).offset(offset),

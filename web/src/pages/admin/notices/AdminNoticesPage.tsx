@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { adminNoticesApi } from "@/api";
+import type { AdminNoticeListParams } from "@/api";
 import type { Notice } from "@/types";
 
 type ModalType = "view" | "delete";
@@ -24,16 +25,20 @@ export default function AdminNoticesPage() {
   const [titleKeyword, setTitleKeyword] = useState("");
   const [appliedFilter, setAppliedFilter] = useState({ pinned: "", title: "" });
 
-  const load = () => {
+  // 등록·수정·삭제 후 재조회 시에도 적용 중인 필터를 유지한다.
+  const load = (pinned = appliedFilter.pinned, title = appliedFilter.title) => {
+    const params: AdminNoticeListParams = {};
+    if (pinned !== "") params.isPinned = pinned === "Y" ? 1 : 0;
+    if (title) params.keyword = title;
     setLoading(true);
     return adminNoticesApi
-      .list()
+      .list(params)
       .then((r) => setNotices(r.data))
       .catch(() => {})
       .finally(() => setLoading(false));
   };
   useEffect(() => {
-    load();
+    load("", "");
   }, []);
 
   const openView = (n: Notice) => {
@@ -57,17 +62,10 @@ export default function AdminNoticesPage() {
     }
   };
 
-  // 필독 여부 / 제목 검색은 클라이언트 측 필터.
-  const filtered = notices.filter((n) => {
-    if (appliedFilter.pinned === "Y" && !n.isPinned) return false;
-    if (appliedFilter.pinned === "N" && n.isPinned) return false;
-    if (appliedFilter.title && !n.title.includes(appliedFilter.title))
-      return false;
-    return true;
-  });
-
-  const applySearch = () =>
+  const applySearch = () => {
     setAppliedFilter({ pinned: pinnedFilter, title: titleKeyword });
+    load(pinnedFilter, titleKeyword);
+  };
 
   return (
     <div>
@@ -84,7 +82,11 @@ export default function AdminNoticesPage() {
       <div className="mb-6 flex flex-wrap gap-3">
         <select
           value={pinnedFilter}
-          onChange={(e) => setPinnedFilter(e.target.value)}
+          onChange={(e) => {
+            setPinnedFilter(e.target.value);
+            setAppliedFilter((f) => ({ ...f, pinned: e.target.value }));
+            load(e.target.value, appliedFilter.title);
+          }}
           className="h-[52px] w-[200px] rounded-lg border border-admin-border bg-admin-bg px-4 text-[15px] text-ink outline-none"
         >
           <option value="">필독 여부: 전체</option>
@@ -127,17 +129,19 @@ export default function AdminNoticesPage() {
                   불러오는 중...
                 </td>
               </tr>
-            ) : filtered.length === 0 ? (
+            ) : notices.length === 0 ? (
               <tr>
                 <td
                   colSpan={5}
                   className="p-10 text-center text-[14px] text-admin-muted"
                 >
-                  공지사항이 없습니다.
+                  {appliedFilter.pinned || appliedFilter.title
+                    ? "검색 결과가 없습니다."
+                    : "공지사항이 없습니다."}
                 </td>
               </tr>
             ) : (
-              filtered.map((n) => (
+              notices.map((n) => (
                 <tr key={n.id} className="border-b border-admin-line">
                   <td className={TD}>{n.id}</td>
                   <td

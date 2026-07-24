@@ -66,7 +66,10 @@ export default function AdminInquiriesPage() {
       <div className="mb-6 flex flex-wrap gap-3">
         <select
           value={type}
-          onChange={(e) => setType(e.target.value)}
+          onChange={(e) => {
+            setType(e.target.value);
+            load(status, e.target.value);
+          }}
           className="h-[52px] w-[200px] rounded-lg border border-admin-border bg-admin-bg px-4 text-[15px] text-ink outline-none"
         >
           <option value="">유형: 전체</option>
@@ -77,7 +80,10 @@ export default function AdminInquiriesPage() {
         </select>
         <select
           value={status}
-          onChange={(e) => setStatus(e.target.value)}
+          onChange={(e) => {
+            setStatus(e.target.value);
+            load(e.target.value, type);
+          }}
           className="h-[52px] w-[200px] rounded-lg border border-admin-border bg-admin-bg px-4 text-[15px] text-ink outline-none"
         >
           <option value="">상태: 전체</option>
