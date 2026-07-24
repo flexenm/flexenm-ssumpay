@@ -129,17 +129,19 @@ export default function AdminNoticesPage() {
                   불러오는 중...
                 </td>
               </tr>
-            ) : filtered.length === 0 ? (
+            ) : notices.length === 0 ? (
               <tr>
                 <td
                   colSpan={5}
                   className="p-10 text-center text-[14px] text-admin-muted"
                 >
-                  공지사항이 없습니다.
+                  {appliedFilter.pinned || appliedFilter.title
+                    ? "검색 결과가 없습니다."
+                    : "공지사항이 없습니다."}
                 </td>
               </tr>
             ) : (
-              filtered.map((n) => (
+              notices.map((n) => (
                 <tr key={n.id} className="border-b border-admin-line">
                   <td className={TD}>{n.id}</td>
                   <td
