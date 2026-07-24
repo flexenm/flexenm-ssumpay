@@ -168,7 +168,7 @@ router.delete("/:id", async (ctx) => {
     return;
   }
 
-  await Inquiry.query().patchById(inquiry.id, {
+  await Inquiry.query().findById(inquiry.id).patch({
     deletedAt: new Date().toISOString(),
   });
   ctx.body = { code: 200, message: "문의가 삭제되었습니다." };
