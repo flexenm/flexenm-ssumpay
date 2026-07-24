@@ -209,7 +209,7 @@ export const adminOrdersApi = {
 };
 
 export const adminProductsApi = {
-  list: (params?: { category?: string }) =>
+  list: (params?: { category?: string; keyword?: string }) =>
     handle<DataResponse<Product[]>>(
       adminApi.get("/admin/products", { params }),
     ),

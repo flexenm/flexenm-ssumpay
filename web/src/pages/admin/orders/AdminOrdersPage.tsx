@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { adminOrdersApi } from "@/api";
 import type { AdminOrderListParams } from "@/api";
 import type { Order } from "@/types";
-import DummyBadge from "@/components/ui/DummyBadge";
 
 const PAYMENT_LABEL: Record<number, string> = {
   0: "대기",
@@ -22,6 +21,14 @@ const METHOD_LABEL: Record<number, string> = {
   2: "무통장입금",
 };
 
+// "최근 N일"은 오늘을 포함한 N일. 백엔드는 createdAt >= startDate 로 비교한다.
+const startDateOf = (days: string) => {
+  const d = new Date();
+  d.setDate(d.getDate() - (Number(days) - 1));
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+};
+
 const formatDateTime = (iso: string) => {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
@@ -36,11 +43,10 @@ export default function AdminOrdersPage() {
   const [loading, setLoading] = useState(true);
   const [keyword, setKeyword] = useState("");
   const [chargeStatus, setChargeStatus] = useState("");
-  // 기간 필터는 백엔드 연동 전 클라이언트 UI 전용 (더미)
   const [period, setPeriod] = useState("7");
 
-  const load = (kw = keyword, cs = chargeStatus) => {
-    const params: AdminOrderListParams = {};
+  const load = (kw = keyword, cs = chargeStatus, pd = period) => {
+    const params: AdminOrderListParams = { startDate: startDateOf(pd) };
     if (kw) params.keyword = kw;
     if (cs !== "") params.chargeStatus = Number(cs);
     setLoading(true);
@@ -65,21 +71,24 @@ export default function AdminOrdersPage() {
       <h1 className="mb-6 text-2xl font-bold text-ink">주문·충전 조회</h1>
 
       <div className="mb-5 flex flex-wrap items-center gap-3">
-        <div className="flex items-center gap-2">
-          <select
-            value={period}
-            onChange={(e) => setPeriod(e.target.value)}
-            className={selectClass}
-          >
-            <option value="7">기간: 최근 7일</option>
-            <option value="30">기간: 최근 30일</option>
-            <option value="90">기간: 최근 90일</option>
-          </select>
-          <DummyBadge />
-        </div>
+        <select
+          value={period}
+          onChange={(e) => {
+            setPeriod(e.target.value);
+            load(keyword, chargeStatus, e.target.value);
+          }}
+          className={selectClass}
+        >
+          <option value="7">기간: 최근 7일</option>
+          <option value="30">기간: 최근 30일</option>
+          <option value="90">기간: 최근 90일</option>
+        </select>
         <select
           value={chargeStatus}
-          onChange={(e) => setChargeStatus(e.target.value)}
+          onChange={(e) => {
+            setChargeStatus(e.target.value);
+            load(keyword, e.target.value, period);
+          }}
           className={selectClass}
         >
           <option value="">충전 상태: 전체</option>
@@ -90,8 +99,8 @@ export default function AdminOrdersPage() {
         <input
           value={keyword}
           onChange={(e) => setKeyword(e.target.value)}
-          placeholder="주문번호 / 회원 / 플렉스티비 아이디 검색"
-          className={`${inputClass} min-w-[320px] flex-1`}
+          placeholder="주문번호 / 회원 / 플렉스티비 아이디"
+          className={`${inputClass} w-[360px] max-w-full`}
         />
         <button
           onClick={() => load(keyword, chargeStatus)}

@@ -28,6 +28,8 @@ export default function AdminProductsPage() {
   const [form, setForm] = useState<ProductFormState>(empty);
   const [selected, setSelected] = useState<Product | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const [keyword, setKeyword] = useState("");
+  const [appliedKeyword, setAppliedKeyword] = useState("");
   const objectUrlRef = useRef<string | null>(null);
 
   const revokePreview = () => {
@@ -37,17 +39,23 @@ export default function AdminProductsPage() {
     }
   };
 
-  const load = () => {
+  // 등록·수정·삭제 후 재조회 시에도 적용 중인 검색어를 유지한다.
+  const load = (kw = appliedKeyword) => {
     setLoading(true);
     return adminProductsApi
-      .list()
+      .list(kw ? { keyword: kw } : undefined)
       .then((r) => setProducts(r.data))
       .catch(() => {})
       .finally(() => setLoading(false));
   };
   useEffect(() => {
-    load();
+    load("");
   }, []);
+
+  const search = () => {
+    setAppliedKeyword(keyword);
+    load(keyword);
+  };
   useEffect(() => () => revokePreview(), []);
 
   const openCreate = () => {
@@ -112,8 +120,24 @@ export default function AdminProductsPage() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-ink">상품 관리</h1>
+      <h1 className="mb-6 text-2xl font-bold text-ink">상품 관리</h1>
+
+      <div className="mb-5 flex items-center justify-between gap-3">
+        <div className="flex gap-3">
+          <input
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && search()}
+            placeholder="상품명 검색"
+            className="h-[52px] w-[360px] max-w-full rounded-lg border border-admin-border bg-admin-bg px-4 text-[15px] text-ink outline-none placeholder:text-[#a6a6a6]"
+          />
+          <button
+            onClick={search}
+            className="h-[52px] w-[110px] cursor-pointer rounded-lg bg-admin text-[15px] font-medium text-white"
+          >
+            검색
+          </button>
+        </div>
         <button
           onClick={openCreate}
           className="w-[200px] h-[52px] bg-admin text-white rounded-lg cursor-pointer text-[15px] font-medium"
@@ -142,7 +166,7 @@ export default function AdminProductsPage() {
           ) : products.length === 0 ? (
             <tr>
               <td colSpan={6} className="p-10 text-center text-[14px] text-admin-muted">
-                상품이 없습니다.
+                {appliedKeyword ? "검색 결과가 없습니다." : "상품이 없습니다."}
               </td>
             </tr>
           ) : (

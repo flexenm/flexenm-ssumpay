@@ -1,6 +1,17 @@
 const Router = require("koa-router");
 const Inquiry = require("../../entities/Inquiry");
 
+const TITLE_MAX = 50;
+const CONTENT_MAX = 1000;
+
+function validateInquiryText(title, content) {
+  if (!title || title.length > TITLE_MAX)
+    return `제목은 1~${TITLE_MAX}자 이내로 작성해주세요.`;
+  if (!content || content.length > CONTENT_MAX)
+    return `내용은 1~${CONTENT_MAX}자 이내로 작성해주세요.`;
+  return null;
+}
+
 const router = new Router();
 
 router.get("/", async (ctx) => {
@@ -44,15 +55,16 @@ router.get("/:id", async (ctx) => {
 
 router.post("/", async (ctx) => {
   const { type, title, content } = ctx.request.body;
-  if (
-    type === undefined ||
-    type === null ||
-    type === "" ||
-    !title ||
-    !content
-  ) {
+  if (type === undefined || type === null || type === "" || !title || !content) {
     ctx.status = 400;
     ctx.body = { code: 400, message: "문의 유형, 제목, 내용을 입력해주세요." };
+    return;
+  }
+
+  const textError = validateInquiryText(title, content);
+  if (textError) {
+    ctx.status = 400;
+    ctx.body = { code: 400, message: textError };
     return;
   }
 
@@ -89,6 +101,19 @@ router.put("/:id", async (ctx) => {
   }
 
   const { title, content } = ctx.request.body;
+  if (!title || !content) {
+    ctx.status = 400;
+    ctx.body = { code: 400, message: "제목과 내용을 입력해주세요." };
+    return;
+  }
+
+  const textError = validateInquiryText(title, content);
+  if (textError) {
+    ctx.status = 400;
+    ctx.body = { code: 400, message: textError };
+    return;
+  }
+
   const updated = await Inquiry.query().patchAndFetchById(inquiry.id, {
     title,
     content,

@@ -5,6 +5,9 @@ import { ChevronDown } from "lucide-react";
 import { inquiriesApi } from "@/api";
 import type { CreateInquiryInput } from "@/api";
 
+const TITLE_MAX = 50;
+const CONTENT_MAX = 1000;
+
 export default function InquiryFormPage() {
   const navigate = useNavigate();
   const [form, setForm] = useState<{
@@ -19,6 +22,14 @@ export default function InquiryFormPage() {
     e.preventDefault();
     if (!typeSelected || !form.title || !form.content) {
       setError("모든 항목을 입력해주세요.");
+      return;
+    }
+    if (form.title.length > TITLE_MAX) {
+      setError(`제목은 ${TITLE_MAX}자 이내로 입력해주세요.`);
+      return;
+    }
+    if (form.content.length > CONTENT_MAX) {
+      setError(`내용은 ${CONTENT_MAX}자 이내로 입력해주세요.`);
       return;
     }
     try {
@@ -78,9 +89,13 @@ export default function InquiryFormPage() {
           <input
             value={form.title}
             onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))}
-            placeholder="제목을 입력해주세요"
+            placeholder={`제목을 입력해주세요 (최대 ${TITLE_MAX}자)`}
+            maxLength={TITLE_MAX}
             className={`${fieldClass} w-full`}
           />
+          <p className="mt-1 text-right text-xs text-ink/40">
+            {form.title.length}/{TITLE_MAX}
+          </p>
         </div>
 
         <div>
@@ -91,8 +106,12 @@ export default function InquiryFormPage() {
             value={form.content}
             onChange={(e) => setForm((p) => ({ ...p, content: e.target.value }))}
             placeholder="문의 내용을 입력해 주세요.&#10;충전 관련 문의 시 주문번호와 플렉스티비 아이디를 함께 적어주시면 빠른 처리가 가능합니다."
+            maxLength={CONTENT_MAX}
             className={`${fieldClass} min-h-[300px] w-full resize-y leading-[1.7]`}
           />
+          <p className="mt-1 text-right text-xs text-ink/40">
+            {form.content.length}/{CONTENT_MAX}
+          </p>
         </div>
 
         {error && <p className="text-[13px] text-red-500">{error}</p>}
