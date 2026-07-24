@@ -1,6 +1,7 @@
 import { Outlet, Link, useNavigate } from "react-router-dom";
 import { getAccessToken, removeAccessToken } from "@/utils/cookie";
 import { removeMe } from "@/hooks/useMe";
+import logo from "@/assets/img/logo.png";
 
 export default function UserLayout() {
   const navigate = useNavigate();
@@ -16,8 +17,8 @@ export default function UserLayout() {
   return (
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-[#e7e7e7] bg-white/80 px-10 backdrop-blur-md">
-        <Link to="/" className="text-2xl font-bold text-primary">
-          ssumpay
+        <Link to="/">
+          <img src={logo} alt="ssumpay" className="h-[29px]" />
         </Link>
         <nav className="flex items-center gap-7 text-[15px] text-ink">
           <Link to="/customer" className="hover:text-primary">
