@@ -166,6 +166,16 @@ export default function InquiryDetailPage() {
         </div>
       )}
 
+      {!editing && inquiry.imageUrl && (
+        <div className="mt-6">
+          <img
+            src={inquiry.imageUrl}
+            alt="첨부 이미지"
+            className="max-h-[400px] max-w-full rounded-lg border border-ink/10 object-contain"
+          />
+        </div>
+      )}
+
       {!editing && <hr className="mt-8 border-t border-line" />}
 
       {editing && (
