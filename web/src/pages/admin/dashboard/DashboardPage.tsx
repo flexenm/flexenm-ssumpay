@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { ChevronRight } from "lucide-react";
 import { adminDashboardApi, adminOrdersApi } from "@/api";
 import type { DashboardSummary, Order } from "@/types";
 import DummyBadge from "@/components/ui/DummyBadge";
@@ -68,13 +69,33 @@ export default function DashboardPage() {
           <div
             key={c.label}
             onClick={c.to ? () => navigate(c.to) : undefined}
-            className={`flex h-[140px] flex-col justify-center rounded-xl border border-admin-border bg-white px-6 ${
-              c.to ? "cursor-pointer transition-colors hover:bg-admin-bg" : ""
+            role={c.to ? "button" : undefined}
+            tabIndex={c.to ? 0 : undefined}
+            onKeyDown={
+              c.to
+                ? (e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      navigate(c.to);
+                    }
+                  }
+                : undefined
+            }
+            className={`group flex h-[140px] flex-col justify-center rounded-xl border border-admin-border bg-white px-6 ${
+              c.to
+                ? "cursor-pointer transition-colors hover:border-admin hover:bg-admin-bg"
+                : ""
             }`}
           >
             <p className="mb-2 flex items-center gap-2 text-[14px] text-admin-muted">
               {c.label}
               {c.dummy && <DummyBadge />}
+              {c.to && (
+                <ChevronRight
+                  size={16}
+                  className="ml-auto text-admin-muted transition-transform group-hover:translate-x-0.5"
+                />
+              )}
             </p>
             <p className="text-[28px] font-bold text-admin">{c.value}</p>
           </div>

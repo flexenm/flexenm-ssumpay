@@ -82,6 +82,7 @@ export const productCategories: ProductCategoryConfig[] = [
     desc: "다양한 웹툰 플랫폼 관련 상품을 확인해보세요",
     Icon: BookOpen,
     banner: bannerWebtoon,
+    comingSoon: true,
     subs: [{ slug: "toon", label: "투네이션", subcategory: "toon" }],
   },
   {
@@ -91,6 +92,7 @@ export const productCategories: ProductCategoryConfig[] = [
     desc: "다양한 상품권 관련 상품을 확인해보세요",
     Icon: Gift,
     banner: bannerGiftcard,
+    comingSoon: true,
     subs: [{ slug: "culture", label: "컬처랜드", subcategory: "culture" }],
   },
 ];

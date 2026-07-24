@@ -89,7 +89,7 @@ export default function AdminInquiriesPage() {
           onChange={(e) => setKeyword(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && search()}
           placeholder="아이디"
-          className="h-[52px] w-[420px] max-w-full rounded-lg border border-admin-border bg-admin-bg px-4 text-[15px] text-ink outline-none placeholder:text-[#a6a6a6]"
+          className="h-[52px] w-[360px] max-w-full rounded-lg border border-admin-border bg-admin-bg px-4 text-[15px] text-ink outline-none placeholder:text-[#a6a6a6]"
         />
         <button
           onClick={search}

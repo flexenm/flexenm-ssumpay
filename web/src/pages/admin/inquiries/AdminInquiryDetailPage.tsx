@@ -68,14 +68,36 @@ export default function AdminInquiryDetailPage() {
         </button>
       </div>
 
-      <p className="mb-3 text-[14px] text-admin-muted">
-        {`유형: ${typeLabel[inquiry.type] ?? inquiry.type} | 작성자: ${inquiry.member?.username ?? "-"} | ${fmtDateTime(inquiry.createdAt)} | 상태: ${answered ? "답변 완료" : "답변 대기"}`}
-      </p>
+      <div className="mb-8 rounded-lg border border-admin-line bg-white px-6 py-5">
+        <div className="mb-4 flex items-start justify-between gap-4">
+          <h2 className="text-[20px] font-bold text-admin">{inquiry.title}</h2>
+          <span
+            className={`shrink-0 rounded-full px-3 py-1 text-[13px] font-medium ${
+              answered
+                ? "border border-admin-border text-admin-muted"
+                : "bg-admin text-white"
+            }`}
+          >
+            {answered ? "답변 완료" : "답변 대기"}
+          </span>
+        </div>
 
-      <h2 className="mb-5 text-[20px] font-bold text-admin">{inquiry.title}</h2>
+        <dl className="flex flex-wrap items-center gap-x-8 gap-y-2 text-[14px]">
+          {[
+            { label: "유형", value: typeLabel[inquiry.type] ?? inquiry.type },
+            { label: "작성자", value: inquiry.member?.username ?? "-" },
+            { label: "등록일", value: fmtDateTime(inquiry.createdAt) },
+          ].map((m) => (
+            <div key={m.label} className="flex items-center gap-2">
+              <dt className="text-admin-muted">{m.label}</dt>
+              <dd className="font-medium text-ink">{m.value}</dd>
+            </div>
+          ))}
+        </dl>
 
-      <div className="mb-8 min-h-[200px] whitespace-pre-wrap rounded-lg bg-admin-bg p-6 text-[15px] leading-relaxed text-ink">
-        {inquiry.content}
+        <div className="mt-5 min-h-[200px] whitespace-pre-wrap border-t border-admin-line pt-5 text-[15px] leading-relaxed text-ink">
+          {inquiry.content}
+        </div>
       </div>
 
       <h3 className="mb-4 text-[18px] font-bold text-admin">답변 작성</h3>
