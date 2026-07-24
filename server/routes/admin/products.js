@@ -4,12 +4,13 @@ const Product = require('../../entities/Product')
 const router = new Router()
 
 router.get('/', async ctx => {
-  const { category, subcategory, isActive } = ctx.query
+  const { category, subcategory, isActive, keyword } = ctx.query
 
   let query = Product.query().whereNull('deletedAt').orderBy('sort').orderBy('id')
   if (category) query = query.where({ category })
   if (subcategory) query = query.where({ subcategory })
   if (isActive !== undefined) query = query.where({ isActive })
+  if (keyword) query = query.where('name', 'like', `%${keyword}%`)
 
   ctx.body = { code: 200, data: await query }
 })
