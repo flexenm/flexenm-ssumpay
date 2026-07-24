@@ -14,8 +14,8 @@ function createS3() {
   return new AWS.S3({
     endpoint,
     region,
-    accessKeyId: process.env.NCP_ACCESS_KEY,
-    secretAccessKey: process.env.NCP_SECRET_KEY,
+    accessKeyId: process.env.NCP_LIVE_ACCESS_KEY,
+    secretAccessKey: process.env.NCP_LIVE_SECRET_KEY,
   })
 }
 

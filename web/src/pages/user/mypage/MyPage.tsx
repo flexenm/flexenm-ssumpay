@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import type { FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ChevronRight, Lock, PenLine } from "lucide-react";
 import { mypageApi, ordersApi, inquiriesApi } from "@/api";
 import type { Member, Order, Inquiry } from "@/types";
@@ -16,7 +16,11 @@ const breadcrumbs = ["내정보", "구매내역", "1:1문의내역"];
 const PAGE_SIZE = 10;
 
 export default function MyPage() {
-  const [tab, setTab] = useState(0);
+  const [searchParams] = useSearchParams();
+  const [tab, setTab] = useState(() => {
+    const t = Number(searchParams.get("tab"));
+    return t >= 0 && t <= 2 ? t : 0;
+  });
   const [info, setInfo] = useState<Member | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
