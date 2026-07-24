@@ -90,8 +90,8 @@ export default function AdminOrdersPage() {
         <input
           value={keyword}
           onChange={(e) => setKeyword(e.target.value)}
-          placeholder="주문번호 / 회원 / 플렉스티비 아이디 검색"
-          className={`${inputClass} min-w-[320px] flex-1`}
+          placeholder="주문번호 / 회원 / 플렉스티비 아이디"
+          className={`${inputClass} w-[360px] max-w-full`}
         />
         <button
           onClick={() => load(keyword, chargeStatus)}
