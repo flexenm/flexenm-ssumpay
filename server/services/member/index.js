@@ -82,6 +82,11 @@ async function updateStatus(id, status) {
     throw new UserError('올바른 상태값을 입력해주세요.', 400)
   }
 
+  const member = await MembersRepo.findById(id)
+  if (!member) {
+    throw new UserError('회원을 찾을 수 없습니다.', 404)
+  }
+
   await MembersRepo.patchStatus(id, status)
   return Number(status) === MEMBER_STATUS.BLOCKED ? '회원이 차단되었습니다.' : '차단이 해제되었습니다.'
 }

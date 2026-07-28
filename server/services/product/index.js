@@ -44,6 +44,11 @@ async function updateProduct(id, { category, subcategory, name, price, lexAmount
 }
 
 async function deleteProduct(id) {
+  const product = await ProductsRepo.findById(id)
+  if (!product) {
+    throw new UserError('상품을 찾을 수 없습니다.', 404)
+  }
+
   await ProductsRepo.softDeleteById(id)
 }
 

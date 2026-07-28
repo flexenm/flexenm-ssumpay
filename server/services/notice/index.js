@@ -50,6 +50,11 @@ async function updateNotice(id, { title, content, isPinned, isActive }) {
 }
 
 async function deleteNotice(id) {
+  const notice = await NoticesRepo.findById(id)
+  if (!notice) {
+    throw new UserError('공지사항을 찾을 수 없습니다.', 404)
+  }
+
   await NoticesRepo.softDeleteById(id)
 }
 
