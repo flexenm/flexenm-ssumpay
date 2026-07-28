@@ -1,55 +1,26 @@
 const Router = require('koa-router')
-const Product = require('../../entities/Product')
-const UserError = require('../../utils/UserError')
+const productService = require('../../services/product')
 
 const router = new Router()
 
 router.get('/', async ctx => {
   const { category, subcategory, isActive, keyword } = ctx.query
-
-  let query = Product.query().whereNull('deletedAt').orderBy('sort').orderBy('id')
-  if (category) query = query.where({ category })
-  if (subcategory) query = query.where({ subcategory })
-  if (isActive !== undefined) query = query.where({ isActive })
-  if (keyword) query = query.where('name', 'like', `%${keyword}%`)
-
-  ctx.body = { code: 200, data: await query }
+  ctx.body = { code: 200, data: await productService.listForAdmin({ category, subcategory, isActive, keyword }) }
 })
 
 router.post('/', async ctx => {
-  const { category, subcategory, name, price, lexAmount, coinAmount, sort } = ctx.request.body
-  if (!category || !subcategory || !name || price === undefined) {
-    throw new UserError('필수 항목을 입력해주세요.', 400)
-  }
-
-  const product = await Product.query().insertAndFetch({
-    category, subcategory, name, price,
-    lexAmount: lexAmount || 0,
-    coinAmount: coinAmount || 0,
-    sort: sort || 0,
-    isActive: 1
-  })
-
+  const product = await productService.createProduct(ctx.request.body)
   ctx.status = 201
   ctx.body = { code: 201, data: product }
 })
 
 router.put('/:id', async ctx => {
-  const product = await Product.query().findById(ctx.params.id)
-  if (!product) {
-    throw new UserError('상품을 찾을 수 없습니다.', 404)
-  }
-
-  const { category, subcategory, name, price, lexAmount, coinAmount, isActive, sort } = ctx.request.body
-  const updated = await Product.query().patchAndFetchById(ctx.params.id, {
-    category, subcategory, name, price, lexAmount, coinAmount, isActive, sort
-  })
-
+  const updated = await productService.updateProduct(ctx.params.id, ctx.request.body)
   ctx.body = { code: 200, data: updated }
 })
 
 router.delete('/:id', async ctx => {
-  await Product.query().patchById(ctx.params.id, { deletedAt: new Date().toISOString() })
+  await productService.deleteProduct(ctx.params.id)
   ctx.body = { code: 200, message: '상품이 삭제되었습니다.' }
 })
 

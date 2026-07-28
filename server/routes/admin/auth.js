@@ -1,41 +1,11 @@
 const Router = require("koa-router");
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
-const ms = require("ms");
-const Admin = require("../../entities/Admin");
-const UserError = require("../../utils/UserError");
+const adminService = require("../../services/admin");
 
 const router = new Router();
 
 router.post("/login", async (ctx) => {
-  const { username, password } = ctx.request.body;
-  if (!username || !password) {
-    throw new UserError("아이디와 비밀번호를 입력해주세요.", 400);
-  }
-
-  const admin = await Admin.query().findOne({ username, isActive: 1 });
-  if (!admin) {
-    throw new UserError("아이디 또는 비밀번호가 올바르지 않습니다.", 401);
-  }
-
-  const isValid = await bcrypt.compare(password, admin.password);
-  if (!isValid) {
-    throw new UserError("아이디 또는 비밀번호가 올바르지 않습니다.", 401);
-  }
-
-  const adminJwtExpiresIn = "8h";
-  const token = jwt.sign(
-    { id: admin.id, username: admin.username, name: admin.name },
-    process.env.ADMIN_JWT_SECRET,
-    { expiresIn: adminJwtExpiresIn },
-  );
-
-  ctx.body = {
-    code: 200,
-    token,
-    expiresIn: Math.floor(ms(adminJwtExpiresIn) / 1000),
-    admin: { id: admin.id, username: admin.username, name: admin.name },
-  };
+  const result = await adminService.login(ctx.request.body);
+  ctx.body = { code: 200, ...result };
 });
 
 module.exports = router;
