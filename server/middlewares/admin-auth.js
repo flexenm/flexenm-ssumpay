@@ -21,6 +21,6 @@ module.exports = async function adminAuth(ctx, next) {
     throw new UserError('인증이 필요합니다.', 401)
   }
 
-  ctx.state.admin = admin
+  ctx.state.admin = { id: admin.id, isActive: admin.isActive }
   await next()
 }
