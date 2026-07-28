@@ -42,6 +42,7 @@ router.get('/:id', async ctx => {
 
 router.patch('/:id/charge-status', async ctx => {
   const { chargeStatus, memo } = ctx.request.body
+  const { CHARGE_STATUS, PAYMENT_STATUS } = require('../../const')
   const order = await Order.query().findById(ctx.params.id)
   if (!order) {
     ctx.status = 404
@@ -55,6 +56,19 @@ router.patch('/:id/charge-status', async ctx => {
     return
   }
 
+  if ([CHARGE_STATUS.DONE, CHARGE_STATUS.REFUNDED].includes(Number(chargeStatus))) {
+    if (order.paymentStatus !== PAYMENT_STATUS.DONE) {
+      ctx.status = 400
+      ctx.body = { code: 400, message: '결제가 완료된 주문만 충전 상태를 변경할 수 있습니다.' }
+      return
+    }
+  }
+
+  if(order.chargeStatus === CHARGE_STATUS.REFUNDED){
+    ctx.status = 400
+    ctx.body = {code : 400, message : '환불 완료된 주문은 상태를 변경할 수 없습니다.'}
+    return
+  }
   const updates = { chargeStatus: Number(chargeStatus) }
   if (Number(chargeStatus) === 1) updates.chargedAt = db.raw('NOW()')
   if (memo !== undefined) updates.memo = memo
