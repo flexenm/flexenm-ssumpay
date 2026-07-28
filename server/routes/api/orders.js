@@ -15,7 +15,7 @@ async function verifyFlexAccount(loginId, password) {
       loginKeep: false,
       saveId: false,
       device: "PCWEB",
-    });
+    },{timeout :5000});
     return res.status === 200 && !!res.data?.id;
   } catch (e) {
     const status = e.response?.status;
