@@ -1,0 +1,12 @@
+# CodeDeploy(ECS) appspec 최소 템플릿.
+# TaskDefinition/ContainerName/Port는 taskdef.json과 일치해야 합니다.
+
+version: 0.0
+Resources:
+  - TargetService:
+      Type: AWS::ECS::Service
+      Properties:
+        TaskDefinition: "TODO_TASK_DEFINITION_ARN" # CodeDeploy가 배포 시 실제 값으로 치환
+        LoadBalancerInfo:
+          ContainerName: "ssumpay-server"
+          ContainerPort: 3000

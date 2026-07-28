@@ -1,0 +1,138 @@
+const axios = require('axios')
+const db = require('../../db')
+const OrdersRepo = require('../../repositories/Orders')
+const ProductsRepo = require('../../repositories/Products')
+const UserError = require('../../utils/UserError')
+const { PAYMENT_METHOD, CHARGE_STATUS, PAYMENT_STATUS } = require('../../const')
+
+const FLEXTV_API_URL = process.env.FLEXTV_API_URL
+
+async function verifyFlexAccount(loginId, password) {
+  if (!FLEXTV_API_URL) throw Object.assign(new Error('FlexTV 서비스 연결 설정이 없습니다.'), { status: 503 })
+  try {
+    // FlexTV 웹이 실제로 쓰는 signin 엔드포인트. 성공 시 200 + 회원정보, 실패 시 401.
+    const res = await axios.post(`${FLEXTV_API_URL}/v2/api/auth/signin`, {
+      loginId,
+      password,
+      loginKeep: false,
+      saveId: false,
+      device: 'PCWEB'
+    }, { timeout: 5000 })
+    return res.status === 200 && !!res.data?.id
+  } catch (e) {
+    const status = e.response?.status
+    if (status === 400 || status === 401) return false
+    console.error('[verifyFlexAccount] FlexTV signin failed:', status, e.response?.data ?? e.message)
+    throw Object.assign(new Error('FlexTV 계정 확인 중 오류가 발생했습니다.'), { status: 502 })
+  }
+}
+
+function generateOrderNo() {
+  const now = new Date()
+  const pad = (n) => String(n).padStart(2, '0')
+  const datePart = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`
+  return `SP${datePart}${Math.floor(Math.random() * 9000) + 1000}`
+}
+
+async function createOrder({ memberId, productId, flexUsername, flexPassword, paymentMethod = 1, ipAddr }) {
+  if (!Object.values(PAYMENT_METHOD).includes(paymentMethod)) {
+    throw new UserError('올바르지 않은 결제 수단입니다.', 400)
+  }
+
+  if (!productId || !flexUsername || !flexPassword) {
+    throw new UserError('상품, FlexTV 아이디, 비밀번호를 입력해주세요.', 400)
+  }
+
+  const isValid = await verifyFlexAccount(flexUsername, flexPassword)
+  if (!isValid) {
+    throw new UserError('FlexTV 아이디 또는 비밀번호가 올바르지 않습니다.', 401)
+  }
+
+  const product = await ProductsRepo.findActiveById(productId)
+  if (!product) {
+    throw new UserError('상품을 찾을 수 없습니다.', 404)
+  }
+
+  return OrdersRepo.insert({
+    orderNo: generateOrderNo(),
+    memberId,
+    productId: product.id,
+    productName: product.name,
+    price: product.price,
+    flexUsername,
+    paymentMethod,
+    paymentStatus: 0,
+    chargeStatus: 0,
+    ipAddr
+  })
+}
+
+async function listMyOrders(memberId, { page, limit }) {
+  return OrdersRepo.listByMember(memberId, { page, limit })
+}
+
+async function getByOrderNoForMember(orderNo, memberId) {
+  const order = await OrdersRepo.findByOrderNoForMember(orderNo, memberId)
+  if (!order) {
+    throw new UserError('주문을 찾을 수 없습니다.', 404)
+  }
+  return order
+}
+
+async function searchForAdmin(filters) {
+  return OrdersRepo.searchForAdmin(filters)
+}
+
+async function getByIdForAdmin(id) {
+  const order = await OrdersRepo.findByIdWithMemberAndProduct(id)
+  if (!order) {
+    throw new UserError('주문을 찾을 수 없습니다.', 404)
+  }
+  return order
+}
+
+async function updateChargeStatus(id, { chargeStatus, memo }) {
+  const order = await OrdersRepo.findById(id)
+  if (!order) {
+    throw new UserError('주문을 찾을 수 없습니다.', 404)
+  }
+
+  if (![0, 1, 2].includes(Number(chargeStatus))) {
+    throw new UserError('유효하지 않은 충전 상태입니다.', 400)
+  }
+
+  if ([CHARGE_STATUS.DONE, CHARGE_STATUS.REFUNDED].includes(Number(chargeStatus))) {
+    if (order.paymentStatus !== PAYMENT_STATUS.DONE) {
+      throw new UserError('결제가 완료된 주문만 충전 상태를 변경할 수 있습니다.', 400)
+    }
+  }
+
+  if (order.chargeStatus === CHARGE_STATUS.REFUNDED) {
+    throw new UserError('환불 완료된 주문은 상태를 변경할 수 없습니다.', 400)
+  }
+
+  const updates = { chargeStatus: Number(chargeStatus) }
+  if (Number(chargeStatus) === 1) updates.chargedAt = db.raw('NOW()')
+  if (memo !== undefined) updates.memo = memo
+
+  await OrdersRepo.patchChargeStatus(id, updates)
+}
+
+async function updateMemo(id, memo) {
+  const order = await OrdersRepo.findById(id)
+  if (!order) {
+    throw new UserError('주문을 찾을 수 없습니다.', 404)
+  }
+
+  await OrdersRepo.patchMemo(id, memo)
+}
+
+module.exports = {
+  createOrder,
+  listMyOrders,
+  getByOrderNoForMember,
+  searchForAdmin,
+  getByIdForAdmin,
+  updateChargeStatus,
+  updateMemo
+}

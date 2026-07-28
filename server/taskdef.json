@@ -1,0 +1,41 @@
+{
+  "family": "def_prod_ssumpay_server",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "TODO_ECS_TASK_EXECUTION_ROLE_ARN",
+  "taskRoleArn": "TODO_ECS_TASK_ROLE_ARN",
+  "containerDefinitions": [
+    {
+      "name": "ssumpay-server",
+      "image": "TODO_ECR_REPOSITORY_URI:latest",
+      "portMappings": [
+        {
+          "containerPort": 3000,
+          "protocol": "tcp"
+        }
+      ],
+      "essential": true,
+      "environment": [
+        { "name": "PORT", "value": "3000" }
+      ],
+      "secrets": [
+        { "name": "DB_HOST", "valueFrom": "TODO_SECRETS_MANAGER_ARN:DB_HOST::" },
+        { "name": "DB_USER", "valueFrom": "TODO_SECRETS_MANAGER_ARN:DB_USER::" },
+        { "name": "DB_PASSWORD", "valueFrom": "TODO_SECRETS_MANAGER_ARN:DB_PASSWORD::" },
+        { "name": "DB_NAME", "valueFrom": "TODO_SECRETS_MANAGER_ARN:DB_NAME::" },
+        { "name": "JWT_SECRET", "valueFrom": "TODO_SECRETS_MANAGER_ARN:JWT_SECRET::" },
+        { "name": "ADMIN_JWT_SECRET", "valueFrom": "TODO_SECRETS_MANAGER_ARN:ADMIN_JWT_SECRET::" }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/ssumpay-server",
+          "awslogs-region": "TODO_AWS_REGION",
+          "awslogs-stream-prefix": "ssumpay-server"
+        }
+      }
+    }
+  ]
+}

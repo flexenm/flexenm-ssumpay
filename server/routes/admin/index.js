@@ -1,5 +1,6 @@
 const Router = require("koa-router");
 const adminAuth = require("../../middlewares/admin-auth");
+const ipWhitelist = require("../../middlewares/ip-whitelist");
 
 const authRouter = require("./auth");
 const myRouter = require("./my");
@@ -13,8 +14,8 @@ const inquiriesRouter = require("./inquiries");
 const router = new Router({ prefix: "/admin" });
 
 // 로그인은 인증 없이
+router.use(ipWhitelist); 
 router.use("/auth", authRouter.routes());
-
 // 이하 모든 라우트는 관리자 JWT 필요
 router.use(adminAuth);
 router.use("/my", myRouter.routes());

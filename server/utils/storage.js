@@ -1,21 +1,24 @@
-const AWS = require('aws-sdk')
+const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3')
 const FileType = require('file-type')
 const { v4: uuidv4 } = require('uuid')
 
 const ALLOWED_MIME = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
 const MAX_SIZE = 5 * 1024 * 1024 // 5MB
 
-const endpoint = new AWS.Endpoint('https://kr.object.ncloudstorage.com')
+const endpoint = 'https://kr.object.ncloudstorage.com'
 const region = 'kr-standard'
 const BUCKET = process.env.NCP_BUCKET || 'ssumpay-images'
 const CDN_DOMAIN = process.env.NCP_CDN_DOMAIN || `https://kr.object.ncloudstorage.com/${BUCKET}`
 
 function createS3() {
-  return new AWS.S3({
+  return new S3Client({
     endpoint,
     region,
-    accessKeyId: process.env.NCP_LIVE_ACCESS_KEY,
-    secretAccessKey: process.env.NCP_LIVE_SECRET_KEY,
+    credentials: {
+      accessKeyId: process.env.NCP_LIVE_ACCESS_KEY,
+      secretAccessKey: process.env.NCP_LIVE_SECRET_KEY,
+    },
+    requestChecksumCalculation: 'WHEN_REQUIRED',
   })
 }
 
@@ -33,15 +36,15 @@ async function uploadInquiryImage(buffer) {
   const key = `inquiry/${uuidv4()}.${ext}`
 
   const S3 = createS3()
-  await S3.putObject({
+  await S3.send(new PutObjectCommand({
     Bucket: BUCKET,
     Key: key,
     ACL: 'public-read',
     Body: buffer,
     ContentType: type.mime,
-  }).promise()
+  }))
 
   return `${CDN_DOMAIN}/${key}`
 }
 
-module.exports = { uploadInquiryImage }
+module.exports = { uploadInquiryImage, ALLOWED_MIME, MAX_SIZE }

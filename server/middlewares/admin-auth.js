@@ -1,19 +1,26 @@
 const jwt = require('jsonwebtoken')
+const Admin = require('../entities/Admin')
+const UserError = require('../utils/UserError')
 
 module.exports = async function adminAuth(ctx, next) {
   const token = ctx.headers.authorization?.replace('Bearer ', '')
   if (!token) {
-    ctx.status = 401
-    ctx.body = { code: 401, message: '인증이 필요합니다.' }
-    return
+    throw new UserError('인증이 필요합니다.', 401)
   }
 
+  let decoded
   try {
-    const decoded = jwt.verify(token, process.env.ADMIN_JWT_SECRET)
-    ctx.state.admin = decoded
-    await next()
+    decoded = jwt.verify(token, process.env.ADMIN_JWT_SECRET)
   } catch (e) {
-    ctx.status = 401
-    ctx.body = { code: 401, message: '유효하지 않은 토큰입니다.' }
+    throw new UserError('유효하지 않은 토큰입니다.', 401)
   }
+
+  const admin = await Admin.query().findById(decoded.id).select('id', 'isActive')
+
+  if (!admin || !admin.isActive) {
+    throw new UserError('인증이 필요합니다.', 401)
+  }
+
+  ctx.state.admin = { id: admin.id, isActive: admin.isActive }
+  await next()
 }

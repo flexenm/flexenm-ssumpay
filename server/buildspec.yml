@@ -1,0 +1,37 @@
+version: 0.2
+
+# 최소 스캐폴드 템플릿입니다. 실제 AWS 계정/ECR/ECS 리소스가 준비되기 전까지는
+# 아래 TODO 값들을 채워야 파이프라인이 동작합니다.
+
+env:
+  variables:
+    # TODO: 실제 ECR 리포지토리 URI로 교체 (예: 123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/ssumpay-server)
+    REPOSITORY_URI: "TODO_ECR_REPOSITORY_URI"
+    CONTAINER_NAME: "ssumpay-server"
+
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $REPOSITORY_URI
+      - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+      - IMAGE_TAG=${COMMIT_HASH:-latest}
+  build:
+    commands:
+      - echo Build started on `date`
+      - echo Building the Docker image...
+      - docker build -t $REPOSITORY_URI:$IMAGE_TAG -f server/Dockerfile server
+      - docker tag $REPOSITORY_URI:$IMAGE_TAG $REPOSITORY_URI:latest
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      - echo Pushing the Docker image...
+      - docker push $REPOSITORY_URI:$IMAGE_TAG
+      - docker push $REPOSITORY_URI:latest
+      - printf '[{"name":"%s","imageUri":"%s"}]' $CONTAINER_NAME $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
+
+artifacts:
+  files:
+    - imagedefinitions.json
+    - server/appspec.yml
+    - server/taskdef.json
