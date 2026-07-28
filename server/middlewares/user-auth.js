@@ -19,15 +19,7 @@ module.exports = async function userAuth(ctx, next) {
     return
   }
 
-
-  let member
-  try{
-    member = await Member.query().findById(decoded.id).select('id', 'status')
-  }catch(e){
-    ctx.status = 500
-    ctx.body = { code: 500, message: '서버 오류가 발생했습니다.' }
-    return
-  }
+  const member = await Member.query().findById(decoded.id).select('id', 'status')
 
   if (!member || member.status === MEMBER_STATUS.BLOCKED) {
     ctx.status = 401

@@ -31,9 +31,9 @@ router.post("/", async (ctx) => {
   const { productId, flexUsername, flexPassword, paymentMethod = 1 } = ctx.request.body;
   const memberId = ctx.state.member.id;
 
-  if(!Object.values(PAYMENT_METHOD).includes(paymentMethod)){
+  if (!Object.values(PAYMENT_METHOD).includes(paymentMethod)) {
     ctx.status = 400;
-    ctx.body ={ code : 400, message :"올바르지 않은 결제 수단입니다."};
+    ctx.body = { code: 400, message: "올바르지 않은 결제 수단입니다." };
     return;
   }
 
@@ -55,19 +55,7 @@ router.post("/", async (ctx) => {
     return;
   }
 
-  let product;
-  try{
-    product = await Product.query()
-    .findById(productId)
-    .where({ isActive: 1 });
-  }catch(e){
-    ctx.status=500;
-    ctx.body ={
-      code:500, message :"서버 오류가 발생했습니다."
-    };
-    return;
-  }
-
+  const product = await Product.query().findById(productId).where({ isActive: 1 });
   if (!product) {
     ctx.status = 404;
     ctx.body = { code: 404, message: "상품을 찾을 수 없습니다." };
@@ -79,25 +67,18 @@ router.post("/", async (ctx) => {
   const datePart = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
   const orderNo = `SP${datePart}${Math.floor(Math.random() * 9000) + 1000}`;
 
-  let order;
-  try{
-    order = await Order.query().insertAndFetch({
-      orderNo,
-      memberId,
-      productId: product.id,
-      productName: product.name,
-      price: product.price,
-      flexUsername,
-      paymentMethod,
-      paymentStatus: 0,
-      chargeStatus: 0,
-      ipAddr: ctx.ip,
-    });
-  }catch(e){
-    ctx.status = 500;
-    ctx.body = { code: 500, message: "서버 오류가 발생했습니다." };
-    return;
-  }
+  const order = await Order.query().insertAndFetch({
+    orderNo,
+    memberId,
+    productId: product.id,
+    productName: product.name,
+    price: product.price,
+    flexUsername,
+    paymentMethod,
+    paymentStatus: 0,
+    chargeStatus: 0,
+    ipAddr: ctx.ip,
+  });
 
   ctx.status = 201;
   ctx.body = {
@@ -105,27 +86,19 @@ router.post("/", async (ctx) => {
     data: { orderNo: order.orderNo, id: order.id, price: order.price },
   };
 });
-
 router.get("/my", async (ctx) => {
   const { page = 1, limit = 10 } = ctx.query;
   const offset = (page - 1) * limit;
   const memberId = ctx.state.member.id;
 
-  let items, total;
-  try {
-    [items, total] = await Promise.all([
-      Order.query()
-        .where({ memberId })
-        .orderBy("createdAt", "desc")
-        .limit(limit)
-        .offset(offset),
-      Order.query().where({ memberId }).resultSize(),
-    ]);
-  } catch (e) {
-    ctx.status = 500;
-    ctx.body = { code: 500, message: "서버 오류가 발생했습니다." };
-    return;
-  }
+  const [items, total] = await Promise.all([
+    Order.query()
+      .where({ memberId })
+      .orderBy("createdAt", "desc")
+      .limit(limit)
+      .offset(offset),
+    Order.query().where({ memberId }).resultSize(),
+  ]);
 
   ctx.body = {
     code: 200,
@@ -135,18 +108,10 @@ router.get("/my", async (ctx) => {
     limit: Number(limit),
   };
 });
-
 router.get("/:orderNo", async (ctx) => {
-  let order;
-  try {
-    order = await Order.query()
-      .findOne({ orderNo: ctx.params.orderNo, memberId: ctx.state.member.id })
-      .withGraphJoined("product");
-  } catch (e) {
-    ctx.status = 500;
-    ctx.body = { code: 500, message: "서버 오류가 발생했습니다." };
-    return;
-  }
+  const order = await Order.query()
+    .findOne({ orderNo: ctx.params.orderNo, memberId: ctx.state.member.id })
+    .withGraphJoined("product");
 
   if (!order) {
     ctx.status = 404;
@@ -156,5 +121,4 @@ router.get("/:orderNo", async (ctx) => {
 
   ctx.body = { code: 200, data: order };
 });
-
 module.exports = router;

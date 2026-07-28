@@ -18,14 +18,7 @@ module.exports = async function adminAuth(ctx, next) {
     return
   }
 
-  let admin
-  try{
-    admin = await Admin.query().findById(decoded.id).select('id', 'isActive')
-  }catch(e){
-    ctx.status = 500
-    ctx.body = { code: 500, message: '서버 오류가 발생했습니다.' }
-    return
-  }
+  const admin = await Admin.query().findById(decoded.id).select('id', 'isActive')
 
   if (!admin || !admin.isActive) {
     ctx.status = 401

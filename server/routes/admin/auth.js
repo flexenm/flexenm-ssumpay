@@ -8,46 +8,23 @@ const router = new Router();
 
 router.post("/login", async (ctx) => {
   const { username, password } = ctx.request.body;
-
   if (!username || !password) {
     ctx.status = 400;
     ctx.body = { code: 400, message: "아이디와 비밀번호를 입력해주세요." };
     return;
   }
 
-  let admin;
-  try {
-    admin = await Admin.query().findOne({ username, isActive: 1 });
-  } catch (e) {
-    ctx.status = 500;
-    ctx.body = { code: 500, message: "서버 오류가 발생했습니다." };
-    return;
-  }
-
+  const admin = await Admin.query().findOne({ username, isActive: 1 });
   if (!admin) {
     ctx.status = 401;
-    ctx.body = {
-      code: 401,
-      message: "아이디 또는 비밀번호가 올바르지 않습니다.",
-    };
+    ctx.body = { code: 401, message: "아이디 또는 비밀번호가 올바르지 않습니다." };
     return;
   }
 
-  let isValid;
-  try {
-    isValid = await bcrypt.compare(password, admin.password);
-  } catch (e) {
-    ctx.status = 500;
-    ctx.body = { code: 500, message: "서버 오류가 발생했습니다." };
-    return;
-  }
-
+  const isValid = await bcrypt.compare(password, admin.password);
   if (!isValid) {
     ctx.status = 401;
-    ctx.body = {
-      code: 401,
-      message: "아이디 또는 비밀번호가 올바르지 않습니다.",
-    };
+    ctx.body = { code: 401, message: "아이디 또는 비밀번호가 올바르지 않습니다." };
     return;
   }
 
@@ -61,7 +38,7 @@ router.post("/login", async (ctx) => {
   ctx.body = {
     code: 200,
     token,
-    expiresIn: Math.floor(ms(adminJwtExpiresIn) / 1000), // 쿠키 maxAge 동기화용(초). JWT exp와 동일 원천
+    expiresIn: Math.floor(ms(adminJwtExpiresIn) / 1000),
     admin: { id: admin.id, username: admin.username, name: admin.name },
   };
 });
