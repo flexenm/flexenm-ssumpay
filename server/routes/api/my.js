@@ -1,5 +1,7 @@
 const Router = require("koa-router");
 const Member = require("../../entities/Member");
+const UserError = require("../../utils/UserError");
+const { MEMBER_STATUS } = require("../../const");
 
 const router = new Router();
 
@@ -8,10 +10,8 @@ const router = new Router();
 router.get("/profile", async (ctx) => {
   const member = await Member.query().findById(ctx.state.member.id);
   // 토큰은 유효하지만 계정이 삭제/차단된 경우도 미인증으로 처리
-  if (!member || member.status === 1) {
-    ctx.status = 401;
-    ctx.body = { code: 401, message: "인증이 필요합니다." };
-    return;
+  if (!member || member.status === MEMBER_STATUS.BLOCKED) {
+    throw new UserError("인증이 필요합니다.", 401);
   }
 
   ctx.body = {

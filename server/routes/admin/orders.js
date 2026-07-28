@@ -1,6 +1,7 @@
 const Router = require('koa-router')
 const Order = require('../../entities/Order')
 const db = require('../../db')
+const UserError = require('../../utils/UserError')
 
 const router = new Router()
 
@@ -33,9 +34,7 @@ router.get('/', async ctx => {
 router.get('/:id', async ctx => {
   const order = await Order.query().findById(ctx.params.id).withGraphJoined('[member, product]')
   if (!order) {
-    ctx.status = 404
-    ctx.body = { code: 404, message: '주문을 찾을 수 없습니다.' }
-    return
+    throw new UserError('주문을 찾을 수 없습니다.', 404)
   }
   ctx.body = { code: 200, data: order }
 })
@@ -45,29 +44,21 @@ router.patch('/:id/charge-status', async ctx => {
   const { CHARGE_STATUS, PAYMENT_STATUS } = require('../../const')
   const order = await Order.query().findById(ctx.params.id)
   if (!order) {
-    ctx.status = 404
-    ctx.body = { code: 404, message: '주문을 찾을 수 없습니다.' }
-    return
+    throw new UserError('주문을 찾을 수 없습니다.', 404)
   }
 
   if (![0, 1, 2].includes(Number(chargeStatus))) {
-    ctx.status = 400
-    ctx.body = { code: 400, message: '유효하지 않은 충전 상태입니다.' }
-    return
+    throw new UserError('유효하지 않은 충전 상태입니다.', 400)
   }
 
   if ([CHARGE_STATUS.DONE, CHARGE_STATUS.REFUNDED].includes(Number(chargeStatus))) {
     if (order.paymentStatus !== PAYMENT_STATUS.DONE) {
-      ctx.status = 400
-      ctx.body = { code: 400, message: '결제가 완료된 주문만 충전 상태를 변경할 수 있습니다.' }
-      return
+      throw new UserError('결제가 완료된 주문만 충전 상태를 변경할 수 있습니다.', 400)
     }
   }
 
-  if(order.chargeStatus === CHARGE_STATUS.REFUNDED){
-    ctx.status = 400
-    ctx.body = {code : 400, message : '환불 완료된 주문은 상태를 변경할 수 없습니다.'}
-    return
+  if (order.chargeStatus === CHARGE_STATUS.REFUNDED) {
+    throw new UserError('환불 완료된 주문은 상태를 변경할 수 없습니다.', 400)
   }
   const updates = { chargeStatus: Number(chargeStatus) }
   if (Number(chargeStatus) === 1) updates.chargedAt = db.raw('NOW()')
@@ -81,9 +72,7 @@ router.patch('/:id/memo', async ctx => {
   const { memo } = ctx.request.body
   const order = await Order.query().findById(ctx.params.id)
   if (!order) {
-    ctx.status = 404
-    ctx.body = { code: 404, message: '주문을 찾을 수 없습니다.' }
-    return
+    throw new UserError('주문을 찾을 수 없습니다.', 404)
   }
   await Order.query().patchAndFetchById(ctx.params.id, { memo })
   ctx.body = { code: 200, message: '메모가 저장되었습니다.' }

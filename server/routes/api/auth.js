@@ -7,6 +7,8 @@ const Member = require("../../entities/Member");
 const PasswordResetToken = require("../../entities/PasswordResetToken");
 const rateLimit = require("../../middlewares/rate-limit");
 const { createTransport, escapeHtml } = require("../../utils/mailer");
+const UserError = require("../../utils/UserError");
+const { MEMBER_STATUS } = require("../../const");
 const {
   validateUsername,
   validatePassword,
@@ -39,16 +41,12 @@ function hashToken(token) {
 router.get("/check-username", authLimiter, async (ctx) => {
   const { username } = ctx.query;
   if (!username) {
-    ctx.status = 400;
-    ctx.body = { code: 400, message: "아이디를 입력해주세요." };
-    return;
+    throw new UserError("아이디를 입력해주세요.", 400);
   }
 
   const unError = validateUsername(username);
   if (unError) {
-    ctx.status = 400;
-    ctx.body = { code: 400, message: unError };
-    return;
+    throw new UserError(unError, 400);
   }
 
   const exists = await Member.query().findOne({ username });
@@ -64,56 +62,39 @@ router.post("/register", authLimiter, async (ctx) => {
   const email = normalizeEmail(ctx.request.body.email);
 
   if (!username || !password || !name || !email) {
-    ctx.status = 400;
-    ctx.body = { code: 400, message: "필수 항목을 입력해주세요." };
-    return;
+    throw new UserError("필수 항목을 입력해주세요.", 400);
   }
 
   const unError = validateUsername(username);
   if (unError) {
-    ctx.status = 400;
-    ctx.body = { code: 400, message: unError };
-    return;
+    throw new UserError(unError, 400);
   }
 
   const pwError = validatePassword(password);
   if (pwError) {
-    ctx.status = 400;
-    ctx.body = { code: 400, message: pwError };
-    return;
+    throw new UserError(pwError, 400);
   }
 
   const nameError = validateName(name);
   if (nameError) {
-    ctx.status = 400;
-    ctx.body = { code: 400, message: nameError };
-    return;
+    throw new UserError(nameError, 400);
   }
 
   const emailError = validateEmail(email);
   if (emailError) {
-    ctx.status = 400;
-    ctx.body = { code: 400, message: emailError };
-    return;
+    throw new UserError(emailError, 400);
   }
 
   const mxValid = await hasMxRecord(email);
   if (!mxValid) {
-    ctx.status = 400;
-    ctx.body = { code: 400, message: "존재하지 않는 이메일 도메인입니다." };
-    return;
+    throw new UserError("존재하지 않는 이메일 도메인입니다.", 400);
   }
 
   const exists = await Member.query()
     .where((q) => q.where({ username }).orWhere({ email }))
     .first();
   if (exists) {
-    ctx.status = 409;
-    ctx.body = {
-      code: 409,
-      message: "이미 사용 중인 아이디 또는 이메일입니다.",
-    };
-    return;
+    throw new UserError("이미 사용 중인 아이디 또는 이메일입니다.", 409);
   }
 
   const hashed = await bcrypt.hash(password, 10);
@@ -134,35 +115,21 @@ router.post("/login", authLimiter, async (ctx) => {
   const { username, password } = ctx.request.body;
 
   if (!username || !password) {
-    ctx.status = 400;
-    ctx.body = { code: 400, message: "아이디와 비밀번호를 입력해주세요." };
-    return;
+    throw new UserError("아이디와 비밀번호를 입력해주세요.", 400);
   }
 
   const member = await Member.query().findOne({ username });
   if (!member) {
-    ctx.status = 401;
-    ctx.body = {
-      code: 401,
-      message: "아이디 또는 비밀번호가 올바르지 않습니다.",
-    };
-    return;
+    throw new UserError("아이디 또는 비밀번호가 올바르지 않습니다.", 401);
   }
 
-  if (member.status === 1) {
-    ctx.status = 403;
-    ctx.body = { code: 403, message: "차단된 계정입니다." };
-    return;
+  if (member.status === MEMBER_STATUS.BLOCKED) {
+    throw new UserError("차단된 계정입니다.", 403);
   }
 
   const isValid = await bcrypt.compare(password, member.password);
   if (!isValid) {
-    ctx.status = 401;
-    ctx.body = {
-      code: 401,
-      message: "아이디 또는 비밀번호가 올바르지 않습니다.",
-    };
-    return;
+    throw new UserError("아이디 또는 비밀번호가 올바르지 않습니다.", 401);
   }
 
   const jwtExpiresIn = process.env.JWT_EXPIRES_IN || "7d";
@@ -191,9 +158,7 @@ router.post("/password/reset", authLimiter, async (ctx) => {
   // 가입 시 소문자로 저장되므로 조회 전에도 동일하게 정규화
   const email = normalizeEmail(ctx.request.body.email);
   if (!username || !email) {
-    ctx.status = 400;
-    ctx.body = { code: 400, message: "아이디와 이메일을 입력해주세요." };
-    return;
+    throw new UserError("아이디와 이메일을 입력해주세요.", 400);
   }
 
   // 계정 존재 여부와 무관하게 동일 응답 (열거 방지)
@@ -243,16 +208,12 @@ router.post("/password/reset", authLimiter, async (ctx) => {
 router.post("/password/reset/confirm", authLimiter, async (ctx) => {
   const { token, newPassword } = ctx.request.body;
   if (!token) {
-    ctx.status = 400;
-    ctx.body = { code: 400, message: "유효하지 않은 요청입니다." };
-    return;
+    throw new UserError("유효하지 않은 요청입니다.", 400);
   }
 
   const pwError = validatePassword(newPassword);
   if (pwError) {
-    ctx.status = 400;
-    ctx.body = { code: 400, message: pwError };
-    return;
+    throw new UserError(pwError, 400);
   }
 
   const row = await PasswordResetToken.query()
@@ -261,12 +222,7 @@ router.post("/password/reset/confirm", authLimiter, async (ctx) => {
     .where("expiresAt", ">", new Date());
 
   if (!row) {
-    ctx.status = 400;
-    ctx.body = {
-      code: 400,
-      message: "유효하지 않거나 만료된 링크입니다. 다시 요청해주세요.",
-    };
-    return;
+    throw new UserError("유효하지 않거나 만료된 링크입니다. 다시 요청해주세요.", 400);
   }
 
   const hashed = await bcrypt.hash(newPassword, 10);
@@ -279,11 +235,10 @@ router.post("/password/reset/confirm", authLimiter, async (ctx) => {
       .whereNull("usedAt");
 
     if (marked === 0) {
-      const err = new Error(
+      throw new UserError(
         "유효하지 않거나 만료된 링크입니다. 다시 요청해주세요.",
+        400,
       );
-      err.status = 400;
-      throw err;
     }
 
     await Member.query(trx).patchAndFetchById(row.memberId, {

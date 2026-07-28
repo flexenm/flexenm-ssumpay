@@ -1,5 +1,6 @@
 const Router = require('koa-router')
 const Notice = require('../../entities/Notice')
+const UserError = require('../../utils/UserError')
 
 const router = new Router()
 
@@ -22,9 +23,7 @@ router.get('/', async ctx => {
 router.get('/:id', async ctx => {
   const notice = await Notice.query().findById(ctx.params.id)
   if (!notice) {
-    ctx.status = 404
-    ctx.body = { code: 404, message: '공지사항을 찾을 수 없습니다.' }
-    return
+    throw new UserError('공지사항을 찾을 수 없습니다.', 404)
   }
   ctx.body = { code: 200, data: notice }
 })
@@ -32,9 +31,7 @@ router.get('/:id', async ctx => {
 router.post('/', async ctx => {
   const { title, content, isPinned } = ctx.request.body
   if (!title || !content) {
-    ctx.status = 400
-    ctx.body = { code: 400, message: '제목과 내용을 입력해주세요.' }
-    return
+    throw new UserError('제목과 내용을 입력해주세요.', 400)
   }
 
   const notice = await Notice.query().insertAndFetch({
@@ -48,9 +45,7 @@ router.post('/', async ctx => {
 router.put('/:id', async ctx => {
   const notice = await Notice.query().findById(ctx.params.id)
   if (!notice) {
-    ctx.status = 404
-    ctx.body = { code: 404, message: '공지사항을 찾을 수 없습니다.' }
-    return
+    throw new UserError('공지사항을 찾을 수 없습니다.', 404)
   }
 
   const { title, content, isPinned, isActive } = ctx.request.body

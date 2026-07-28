@@ -1,5 +1,7 @@
 const Router = require('koa-router')
 const Member = require('../../entities/Member')
+const UserError = require('../../utils/UserError')
+const { MEMBER_STATUS } = require('../../const')
 
 const router = new Router()
 
@@ -34,22 +36,18 @@ router.get('/:id', async ctx => {
     .select('id', 'username', 'name', 'email', 'phone', 'flexUsername', 'status', 'createdAt')
 
   if (!member) {
-    ctx.status = 404
-    ctx.body = { code: 404, message: '회원을 찾을 수 없습니다.' }
-    return
+    throw new UserError('회원을 찾을 수 없습니다.', 404)
   }
   ctx.body = { code: 200, data: member }
 })
 
 router.patch('/:id/status', async ctx => {
   const { status } = ctx.request.body
-  if (status === undefined || ![0, 1].includes(Number(status))) {
-    ctx.status = 400
-    ctx.body = { code: 400, message: '올바른 상태값을 입력해주세요.' }
-    return
+  if (status === undefined || ![MEMBER_STATUS.NORMAL, MEMBER_STATUS.BLOCKED].includes(Number(status))) {
+    throw new UserError('올바른 상태값을 입력해주세요.', 400)
   }
   await Member.query().patchAndFetchById(ctx.params.id, { status })
-  ctx.body = { code: 200, message: status === 1 ? '회원이 차단되었습니다.' : '차단이 해제되었습니다.' }
+  ctx.body = { code: 200, message: Number(status) === MEMBER_STATUS.BLOCKED ? '회원이 차단되었습니다.' : '차단이 해제되었습니다.' }
 })
 
 module.exports = router

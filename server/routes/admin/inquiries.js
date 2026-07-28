@@ -2,6 +2,7 @@ const Router = require("koa-router");
 const Inquiry = require("../../entities/Inquiry");
 const db = require("../../db");
 const { createTransport, escapeHtml } = require("../../utils/mailer");
+const UserError = require("../../utils/UserError");
 
 const router = new Router();
 
@@ -35,9 +36,7 @@ router.get("/:id", async (ctx) => {
     .findById(ctx.params.id)
     .withGraphJoined("member");
   if (!inquiry) {
-    ctx.status = 404;
-    ctx.body = { code: 404, message: "문의를 찾을 수 없습니다." };
-    return;
+    throw new UserError("문의를 찾을 수 없습니다.", 404);
   }
   ctx.body = { code: 200, data: inquiry };
 });
@@ -45,18 +44,14 @@ router.get("/:id", async (ctx) => {
 router.post("/:id/answer", async (ctx) => {
   const { answer } = ctx.request.body;
   if (!answer) {
-    ctx.status = 400;
-    ctx.body = { code: 400, message: "답변 내용을 입력해주세요." };
-    return;
+    throw new UserError("답변 내용을 입력해주세요.", 400);
   }
 
   const inquiry = await Inquiry.query()
     .findById(ctx.params.id)
     .withGraphJoined("member");
   if (!inquiry) {
-    ctx.status = 404;
-    ctx.body = { code: 404, message: "문의를 찾을 수 없습니다." };
-    return;
+    throw new UserError("문의를 찾을 수 없습니다.", 404);
   }
 
   await Inquiry.query().patchAndFetchById(ctx.params.id, {

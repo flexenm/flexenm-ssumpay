@@ -3,29 +3,24 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const ms = require("ms");
 const Admin = require("../../entities/Admin");
+const UserError = require("../../utils/UserError");
 
 const router = new Router();
 
 router.post("/login", async (ctx) => {
   const { username, password } = ctx.request.body;
   if (!username || !password) {
-    ctx.status = 400;
-    ctx.body = { code: 400, message: "아이디와 비밀번호를 입력해주세요." };
-    return;
+    throw new UserError("아이디와 비밀번호를 입력해주세요.", 400);
   }
 
   const admin = await Admin.query().findOne({ username, isActive: 1 });
   if (!admin) {
-    ctx.status = 401;
-    ctx.body = { code: 401, message: "아이디 또는 비밀번호가 올바르지 않습니다." };
-    return;
+    throw new UserError("아이디 또는 비밀번호가 올바르지 않습니다.", 401);
   }
 
   const isValid = await bcrypt.compare(password, admin.password);
   if (!isValid) {
-    ctx.status = 401;
-    ctx.body = { code: 401, message: "아이디 또는 비밀번호가 올바르지 않습니다." };
-    return;
+    throw new UserError("아이디 또는 비밀번호가 올바르지 않습니다.", 401);
   }
 
   const adminJwtExpiresIn = "8h";

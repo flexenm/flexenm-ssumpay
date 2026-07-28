@@ -3,6 +3,7 @@ const axios = require("axios");
 const Order = require("../../entities/Order");
 const Product = require("../../entities/Product");
 const { PAYMENT_METHOD } = require("../../const");
+const UserError = require("../../utils/UserError");
 const FLEXTV_API_URL = process.env.FLEXTV_API_URL;
 
 async function verifyFlexAccount(loginId, password) {
@@ -32,34 +33,21 @@ router.post("/", async (ctx) => {
   const memberId = ctx.state.member.id;
 
   if (!Object.values(PAYMENT_METHOD).includes(paymentMethod)) {
-    ctx.status = 400;
-    ctx.body = { code: 400, message: "올바르지 않은 결제 수단입니다." };
-    return;
+    throw new UserError("올바르지 않은 결제 수단입니다.", 400);
   }
 
   if (!productId || !flexUsername || !flexPassword) {
-    ctx.status = 400;
-    ctx.body = { code: 400, message: "상품, FlexTV 아이디, 비밀번호를 입력해주세요." };
-    return;
+    throw new UserError("상품, FlexTV 아이디, 비밀번호를 입력해주세요.", 400);
   }
 
-  const isValid = await verifyFlexAccount(flexUsername, flexPassword).catch((e) => {
-    ctx.status = e.status || 502;
-    ctx.body = { code: e.status || 502, message: e.message };
-    return null;
-  });
-  if (isValid === null) return;
+  const isValid = await verifyFlexAccount(flexUsername, flexPassword);
   if (!isValid) {
-    ctx.status = 401;
-    ctx.body = { code: 401, message: "FlexTV 아이디 또는 비밀번호가 올바르지 않습니다." };
-    return;
+    throw new UserError("FlexTV 아이디 또는 비밀번호가 올바르지 않습니다.", 401);
   }
 
   const product = await Product.query().findById(productId).where({ isActive: 1 });
   if (!product) {
-    ctx.status = 404;
-    ctx.body = { code: 404, message: "상품을 찾을 수 없습니다." };
-    return;
+    throw new UserError("상품을 찾을 수 없습니다.", 404);
   }
 
   const now = new Date();
@@ -114,9 +102,7 @@ router.get("/:orderNo", async (ctx) => {
     .withGraphJoined("product");
 
   if (!order) {
-    ctx.status = 404;
-    ctx.body = { code: 404, message: "주문을 찾을 수 없습니다." };
-    return;
+    throw new UserError("주문을 찾을 수 없습니다.", 404);
   }
 
   ctx.body = { code: 200, data: order };

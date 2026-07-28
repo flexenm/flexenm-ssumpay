@@ -1,5 +1,6 @@
 const Router = require('koa-router')
 const Product = require('../../entities/Product')
+const UserError = require('../../utils/UserError')
 
 const router = new Router()
 
@@ -18,9 +19,7 @@ router.get('/', async ctx => {
 router.post('/', async ctx => {
   const { category, subcategory, name, price, lexAmount, coinAmount, sort } = ctx.request.body
   if (!category || !subcategory || !name || price === undefined) {
-    ctx.status = 400
-    ctx.body = { code: 400, message: '필수 항목을 입력해주세요.' }
-    return
+    throw new UserError('필수 항목을 입력해주세요.', 400)
   }
 
   const product = await Product.query().insertAndFetch({
@@ -38,9 +37,7 @@ router.post('/', async ctx => {
 router.put('/:id', async ctx => {
   const product = await Product.query().findById(ctx.params.id)
   if (!product) {
-    ctx.status = 404
-    ctx.body = { code: 404, message: '상품을 찾을 수 없습니다.' }
-    return
+    throw new UserError('상품을 찾을 수 없습니다.', 404)
   }
 
   const { category, subcategory, name, price, lexAmount, coinAmount, isActive, sort } = ctx.request.body

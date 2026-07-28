@@ -1,6 +1,7 @@
 const Router = require('koa-router')
 const { raw } = require('objection')
 const Notice = require('../../entities/Notice')
+const UserError = require('../../utils/UserError')
 
 const router = new Router()
 
@@ -24,9 +25,7 @@ router.get('/', async ctx => {
 router.get('/:id', async ctx => {
   const notice = await Notice.query().findById(ctx.params.id).where({ isActive: 1 })
   if (!notice) {
-    ctx.status = 404
-    ctx.body = { code: 404, message: '공지사항을 찾을 수 없습니다.' }
-    return
+    throw new UserError('공지사항을 찾을 수 없습니다.', 404)
   }
 
   await Notice.query().patch({ viewCount: raw('viewCount + 1') }).where({ id: notice.id })

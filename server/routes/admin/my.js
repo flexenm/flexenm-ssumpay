@@ -1,5 +1,6 @@
 const Router = require("koa-router");
 const Admin = require("../../entities/Admin");
+const UserError = require("../../utils/UserError");
 
 const router = new Router();
 
@@ -9,9 +10,7 @@ router.get("/profile", async (ctx) => {
   const admin = await Admin.query().findById(ctx.state.admin.id);
   // 토큰은 유효하지만 계정이 삭제/비활성화된 경우도 미인증으로 처리
   if (!admin || !admin.isActive) {
-    ctx.status = 401;
-    ctx.body = { code: 401, message: "인증이 필요합니다." };
-    return;
+    throw new UserError("인증이 필요합니다.", 401);
   }
 
   ctx.body = {

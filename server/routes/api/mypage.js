@@ -2,6 +2,7 @@ const Router = require("koa-router");
 const bcrypt = require("bcrypt");
 const Member = require("../../entities/Member");
 const { validatePassword, validateName } = require("../../utils/validators");
+const UserError = require("../../utils/UserError");
 
 const router = new Router();
 
@@ -32,9 +33,7 @@ router.patch("/", async (ctx) => {
   if (name) {
     const nameError = validateName(name);
     if (nameError) {
-      ctx.status = 400;
-      ctx.body = { code: 400, message: nameError };
-      return;
+      throw new UserError(nameError, 400);
     }
   }
 
@@ -61,27 +60,18 @@ router.patch("/password", async (ctx) => {
   const { currentPassword, newPassword } = ctx.request.body;
 
   if (!currentPassword || !newPassword) {
-    ctx.status = 400;
-    ctx.body = {
-      code: 400,
-      message: "현재 비밀번호와 새 비밀번호를 입력해주세요.",
-    };
-    return;
+    throw new UserError("현재 비밀번호와 새 비밀번호를 입력해주세요.", 400);
   }
 
   const pwError = validatePassword(newPassword);
   if (pwError) {
-    ctx.status = 400;
-    ctx.body = { code: 400, message: pwError };
-    return;
+    throw new UserError(pwError, 400);
   }
 
   const member = await Member.query().findById(ctx.state.member.id);
   const isValid = await bcrypt.compare(currentPassword, member.password);
   if (!isValid) {
-    ctx.status = 401;
-    ctx.body = { code: 401, message: "현재 비밀번호가 올바르지 않습니다." };
-    return;
+    throw new UserError("현재 비밀번호가 올바르지 않습니다.", 401);
   }
 
   const hashed = await bcrypt.hash(newPassword, 10);
