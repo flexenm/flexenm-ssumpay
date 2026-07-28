@@ -44,4 +44,4 @@ async function uploadInquiryImage(buffer) {
   return `${CDN_DOMAIN}/${key}`
 }
 
-module.exports = { uploadInquiryImage }
+module.exports = { uploadInquiryImage, ALLOWED_MIME, MAX_SIZE }
