@@ -1,35 +1,17 @@
 const Router = require('koa-router')
-const { raw } = require('objection')
-const Notice = require('../../entities/Notice')
-const UserError = require('../../utils/UserError')
+const noticeService = require('../../services/notice')
 
 const router = new Router()
 
 router.get('/', async ctx => {
   const { page = 1, limit = 10 } = ctx.query
-  const offset = (page - 1) * limit
-
-  const [items, total] = await Promise.all([
-    Notice.query()
-      .where({ isActive: 1 })
-      .orderBy('isPinned', 'desc')
-      .orderBy('createdAt', 'desc')
-      .limit(limit)
-      .offset(offset),
-    Notice.query().where({ isActive: 1 }).resultSize()
-  ])
-
+  const { items, total } = await noticeService.listActive({ page, limit })
   ctx.body = { code: 200, data: items, total, page: Number(page), limit: Number(limit) }
 })
 
 router.get('/:id', async ctx => {
-  const notice = await Notice.query().findById(ctx.params.id).where({ isActive: 1 })
-  if (!notice) {
-    throw new UserError('공지사항을 찾을 수 없습니다.', 404)
-  }
-
-  await Notice.query().patch({ viewCount: raw('viewCount + 1') }).where({ id: notice.id })
-  ctx.body = { code: 200, data: { ...notice, viewCount: notice.viewCount + 1 } }
+  const notice = await noticeService.getActiveByIdAndBumpViewCount(ctx.params.id)
+  ctx.body = { code: 200, data: notice }
 })
 
 module.exports = router
