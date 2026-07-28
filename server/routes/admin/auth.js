@@ -3,11 +3,10 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const ms = require("ms");
 const Admin = require("../../entities/Admin");
-const ipWhitelist = require("../../middlewares/ip-whitelist");
 
 const router = new Router();
 
-router.post("/login", ipWhitelist, async (ctx) => {
+router.post("/login", async (ctx) => {
   const { username, password } = ctx.request.body;
 
   if (!username || !password) {
@@ -16,7 +15,15 @@ router.post("/login", ipWhitelist, async (ctx) => {
     return;
   }
 
-  const admin = await Admin.query().findOne({ username, isActive: 1 });
+  let admin;
+  try {
+    admin = await Admin.query().findOne({ username, isActive: 1 });
+  } catch (e) {
+    ctx.status = 500;
+    ctx.body = { code: 500, message: "서버 오류가 발생했습니다." };
+    return;
+  }
+
   if (!admin) {
     ctx.status = 401;
     ctx.body = {
@@ -26,7 +33,15 @@ router.post("/login", ipWhitelist, async (ctx) => {
     return;
   }
 
-  const isValid = await bcrypt.compare(password, admin.password);
+  let isValid;
+  try {
+    isValid = await bcrypt.compare(password, admin.password);
+  } catch (e) {
+    ctx.status = 500;
+    ctx.body = { code: 500, message: "서버 오류가 발생했습니다." };
+    return;
+  }
+
   if (!isValid) {
     ctx.status = 401;
     ctx.body = {
