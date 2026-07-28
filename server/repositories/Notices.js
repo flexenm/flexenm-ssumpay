@@ -12,17 +12,18 @@ class Notices extends Base {
     const [items, total] = await Promise.all([
       Notice.query()
         .where({ isActive: 1 })
+        .whereNull('deletedAt')
         .orderBy('isPinned', 'desc')
         .orderBy('createdAt', 'desc')
         .limit(limit)
         .offset(offset),
-      Notice.query().where({ isActive: 1 }).resultSize()
+      Notice.query().where({ isActive: 1 }).whereNull('deletedAt').resultSize()
     ])
     return { items, total }
   }
 
   async findActiveById(id) {
-    return Notice.query().findById(id).where({ isActive: 1 })
+    return Notice.query().findById(id).where({ isActive: 1 }).whereNull('deletedAt')
   }
 
   async incrementViewCount(id) {
@@ -31,7 +32,7 @@ class Notices extends Base {
 
   async listForAdmin({ page = 1, limit = 20, keyword, isPinned } = {}) {
     const offset = (page - 1) * limit
-    let query = Notice.query().orderBy('isPinned', 'desc').orderBy('createdAt', 'desc')
+    let query = Notice.query().whereNull('deletedAt').orderBy('isPinned', 'desc').orderBy('createdAt', 'desc')
     if (keyword) query = query.where('title', 'like', `%${keyword}%`)
     if (isPinned !== undefined && isPinned !== '') query = query.where({ isPinned })
 
@@ -40,6 +41,10 @@ class Notices extends Base {
       query.clone().resultSize()
     ])
     return { items, total }
+  }
+
+  async softDeleteById(id) {
+    return this.patchById(id, { deletedAt: new Date().toISOString() })
   }
 }
 

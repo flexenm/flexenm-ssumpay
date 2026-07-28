@@ -31,7 +31,7 @@ class Products extends Base {
   }
 
   async softDeleteById(id) {
-    return Product.query().patchById(id, { deletedAt: new Date().toISOString() })
+    return this.patchById(id, { deletedAt: new Date().toISOString() })
   }
 }
 

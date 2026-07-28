@@ -50,7 +50,7 @@ async function updateNotice(id, { title, content, isPinned, isActive }) {
 }
 
 async function deleteNotice(id) {
-  await NoticesRepo.deleteById(id)
+  await NoticesRepo.softDeleteById(id)
 }
 
 module.exports = {
