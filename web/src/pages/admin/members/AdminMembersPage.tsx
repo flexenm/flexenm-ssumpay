@@ -39,13 +39,20 @@ export default function AdminMembersPage() {
   }, []);
 
   const toggleStatus = async (m: Member) => {
-    await adminMembersApi.updateStatus(m.id, {
-      status:
-        m.status === MEMBER_STATUS.NORMAL
-          ? MEMBER_STATUS.BLOCKED
-          : MEMBER_STATUS.NORMAL,
-    });
-    load();
+    try {
+      await adminMembersApi.updateStatus(m.id, {
+        status:
+          m.status === MEMBER_STATUS.NORMAL
+            ? MEMBER_STATUS.BLOCKED
+            : MEMBER_STATUS.NORMAL,
+      });
+      load();
+    } catch (e) {
+      alert(
+        (e as { message?: string })?.message ||
+          "회원 상태 변경 중 오류가 발생했습니다.",
+      );
+    }
   };
 
   return (
