@@ -121,6 +121,10 @@ async function updateChargeStatus(id, { chargeStatus, memo }) {
     throw new UserError('환불 완료된 주문은 상태를 변경할 수 없습니다.', 400)
   }
 
+  if (memo !== undefined && typeof memo !== 'string') {
+    throw new UserError('메모는 문자열이어야 합니다.', 400)
+  }
+
   const updates = { chargeStatus: Number(chargeStatus) }
   if (Number(chargeStatus) === 1) updates.chargedAt = db.raw('NOW()')
   if (memo !== undefined) updates.memo = memo
@@ -129,6 +133,10 @@ async function updateChargeStatus(id, { chargeStatus, memo }) {
 }
 
 async function updateMemo(id, memo) {
+  if (typeof memo !== 'string') {
+    throw new UserError('메모는 문자열이어야 합니다.', 400)
+  }
+
   const order = await OrdersRepo.findById(id)
   if (!order) {
     throw new UserError('주문을 찾을 수 없습니다.', 404)
