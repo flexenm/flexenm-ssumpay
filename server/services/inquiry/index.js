@@ -2,14 +2,11 @@ const InquiriesRepo = require('../../repositories/Inquiries')
 const { uploadInquiryImage } = require('../../utils/storage')
 const { createTransport, escapeHtml } = require('../../utils/mailer')
 const UserError = require('../../utils/UserError')
-const { INQUIRY_TYPE } = require('../../const')
-
-const TITLE_MAX = 50
-const CONTENT_MAX = 1000
+const { INQUIRY_TYPE, INQUIRY_TITLE_MAX, INQUIRY_CONTENT_MAX } = require('../../const')
 
 function validateInquiryText(title, content) {
-  if (!title || title.length > TITLE_MAX) return `제목은 1~${TITLE_MAX}자 이내로 작성해주세요.`
-  if (!content || content.length > CONTENT_MAX) return `내용은 1~${CONTENT_MAX}자 이내로 작성해주세요.`
+  if (!title || title.length > INQUIRY_TITLE_MAX) return `제목은 1~${INQUIRY_TITLE_MAX}자 이내로 작성해주세요.`
+  if (!content || content.length > INQUIRY_CONTENT_MAX) return `내용은 1~${INQUIRY_CONTENT_MAX}자 이내로 작성해주세요.`
   return null
 }
 

@@ -25,6 +25,25 @@ const PRODUCT_SUBCATEGORY = {
   PANDA: 'panda'
 }
 
+const MEMBER_PROFILE_COLUMNS = ['id', 'username', 'name', 'email', 'phone', 'flexUsername', 'createdAt']
+
+// admin 응답에 회원 비밀번호 해시가 노출되지 않도록 member 조인/조회 시 컬럼을 제한한다.
+const MEMBER_SAFE_COLUMNS = ['id', 'username', 'name', 'email', 'phone', 'flexUsername', 'status', 'createdAt']
+
+const MEMBER_FIELD_LABELS = {
+  phone: '전화번호',
+  flexUsername: 'FlexTV 아이디'
+}
+
+const PRODUCT_FIELD_LABELS = {
+  price: '가격',
+  lexAmount: '렉스 수량',
+  coinAmount: '코인 수량'
+}
+
+const INQUIRY_TITLE_MAX = 50
+const INQUIRY_CONTENT_MAX = 1000
+
 module.exports = {
   MEMBER_STATUS,
   PAYMENT_METHOD,
@@ -33,5 +52,11 @@ module.exports = {
   INQUIRY_TYPE,
   INQUIRY_STATUS,
   PRODUCT_CATEGORY,
-  PRODUCT_SUBCATEGORY
+  PRODUCT_SUBCATEGORY,
+  MEMBER_PROFILE_COLUMNS,
+  MEMBER_SAFE_COLUMNS,
+  MEMBER_FIELD_LABELS,
+  PRODUCT_FIELD_LABELS,
+  INQUIRY_TITLE_MAX,
+  INQUIRY_CONTENT_MAX
 }

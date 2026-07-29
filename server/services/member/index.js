@@ -3,20 +3,13 @@ const { ValidationError } = require('objection')
 const MembersRepo = require('../../repositories/Members')
 const UserError = require('../../utils/UserError')
 const { validatePassword, validateName } = require('../../utils/validators')
-const { MEMBER_STATUS } = require('../../const')
-
-const PROFILE_COLUMNS = ['id', 'username', 'name', 'email', 'phone', 'flexUsername', 'createdAt']
-
-const FIELD_LABELS = {
-  phone: '전화번호',
-  flexUsername: 'FlexTV 아이디'
-}
+const { MEMBER_STATUS, MEMBER_PROFILE_COLUMNS, MEMBER_FIELD_LABELS } = require('../../const')
 
 // Member 엔티티의 jsonSchema 위반(objection ValidationError)을
 // "phone: should be string,null" 같은 Ajv 원문 대신 한국어 메시지로 바꿔서 던진다.
 function toFriendlyError(err) {
   const [field, issues] = Object.entries(err.data ?? {})[0] ?? []
-  const label = FIELD_LABELS[field] || field
+  const label = MEMBER_FIELD_LABELS[field] || field
   const keyword = issues?.[0]?.keyword
 
   if (keyword === 'type') return new UserError(`${label} 형식이 올바르지 않습니다.`, 400)
@@ -24,7 +17,7 @@ function toFriendlyError(err) {
 }
 
 async function getProfile(memberId) {
-  return MembersRepo.findById(memberId, PROFILE_COLUMNS)
+  return MembersRepo.findById(memberId, MEMBER_PROFILE_COLUMNS)
 }
 
 async function getSelf(memberId) {
