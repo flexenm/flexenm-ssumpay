@@ -1,6 +1,7 @@
 const bcrypt = require('bcrypt')
 const { ValidationError } = require('objection')
 const MembersRepo = require('../../repositories/Members')
+const RefreshTokensRepo = require('../../repositories/RefreshTokens')
 const UserError = require('../../utils/UserError')
 const { validatePassword, validateName } = require('../../utils/validators')
 const { MEMBER_STATUS, MEMBER_PROFILE_COLUMNS, MEMBER_FIELD_LABELS } = require('../../const')
@@ -105,6 +106,12 @@ async function updateStatus(id, status) {
   }
 
   await MembersRepo.patchStatus(id, statusNum)
+
+  if (statusNum === MEMBER_STATUS.BLOCKED) {
+    // 차단 즉시 refresh token을 전부 무효화 — 이미 발급된 access token은 짧은 TTL로 자연 만료됨
+    await RefreshTokensRepo.revokeAllFor({ type: 'member', id })
+  }
+
   return statusNum === MEMBER_STATUS.BLOCKED ? '회원이 차단되었습니다.' : '차단이 해제되었습니다.'
 }
 
