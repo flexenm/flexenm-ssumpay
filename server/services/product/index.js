@@ -1,13 +1,7 @@
 const { ValidationError } = require('objection')
 const ProductsRepo = require('../../repositories/Products')
 const UserError = require('../../utils/UserError')
-const { PRODUCT_CATEGORY, PRODUCT_SUBCATEGORY } = require('../../const')
-
-const FIELD_LABELS = {
-  price: '가격',
-  lexAmount: '렉스 수량',
-  coinAmount: '코인 수량'
-}
+const { PRODUCT_CATEGORY, PRODUCT_SUBCATEGORY, PRODUCT_FIELD_LABELS } = require('../../const')
 
 // jsonSchema는 category/subcategory를 문자열 타입으로만 제한해서, PRODUCT_CATEGORY/PRODUCT_SUBCATEGORY에
 // 정의된 값인지는 여기서 별도로 확인해야 한다. 값이 있을 때만 검사해서 부분 수정(undefined)은 통과시킨다.
@@ -24,7 +18,7 @@ function validateCategoryFields(category, subcategory) {
 // "price: should be >= 0" 같은 Ajv 원문 대신 한국어 메시지로 바꿔서 던진다.
 function toFriendlyError(err) {
   const [field, issues] = Object.entries(err.data ?? {})[0] ?? []
-  const label = FIELD_LABELS[field] || field
+  const label = PRODUCT_FIELD_LABELS[field] || field
   const keyword = issues?.[0]?.keyword
 
   if (keyword === 'minimum') return new UserError(`${label}은(는) 0 이상이어야 합니다.`, 400)
