@@ -2,6 +2,7 @@ const InquiriesRepo = require('../../repositories/Inquiries')
 const { uploadInquiryImage } = require('../../utils/storage')
 const { createTransport, escapeHtml } = require('../../utils/mailer')
 const UserError = require('../../utils/UserError')
+const { INQUIRY_TYPE } = require('../../const')
 
 const TITLE_MAX = 50
 const CONTENT_MAX = 1000
@@ -29,6 +30,11 @@ async function createInquiry({ memberId, type, title, content, imageBuffer }) {
     throw new UserError('문의 유형, 제목, 내용을 입력해주세요.', 400)
   }
 
+  const typeNum = Number(type)
+  if (!Object.values(INQUIRY_TYPE).includes(typeNum)) {
+    throw new UserError('올바르지 않은 문의 유형입니다.', 400)
+  }
+
   const textError = validateInquiryText(title, content)
   if (textError) {
     throw new UserError(textError, 400)
@@ -36,7 +42,7 @@ async function createInquiry({ memberId, type, title, content, imageBuffer }) {
 
   const imageUrl = imageBuffer ? await uploadInquiryImage(imageBuffer) : null
 
-  return InquiriesRepo.insert({ memberId, type, title, content, imageUrl, status: 0 })
+  return InquiriesRepo.insert({ memberId, type: typeNum, title, content, imageUrl, status: 0 })
 }
 
 async function updateInquiry(id, memberId, { title, content, imageBuffer }) {
@@ -90,7 +96,7 @@ async function getByIdForAdmin(id) {
 }
 
 async function answerInquiry(id, answer) {
-  if (!answer) {
+  if (!answer || typeof answer !== 'string') {
     throw new UserError('답변 내용을 입력해주세요.', 400)
   }
 
