@@ -28,8 +28,21 @@ router.post("/", memberLimiter, async (ctx) => {
   ctx.status = 201;
   ctx.body = {
     code: 201,
-    data: { orderNo: order.orderNo, id: order.id, price: order.price },
+    data: {
+      orderNo: order.orderNo,
+      id: order.id,
+      price: order.price,
+      virtualAccountNo: order.virtualAccountNo,
+      virtualAccountBank: order.virtualAccountBank,
+      virtualAccountExpiredAt: order.virtualAccountExpiredAt,
+    },
   };
+});
+
+router.post("/:orderNo/payment/confirm", async (ctx) => {
+  const { paymentKey, amount } = ctx.request.body;
+  const order = await orderService.confirmPayment(ctx.params.orderNo, ctx.state.member.id, { paymentKey, amount });
+  ctx.body = { code: 200, data: order };
 });
 
 router.get("/my", async (ctx) => {

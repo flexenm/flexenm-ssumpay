@@ -2,6 +2,7 @@ const axios = require('axios')
 const db = require('../../db')
 const OrdersRepo = require('../../repositories/Orders')
 const ProductsRepo = require('../../repositories/Products')
+const PaymentGateway = require('../payment')
 const UserError = require('../../utils/UserError')
 const { PAYMENT_METHOD, CHARGE_STATUS, PAYMENT_STATUS } = require('../../const')
 
@@ -68,13 +69,70 @@ async function createOrder({ memberId, productId, flexUsername, flexPassword, pa
 
   // orderNo는 초당 9000개 조합의 랜덤 접미사라 동시 주문 시 충돌 가능 — ER_DUP_ENTRY면 새 orderNo로 재시도.
   // 여기까지 왔다는 건 FlexTV 인증이 이미 끝났다는 뜻이라, 그 비용을 버리지 않도록 insert만 재시도한다.
+  let order
   for (let attempt = 0; attempt < ORDER_NO_MAX_RETRIES; attempt++) {
     try {
-      return await OrdersRepo.insert({ ...orderData, orderNo: generateOrderNo() })
+      order = await OrdersRepo.insert({ ...orderData, orderNo: generateOrderNo() })
+      break
     } catch (err) {
       if (err.code !== 'ER_DUP_ENTRY' || attempt === ORDER_NO_MAX_RETRIES - 1) throw err
     }
   }
+
+  if (paymentMethod === PAYMENT_METHOD.BANK) {
+    const account = await PaymentGateway.issueVirtualAccount({ orderNo: order.orderNo, amount: order.price })
+    await OrdersRepo.attachVirtualAccount(order.orderNo, {
+      virtualAccountNo: account.accountNo,
+      virtualAccountBank: account.bankName,
+      virtualAccountExpiredAt: account.expiredAt
+    })
+    order.virtualAccountNo = account.accountNo
+    order.virtualAccountBank = account.bankName
+    order.virtualAccountExpiredAt = account.expiredAt
+  }
+
+  return order
+}
+
+// 카드결제 확인 — 클라이언트가 보낸 paymentKey를 그대로 믿지 않고 PG 서버 승인 API로 재확인한다.
+async function confirmPayment(orderNo, memberId, { paymentKey, amount }) {
+  const order = await OrdersRepo.findByOrderNoForMember(orderNo, memberId)
+  if (!order) {
+    throw new UserError('주문을 찾을 수 없습니다.', 404)
+  }
+
+  if (order.paymentStatus === PAYMENT_STATUS.DONE) {
+    return order
+  }
+
+  const result = await PaymentGateway.approvePayment({ paymentKey, orderNo, amount })
+  if (result.amount !== order.price) {
+    console.error(`[confirmPayment] amount mismatch orderNo=${orderNo} expected=${order.price} actual=${result.amount}`)
+    throw new UserError('결제 금액이 일치하지 않습니다.', 400)
+  }
+
+  await OrdersRepo.markPaymentDone(orderNo, { pgTid: result.transactionId })
+  return OrdersRepo.findByOrderNoForMember(orderNo, memberId)
+}
+
+// PG 웹훅(무통장입금 확인) 처리 — 라우트에서 서명 검증을 마친 뒤에만 호출된다.
+async function confirmWebhookPayment({ orderNo, amount, transactionId }) {
+  const order = await OrdersRepo.findByOrderNo(orderNo)
+  if (!order) {
+    console.error(`[confirmWebhookPayment] order not found orderNo=${orderNo}`)
+    return
+  }
+
+  if (order.paymentStatus === PAYMENT_STATUS.DONE) {
+    return
+  }
+
+  if (amount !== order.price) {
+    console.error(`[confirmWebhookPayment] amount mismatch orderNo=${orderNo} expected=${order.price} actual=${amount}`)
+    return
+  }
+
+  await OrdersRepo.markPaymentDone(orderNo, { pgTrxNo: transactionId })
 }
 
 async function listMyOrders(memberId, { page, limit }) {
@@ -147,6 +205,8 @@ async function updateMemo(id, memo) {
 
 module.exports = {
   createOrder,
+  confirmPayment,
+  confirmWebhookPayment,
   listMyOrders,
   getByOrderNoForMember,
   searchForAdmin,
