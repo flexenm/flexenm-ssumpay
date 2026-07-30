@@ -44,7 +44,7 @@ class Notices extends Base {
   }
 
   async softDeleteById(id) {
-    return this.patchById(id, { deletedAt: new Date().toISOString() })
+    return this.patchById(id, { deletedAt: new Date().toISOString(), isActive: 0 })
   }
 }
 
