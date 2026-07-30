@@ -6,10 +6,6 @@ class Products extends Base {
     super(Product)
   }
 
-  async findActiveById(id) {
-    return Product.query().findById(id).where({ isActive: 1 })
-  }
-
   async findActiveByIdAndNotDeleted(id) {
     return Product.query().findById(id).where({ isActive: 1 }).whereNull('deletedAt')
   }
@@ -31,7 +27,7 @@ class Products extends Base {
   }
 
   async softDeleteById(id) {
-    return this.patchById(id, { deletedAt: new Date().toISOString() })
+    return this.patchById(id, { deletedAt: new Date().toISOString(), isActive: 0 })
   }
 }
 

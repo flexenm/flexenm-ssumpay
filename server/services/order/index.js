@@ -49,7 +49,7 @@ async function createOrder({ memberId, productId, flexUsername, flexPassword, pa
     throw new UserError('FlexTV 아이디 또는 비밀번호가 올바르지 않습니다.', 401)
   }
 
-  const product = await ProductsRepo.findActiveById(productId)
+  const product = await ProductsRepo.findActiveByIdAndNotDeleted(productId)
   if (!product) {
     throw new UserError('상품을 찾을 수 없습니다.', 404)
   }
