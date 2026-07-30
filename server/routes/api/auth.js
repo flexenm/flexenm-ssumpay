@@ -27,6 +27,16 @@ router.post("/login", authLimiter, async (ctx) => {
   ctx.body = { code: 200, ...result };
 });
 
+router.post("/refresh", authLimiter, async (ctx) => {
+  const result = await authService.refresh(ctx.request.body);
+  ctx.body = { code: 200, ...result };
+});
+
+router.post("/logout", authLimiter, async (ctx) => {
+  await authService.logout(ctx.request.body);
+  ctx.body = { code: 200, message: "로그아웃되었습니다." };
+});
+
 // 비밀번호 재설정 링크 요청
 router.post("/password/reset", authLimiter, async (ctx) => {
   await authService.requestPasswordReset(ctx.request.body);

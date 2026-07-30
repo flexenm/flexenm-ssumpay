@@ -2,13 +2,11 @@ const InquiriesRepo = require('../../repositories/Inquiries')
 const { uploadInquiryImage } = require('../../utils/storage')
 const { createTransport, escapeHtml } = require('../../utils/mailer')
 const UserError = require('../../utils/UserError')
-
-const TITLE_MAX = 50
-const CONTENT_MAX = 1000
+const { INQUIRY_TYPE, INQUIRY_TITLE_MAX, INQUIRY_CONTENT_MAX } = require('../../const')
 
 function validateInquiryText(title, content) {
-  if (!title || title.length > TITLE_MAX) return `제목은 1~${TITLE_MAX}자 이내로 작성해주세요.`
-  if (!content || content.length > CONTENT_MAX) return `내용은 1~${CONTENT_MAX}자 이내로 작성해주세요.`
+  if (!title || title.length > INQUIRY_TITLE_MAX) return `제목은 1~${INQUIRY_TITLE_MAX}자 이내로 작성해주세요.`
+  if (!content || content.length > INQUIRY_CONTENT_MAX) return `내용은 1~${INQUIRY_CONTENT_MAX}자 이내로 작성해주세요.`
   return null
 }
 
@@ -29,6 +27,11 @@ async function createInquiry({ memberId, type, title, content, imageBuffer }) {
     throw new UserError('문의 유형, 제목, 내용을 입력해주세요.', 400)
   }
 
+  const typeNum = Number(type)
+  if (!Object.values(INQUIRY_TYPE).includes(typeNum)) {
+    throw new UserError('올바르지 않은 문의 유형입니다.', 400)
+  }
+
   const textError = validateInquiryText(title, content)
   if (textError) {
     throw new UserError(textError, 400)
@@ -36,7 +39,7 @@ async function createInquiry({ memberId, type, title, content, imageBuffer }) {
 
   const imageUrl = imageBuffer ? await uploadInquiryImage(imageBuffer) : null
 
-  return InquiriesRepo.insert({ memberId, type, title, content, imageUrl, status: 0 })
+  return InquiriesRepo.insert({ memberId, type: typeNum, title, content, imageUrl, status: 0 })
 }
 
 async function updateInquiry(id, memberId, { title, content, imageBuffer }) {
@@ -90,7 +93,7 @@ async function getByIdForAdmin(id) {
 }
 
 async function answerInquiry(id, answer) {
-  if (!answer) {
+  if (!answer || typeof answer !== 'string') {
     throw new UserError('답변 내용을 입력해주세요.', 400)
   }
 

@@ -21,7 +21,7 @@ app.use(async (ctx, next) => {
   try {
     await next()
   } catch (err) {
-    ctx.status = err.status || 500
+    ctx.status = err.status || err.statusCode || 500
     if (ctx.status >= 500) {
       ctx.body = { code: 500, message: '서버 오류가 발생했습니다.' }
       console.error('[ERROR]', err)
