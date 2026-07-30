@@ -3,6 +3,7 @@ const db = require('../../db')
 const OrdersRepo = require('../../repositories/Orders')
 const ProductsRepo = require('../../repositories/Products')
 const PaymentGateway = require('../payment')
+const FlexTVService = require('../flextv')
 const UserError = require('../../utils/UserError')
 const { PAYMENT_METHOD, CHARGE_STATUS, PAYMENT_STATUS } = require('../../const')
 
@@ -160,7 +161,7 @@ async function getByIdForAdmin(id) {
 }
 
 async function updateChargeStatus(id, { chargeStatus, memo }) {
-  const order = await OrdersRepo.findById(id)
+  const order = await OrdersRepo.findByIdWithMemberAndProduct(id)
   if (!order) {
     throw new UserError('주문을 찾을 수 없습니다.', 404)
   }
@@ -184,7 +185,20 @@ async function updateChargeStatus(id, { chargeStatus, memo }) {
   }
 
   const updates = { chargeStatus: Number(chargeStatus) }
-  if (Number(chargeStatus) === 1) updates.chargedAt = db.raw('NOW()')
+
+  // 실패 시 여기서 에러가 그대로 던져지므로 아래 patchChargeStatus는 실행되지 않고
+  // chargeStatus는 이전 값(대기)으로 유지된다 — "완료 처리는 됐는데 실제 지급은 실패"를 방지.
+  if (Number(chargeStatus) === CHARGE_STATUS.DONE) {
+    const result = await FlexTVService.chargeLex({
+      loginId: order.flexUsername,
+      lexAmount: order.product.lexAmount,
+      orderNo: order.orderNo,
+      productName: order.productName,
+      memo
+    })
+    updates.chargedAt = db.raw('NOW()')
+    updates.flexPaymentId = result.paymentId
+  }
   if (memo !== undefined) updates.memo = memo
 
   await OrdersRepo.patchChargeStatus(id, updates)
