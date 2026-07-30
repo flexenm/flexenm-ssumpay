@@ -14,7 +14,7 @@ const memberLimiter = rateLimit({
 });
 
 router.post("/", memberLimiter, async (ctx) => {
-  const { productId, flexUsername, flexPassword, paymentMethod = 1 } = ctx.request.body;
+  const { productId, flexUsername, flexPassword, paymentMethod = 1, payerName } = ctx.request.body;
 
   const order = await orderService.createOrder({
     memberId: ctx.state.member.id,
@@ -22,6 +22,7 @@ router.post("/", memberLimiter, async (ctx) => {
     flexUsername,
     flexPassword,
     paymentMethod,
+    payerName,
     ipAddr: ctx.ip,
   });
 
@@ -35,6 +36,7 @@ router.post("/", memberLimiter, async (ctx) => {
       virtualAccountNo: order.virtualAccountNo,
       virtualAccountBank: order.virtualAccountBank,
       virtualAccountExpiredAt: order.virtualAccountExpiredAt,
+      payerName: order.payerName,
     },
   };
 });

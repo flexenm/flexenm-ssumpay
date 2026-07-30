@@ -37,13 +37,18 @@ function generateOrderNo() {
   return `SP${datePart}${Math.floor(Math.random() * 9000) + 1000}`
 }
 
-async function createOrder({ memberId, productId, flexUsername, flexPassword, paymentMethod = 1, ipAddr }) {
+async function createOrder({ memberId, productId, flexUsername, flexPassword, paymentMethod = 1, payerName, ipAddr }) {
   if (!Object.values(PAYMENT_METHOD).includes(paymentMethod)) {
     throw new UserError('올바르지 않은 결제 수단입니다.', 400)
   }
 
   if (!productId || !flexUsername || !flexPassword) {
     throw new UserError('상품, FlexTV 아이디, 비밀번호를 입력해주세요.', 400)
+  }
+
+  // 무통장입금은 웹훅 확인 시 금액만으로는 입금자를 특정할 수 없어 입금자명 대조가 필요하다.
+  if (paymentMethod === PAYMENT_METHOD.BANK && !payerName) {
+    throw new UserError('입금자명을 입력해주세요.', 400)
   }
 
   const isValid = await verifyFlexAccount(flexUsername, flexPassword)
@@ -63,6 +68,7 @@ async function createOrder({ memberId, productId, flexUsername, flexPassword, pa
     price: product.price,
     flexUsername,
     paymentMethod,
+    payerName: paymentMethod === PAYMENT_METHOD.BANK ? payerName : null,
     paymentStatus: 0,
     chargeStatus: 0,
     ipAddr
@@ -117,7 +123,7 @@ async function confirmPayment(orderNo, memberId, { paymentKey, amount }) {
 }
 
 // PG 웹훅(무통장입금 확인) 처리 — 라우트에서 서명 검증을 마친 뒤에만 호출된다.
-async function confirmWebhookPayment({ orderNo, amount, transactionId }) {
+async function confirmWebhookPayment({ orderNo, amount, transactionId, payerName }) {
   const order = await OrdersRepo.findByOrderNo(orderNo)
   if (!order) {
     console.error(`[confirmWebhookPayment] order not found orderNo=${orderNo}`)
@@ -133,7 +139,40 @@ async function confirmWebhookPayment({ orderNo, amount, transactionId }) {
     return
   }
 
+  // 무통장입금은 금액만으로 입금자를 특정할 수 없어 주문 시 등록한 입금자명과도 대조한다.
+  if (order.paymentMethod === PAYMENT_METHOD.BANK && payerName !== order.payerName) {
+    console.error(`[confirmWebhookPayment] payer name mismatch orderNo=${orderNo} expected=${order.payerName} actual=${payerName}`)
+    return
+  }
+
   await OrdersRepo.markPaymentDone(orderNo, { pgTrxNo: transactionId })
+}
+
+// 무통장입금 웹훅이 안 오는 등 예외 상황에서 관리자가 입금을 직접 확인하고 승인하는 경로.
+// 카드결제는 confirmPayment(PG 서버 승인)로만 확정되도록 하고, 이 수동 승인은 무통장에 한정한다.
+async function confirmPaymentManually(id, adminId, { memo } = {}) {
+  const order = await OrdersRepo.findById(id)
+  if (!order) {
+    throw new UserError('주문을 찾을 수 없습니다.', 404)
+  }
+
+  if (order.paymentMethod !== PAYMENT_METHOD.BANK) {
+    throw new UserError('무통장입금 주문만 수동으로 확인할 수 있습니다.', 400)
+  }
+
+  if (order.paymentStatus === PAYMENT_STATUS.DONE) {
+    throw new UserError('이미 결제 완료 처리된 주문입니다.', 400)
+  }
+
+  if (!memo || typeof memo !== 'string') {
+    throw new UserError('수동 확인 사유(메모)를 입력해주세요.', 400)
+  }
+
+  // pgTrxNo에 'manual:' 접두어를 남겨 PG가 실제로 확인한 건과 관리자가 수동 승인한 건을 구분할 수 있게 한다.
+  await OrdersRepo.markPaymentDone(order.orderNo, { pgTrxNo: `manual:admin${adminId}` })
+
+  const note = `[관리자 수동 결제확인 #admin${adminId} ${new Date().toISOString()}] ${memo}`
+  await OrdersRepo.patchMemo(id, order.memo ? `${order.memo}\n${note}` : note)
 }
 
 async function listMyOrders(memberId, { page, limit }) {
@@ -221,6 +260,7 @@ module.exports = {
   createOrder,
   confirmPayment,
   confirmWebhookPayment,
+  confirmPaymentManually,
   listMyOrders,
   getByOrderNoForMember,
   searchForAdmin,

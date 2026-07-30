@@ -14,8 +14,8 @@ router.post('/payment', async (ctx) => {
     return
   }
 
-  const { orderNo, amount, transactionId } = ctx.request.body
-  await orderService.confirmWebhookPayment({ orderNo, amount, transactionId })
+  const { orderNo, amount, transactionId, payerName } = ctx.request.body
+  await orderService.confirmWebhookPayment({ orderNo, amount, transactionId, payerName })
 
   // 우리 쪽 판단(금액 불일치 등)과 무관하게 웹훅 자체는 정상 수신했음을 알려 PG의 재전송을 막는다.
   ctx.body = { code: 200 }
