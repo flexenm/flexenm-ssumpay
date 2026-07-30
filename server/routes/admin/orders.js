@@ -14,6 +14,11 @@ router.get('/:id', async ctx => {
   ctx.body = { code: 200, data: order }
 })
 
+router.patch('/:id/payment-confirm', async ctx => {
+  await orderService.confirmPaymentManually(ctx.params.id, ctx.state.admin.id, ctx.request.body)
+  ctx.body = { code: 200, message: '결제가 확인 처리되었습니다.' }
+})
+
 router.patch('/:id/charge-status', async ctx => {
   await orderService.updateChargeStatus(ctx.params.id, ctx.request.body)
   ctx.body = { code: 200, message: '충전 상태가 변경되었습니다.' }

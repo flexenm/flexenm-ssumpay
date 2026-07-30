@@ -6,6 +6,7 @@ const MembersRepo = require('../../repositories/Members')
 const PasswordResetTokensRepo = require('../../repositories/PasswordResetTokens')
 const RefreshTokensRepo = require('../../repositories/RefreshTokens')
 const { createTransport, escapeHtml } = require('../../utils/mailer')
+const { hashToken } = require('../../utils/hashToken')
 const UserError = require('../../utils/UserError')
 const { MEMBER_STATUS } = require('../../const')
 const {
@@ -21,12 +22,6 @@ const {
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173'
 // 재설정 링크 유효시간 (30분)
 const RESET_TOKEN_TTL_MS = 30 * 60 * 1000
-
-// 원문 토큰을 그대로 DB에 저장하지 않고 해시로 저장한다.
-// DB가 유출되어도 저장된 값만으로는 재설정 링크를 만들 수 없다.
-function hashToken(token) {
-  return crypto.createHash('sha256').update(token).digest('hex')
-}
 
 async function checkUsernameAvailable(username) {
   if (!username) {

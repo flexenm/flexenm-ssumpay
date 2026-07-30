@@ -54,11 +54,25 @@ class Orders extends Base {
   async findByIdWithMemberAndProduct(id) {
     return Order.query().findById(id).withGraphJoined('[member, product]').modifyGraph('member', (builder) => builder.select(...MEMBER_SAFE_COLUMNS))
   }
-
+  
   async patchChargeStatus(id, updates) {
     return Order.query().patchAndFetchById(id, updates)
   }
+  // paymentStatus=0(대기)일 때만 갱신 — 승인 확인/웹훅이 중복 도착해도 한 번만 반영되도록 멱등하게 처리
+  async markPaymentDone(orderNo, { pgTrxNo, pgTid } = {}) {
+    return Order.query()
+      .patch({ paymentStatus: 1, pgTrxNo, pgTid, paidAt: new Date().toISOString() })
+      .where({ orderNo, paymentStatus: 0 })
+  }
 
+  async findByOrderNo(orderNo) {
+    return Order.query().findOne({ orderNo })
+  }
+
+  async attachVirtualAccount(orderNo, { virtualAccountNo, virtualAccountBank, virtualAccountExpiredAt }) {
+    return Order.query().patch({ virtualAccountNo, virtualAccountBank, virtualAccountExpiredAt }).where({ orderNo })
+  }
+  
   async patchMemo(id, memo) {
     return Order.query().patchAndFetchById(id, { memo })
   }
