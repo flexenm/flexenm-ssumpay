@@ -1,8 +1,7 @@
 const Base = require('./Base')
 const Member = require('../entities/Member')
 const db = require('../db')
-
-const ADMIN_LIST_COLUMNS = ['id', 'username', 'name', 'email', 'phone', 'flexUsername', 'status', 'createdAt']
+const { MEMBER_SAFE_COLUMNS } = require('../const')
 
 class Members extends Base {
   constructor() {
@@ -21,7 +20,7 @@ class Members extends Base {
 
   async listForAdmin({ page = 1, limit = 20, keyword, status } = {}) {
     const offset = (page - 1) * limit
-    let query = Member.query().select(...ADMIN_LIST_COLUMNS).orderBy('createdAt', 'desc')
+    let query = Member.query().select(...MEMBER_SAFE_COLUMNS).orderBy('createdAt', 'desc')
 
     if (keyword) {
       query = query.where((q) => {
@@ -40,7 +39,7 @@ class Members extends Base {
   }
 
   async findByIdForAdmin(id) {
-    return Member.query().findById(id).select(...ADMIN_LIST_COLUMNS)
+    return Member.query().findById(id).select(...MEMBER_SAFE_COLUMNS)
   }
 
   async patchStatus(id, status) {

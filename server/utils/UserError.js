@@ -3,6 +3,7 @@ class UserError extends Error {
     super()
     this.message = message
     this.code = code
+    this.status = code
   }
 }
 module.exports = UserError

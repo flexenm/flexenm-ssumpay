@@ -6,6 +6,7 @@ const UserError = require('../../utils/UserError')
 const { PAYMENT_METHOD, CHARGE_STATUS, PAYMENT_STATUS } = require('../../const')
 
 const FLEXTV_API_URL = process.env.FLEXTV_API_URL
+const ORDER_NO_MAX_RETRIES = 3
 
 async function verifyFlexAccount(loginId, password) {
   if (!FLEXTV_API_URL) throw Object.assign(new Error('FlexTV 서비스 연결 설정이 없습니다.'), { status: 503 })
@@ -53,8 +54,7 @@ async function createOrder({ memberId, productId, flexUsername, flexPassword, pa
     throw new UserError('상품을 찾을 수 없습니다.', 404)
   }
 
-  return OrdersRepo.insert({
-    orderNo: generateOrderNo(),
+  const orderData = {
     memberId,
     productId: product.id,
     productName: product.name,
@@ -64,7 +64,17 @@ async function createOrder({ memberId, productId, flexUsername, flexPassword, pa
     paymentStatus: 0,
     chargeStatus: 0,
     ipAddr
-  })
+  }
+
+  // orderNo는 초당 9000개 조합의 랜덤 접미사라 동시 주문 시 충돌 가능 — ER_DUP_ENTRY면 새 orderNo로 재시도.
+  // 여기까지 왔다는 건 FlexTV 인증이 이미 끝났다는 뜻이라, 그 비용을 버리지 않도록 insert만 재시도한다.
+  for (let attempt = 0; attempt < ORDER_NO_MAX_RETRIES; attempt++) {
+    try {
+      return await OrdersRepo.insert({ ...orderData, orderNo: generateOrderNo() })
+    } catch (err) {
+      if (err.code !== 'ER_DUP_ENTRY' || attempt === ORDER_NO_MAX_RETRIES - 1) throw err
+    }
+  }
 }
 
 async function listMyOrders(memberId, { page, limit }) {
@@ -111,6 +121,10 @@ async function updateChargeStatus(id, { chargeStatus, memo }) {
     throw new UserError('환불 완료된 주문은 상태를 변경할 수 없습니다.', 400)
   }
 
+  if (memo !== undefined && typeof memo !== 'string') {
+    throw new UserError('메모는 문자열이어야 합니다.', 400)
+  }
+
   const updates = { chargeStatus: Number(chargeStatus) }
   if (Number(chargeStatus) === 1) updates.chargedAt = db.raw('NOW()')
   if (memo !== undefined) updates.memo = memo
@@ -119,6 +133,10 @@ async function updateChargeStatus(id, { chargeStatus, memo }) {
 }
 
 async function updateMemo(id, memo) {
+  if (typeof memo !== 'string') {
+    throw new UserError('메모는 문자열이어야 합니다.', 400)
+  }
+
   const order = await OrdersRepo.findById(id)
   if (!order) {
     throw new UserError('주문을 찾을 수 없습니다.', 404)

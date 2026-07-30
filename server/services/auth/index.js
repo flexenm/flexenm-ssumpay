@@ -4,6 +4,7 @@ const ms = require('ms')
 const crypto = require('crypto')
 const MembersRepo = require('../../repositories/Members')
 const PasswordResetTokensRepo = require('../../repositories/PasswordResetTokens')
+const RefreshTokensRepo = require('../../repositories/RefreshTokens')
 const { createTransport, escapeHtml } = require('../../utils/mailer')
 const UserError = require('../../utils/UserError')
 const { MEMBER_STATUS } = require('../../const')
@@ -90,6 +91,34 @@ async function register({ username, password, phone, name: rawName, email: rawEm
   })
 }
 
+// access token은 짧게(누출 시 노출 시간 최소화), 실제 세션 연장/무효화는 Redis에 저장되는 refresh token이 담당한다.
+const ACCESS_TOKEN_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1h'
+
+function buildTokenResponse(member, refreshToken) {
+  const accessToken = jwt.sign(
+    { id: member.id, username: member.username, name: member.name },
+    process.env.JWT_SECRET,
+    { expiresIn: ACCESS_TOKEN_EXPIRES_IN }
+  )
+
+  return {
+    accessToken,
+    refreshToken,
+    expiresIn: Math.floor(ms(ACCESS_TOKEN_EXPIRES_IN) / 1000),
+    member: {
+      id: member.id,
+      username: member.username,
+      name: member.name,
+      email: member.email
+    }
+  }
+}
+
+async function issueTokenPair(member) {
+  const refreshToken = await RefreshTokensRepo.issue({ type: 'member', id: member.id })
+  return buildTokenResponse(member, refreshToken)
+}
+
 async function login({ username, password }) {
   if (!username || !password) {
     throw new UserError('아이디와 비밀번호를 입력해주세요.', 400)
@@ -109,22 +138,32 @@ async function login({ username, password }) {
     throw new UserError('아이디 또는 비밀번호가 올바르지 않습니다.', 401)
   }
 
-  const jwtExpiresIn = process.env.JWT_EXPIRES_IN || '7d'
-  const token = jwt.sign(
-    { id: member.id, username: member.username, name: member.name },
-    process.env.JWT_SECRET,
-    { expiresIn: jwtExpiresIn }
-  )
+  return issueTokenPair(member)
+}
 
-  return {
-    token,
-    expiresIn: Math.floor(ms(jwtExpiresIn) / 1000), // 쿠키 maxAge 동기화용(초). JWT exp와 동일 원천
-    member: {
-      id: member.id,
-      username: member.username,
-      name: member.name,
-      email: member.email
-    }
+async function refresh({ refreshToken }) {
+  if (!refreshToken) {
+    throw new UserError('유효하지 않은 요청입니다.', 400)
+  }
+
+  const data = await RefreshTokensRepo.find(refreshToken)
+  if (!data || data.type !== 'member') {
+    throw new UserError('유효하지 않거나 만료된 토큰입니다.', 401)
+  }
+
+  const member = await MembersRepo.findById(data.id)
+  if (!member || member.status === MEMBER_STATUS.BLOCKED) {
+    await RefreshTokensRepo.revoke(refreshToken)
+    throw new UserError('유효하지 않거나 만료된 토큰입니다.', 401)
+  }
+
+  const newRefreshToken = await RefreshTokensRepo.rotate(refreshToken, { type: 'member', id: member.id })
+  return buildTokenResponse(member, newRefreshToken)
+}
+
+async function logout({ refreshToken }) {
+  if (refreshToken) {
+    await RefreshTokensRepo.revoke(refreshToken)
   }
 }
 
@@ -203,6 +242,8 @@ module.exports = {
   checkUsernameAvailable,
   register,
   login,
+  refresh,
+  logout,
   requestPasswordReset,
   confirmPasswordReset
 }

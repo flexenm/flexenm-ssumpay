@@ -45,7 +45,7 @@ async function updateNotice(id, { title, content, isPinned, isActive }) {
     title,
     content,
     isPinned: isPinned ? 1 : 0,
-    isActive: isActive !== undefined ? isActive : notice.isActive
+    isActive: isActive !== undefined ? (isActive ? 1 : 0) : notice.isActive
   })
 }
 

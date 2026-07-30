@@ -1,13 +1,24 @@
 const bcrypt = require('bcrypt')
+const { ValidationError } = require('objection')
 const MembersRepo = require('../../repositories/Members')
+const RefreshTokensRepo = require('../../repositories/RefreshTokens')
 const UserError = require('../../utils/UserError')
 const { validatePassword, validateName } = require('../../utils/validators')
-const { MEMBER_STATUS } = require('../../const')
+const { MEMBER_STATUS, MEMBER_PROFILE_COLUMNS, MEMBER_FIELD_LABELS } = require('../../const')
 
-const PROFILE_COLUMNS = ['id', 'username', 'name', 'email', 'phone', 'flexUsername', 'createdAt']
+// Member 엔티티의 jsonSchema 위반(objection ValidationError)을
+// "phone: should be string,null" 같은 Ajv 원문 대신 한국어 메시지로 바꿔서 던진다.
+function toFriendlyError(err) {
+  const [field, issues] = Object.entries(err.data ?? {})[0] ?? []
+  const label = MEMBER_FIELD_LABELS[field] || field
+  const keyword = issues?.[0]?.keyword
+
+  if (keyword === 'type') return new UserError(`${label} 형식이 올바르지 않습니다.`, 400)
+  return new UserError(`${label} 값이 올바르지 않습니다.`, 400)
+}
 
 async function getProfile(memberId) {
-  return MembersRepo.findById(memberId, PROFILE_COLUMNS)
+  return MembersRepo.findById(memberId, MEMBER_PROFILE_COLUMNS)
 }
 
 async function getSelf(memberId) {
@@ -29,11 +40,17 @@ async function updateProfile(memberId, { name: rawName, phone, flexUsername }) {
     }
   }
 
-  const updated = await MembersRepo.patchById(memberId, {
-    ...(name && { name }),
-    ...(phone !== undefined && { phone }),
-    ...(flexUsername !== undefined && { flexUsername })
-  })
+  let updated
+  try {
+    updated = await MembersRepo.patchById(memberId, {
+      ...(name && { name }),
+      ...(phone !== undefined && { phone }),
+      ...(flexUsername !== undefined && { flexUsername })
+    })
+  } catch (err) {
+    if (err instanceof ValidationError) throw toFriendlyError(err)
+    throw err
+  }
 
   return {
     id: updated.id,
@@ -78,7 +95,8 @@ async function getByIdForAdmin(id) {
 }
 
 async function updateStatus(id, status) {
-  if (status === undefined || ![MEMBER_STATUS.NORMAL, MEMBER_STATUS.BLOCKED].includes(Number(status))) {
+  const statusNum = Number(status)
+  if (status === undefined || ![MEMBER_STATUS.NORMAL, MEMBER_STATUS.BLOCKED].includes(statusNum)) {
     throw new UserError('올바른 상태값을 입력해주세요.', 400)
   }
 
@@ -87,8 +105,14 @@ async function updateStatus(id, status) {
     throw new UserError('회원을 찾을 수 없습니다.', 404)
   }
 
-  await MembersRepo.patchStatus(id, status)
-  return Number(status) === MEMBER_STATUS.BLOCKED ? '회원이 차단되었습니다.' : '차단이 해제되었습니다.'
+  await MembersRepo.patchStatus(id, statusNum)
+
+  if (statusNum === MEMBER_STATUS.BLOCKED) {
+    // 차단 즉시 refresh token을 전부 무효화 — 이미 발급된 access token은 짧은 TTL로 자연 만료됨
+    await RefreshTokensRepo.revokeAllFor({ type: 'member', id })
+  }
+
+  return statusNum === MEMBER_STATUS.BLOCKED ? '회원이 차단되었습니다.' : '차단이 해제되었습니다.'
 }
 
 module.exports = {

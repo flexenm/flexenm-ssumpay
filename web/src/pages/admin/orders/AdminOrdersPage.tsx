@@ -62,8 +62,15 @@ export default function AdminOrdersPage() {
   }, []);
 
   const updateCharge = async (id: number, status: number) => {
-    await adminOrdersApi.updateChargeStatus(id, { chargeStatus: status });
-    load();
+    try {
+      await adminOrdersApi.updateChargeStatus(id, { chargeStatus: status });
+      load();
+    } catch (e) {
+      alert(
+        (e as { message?: string })?.message ||
+          "충전 상태 변경 중 오류가 발생했습니다.",
+      );
+    }
   };
 
   return (

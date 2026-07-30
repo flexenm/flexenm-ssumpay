@@ -1,9 +1,7 @@
 const Base = require('./Base')
 const Inquiry = require('../entities/Inquiry')
 const db = require('../db')
-
-// admin 응답에 회원 비밀번호 해시가 노출되지 않도록 member 조인 시 컬럼을 제한한다.
-const SAFE_MEMBER_COLUMNS = ['id', 'username', 'name', 'email', 'phone', 'flexUsername', 'status', 'createdAt']
+const { MEMBER_SAFE_COLUMNS } = require('../const')
 
 class Inquiries extends Base {
   constructor() {
@@ -37,7 +35,7 @@ class Inquiries extends Base {
     const offset = (page - 1) * limit
     let query = Inquiry.query()
       .withGraphJoined('member')
-      .modifyGraph('member', (builder) => builder.select(...SAFE_MEMBER_COLUMNS))
+      .modifyGraph('member', (builder) => builder.select(...MEMBER_SAFE_COLUMNS))
       .whereNull('inquiries.deletedAt')
       .orderBy('inquiries.createdAt', 'desc')
     if (status) query = query.where('inquiries.status', status)
@@ -52,7 +50,7 @@ class Inquiries extends Base {
   }
 
   async findByIdWithMember(id) {
-    return Inquiry.query().findById(id).withGraphJoined('member').modifyGraph('member', (builder) => builder.select(...SAFE_MEMBER_COLUMNS))
+    return Inquiry.query().findById(id).withGraphJoined('member').modifyGraph('member', (builder) => builder.select(...MEMBER_SAFE_COLUMNS))
   }
 
   async patchAnswer(id, answer) {
