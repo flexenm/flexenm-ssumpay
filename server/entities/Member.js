@@ -9,7 +9,7 @@ class Member extends Model {
       required: ['username', 'password', 'name', 'email'],
       properties: {
         id: { type: 'integer' },
-        username: { type: 'string', minLength: 4, maxLength: 50 },
+        username: { type: 'string', minLength: 6, maxLength: 15 },
         password: { type: 'string' },
         name: { type: 'string', maxLength: 50 },
         email: { type: 'string', format: 'email' },
