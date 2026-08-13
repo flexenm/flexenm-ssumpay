@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { adminInquiriesApi } from "@/api";
-import type { ListParams } from "@/api";
+import { fetchInquiries } from "@/api/inquiries";
 import { INQUIRY_STATUS } from "@/types";
 import type { Inquiry, Member } from "@/types";
 
@@ -37,9 +36,8 @@ export default function AdminInquiriesPage() {
   // 유형·상태는 백엔드 파라미터(server/routes/admin/inquiries.js)로 조회한다.
   const load = (s = status, t = type) => {
     setLoading(true);
-    return adminInquiriesApi
-      .list({ status: s, type: t } as ListParams)
-      .then((r) => setInquiries(r.data))
+    return fetchInquiries({ status: s, type: t })
+      .then(setInquiries)
       .catch(() => {})
       .finally(() => setLoading(false));
   };

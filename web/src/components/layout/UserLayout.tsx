@@ -1,16 +1,22 @@
 import { Outlet, Link, useNavigate } from "react-router-dom";
-import { getAccessToken, removeAccessToken } from "@/utils/cookie";
-import { removeMe } from "@/hooks/useMe";
+import { logout as logoutApi } from "@/api/auth";
+import { clearMe, useMe } from "@/hooks/useMe";
 import logo from "@/assets/img/logo.png";
 
 export default function UserLayout() {
   const navigate = useNavigate();
-  const isLoggedIn = !!getAccessToken();
+  const { isLoggedIn } = useMe();
 
-  const logout = () => {
-    removeAccessToken();
+  const logout = async () => {
+    // 쿠키가 HttpOnly 라 JS 가 지울 수 없다 — 서버가 만료시켜야 한다.
+    // 서버 호출이 실패해도(만료된 세션 등) 클라이언트 상태는 정리하고 로그인 화면으로 보낸다.
+    try {
+      await logoutApi();
+    } catch {
+      // 서버 폐기 실패는 사용자에게 알릴 것이 없다 — 로그아웃 자체는 진행한다.
+    }
     // 캐시에 남은 내 정보 제거 → 다른 계정 재로그인 시 이전 정보가 남지 않도록
-    removeMe();
+    clearMe();
     navigate("/signin");
   };
 

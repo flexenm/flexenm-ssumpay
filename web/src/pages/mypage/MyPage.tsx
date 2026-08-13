@@ -2,7 +2,10 @@ import { useState, useEffect } from "react";
 import type { FormEvent } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ChevronRight, Lock, PenLine } from "lucide-react";
-import { mypageApi, ordersApi, inquiriesApi } from "@/api";
+import { changePassword as changePasswordApi, fetchMypage } from "@/api/mypage";
+import { fetchMyOrders } from "@/api/orders";
+import { fetchInquiries } from "@/api/inquiries";
+import { getApiError } from "@/utils/error";
 import type { Member, Order, Inquiry } from "@/types";
 import SegmentedTabs from "@/components/ui/SegmentedTabs";
 import Pagination from "@/components/ui/Pagination";
@@ -37,19 +40,17 @@ export default function MyPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    mypageApi
-      .get()
-      .then((r) => setInfo(r.data))
+    fetchMypage()
+      .then(setInfo)
       .catch(() => {});
   }, []);
 
   useEffect(() => {
     if (tab === 1) {
       setLoading(true);
-      ordersApi
-        .my()
-        .then((r) => {
-          setOrders(r.data);
+      fetchMyOrders()
+        .then((data) => {
+          setOrders(data);
           setOrderPage(1);
         })
         .catch(() => {})
@@ -57,10 +58,9 @@ export default function MyPage() {
     }
     if (tab === 2) {
       setLoading(true);
-      inquiriesApi
-        .list()
-        .then((r) => {
-          setInquiries(r.data);
+      fetchInquiries()
+        .then((data) => {
+          setInquiries(data);
           setInquiryPage(1);
         })
         .catch(() => {})
@@ -77,16 +77,15 @@ export default function MyPage() {
       return;
     }
     try {
-      await mypageApi.changePassword({
+      await changePasswordApi({
         currentPassword: pwForm.currentPassword,
         newPassword: pwForm.newPassword,
       });
       setPwSuccess("비밀번호가 변경되었습니다.");
       setPwForm({ currentPassword: "", newPassword: "", newPasswordConfirm: "" });
     } catch (err) {
-      setPwError(
-        (err as { message?: string })?.message || "비밀번호 변경에 실패했습니다.",
-      );
+      const { message } = getApiError(err);
+      setPwError(message ?? "비밀번호 변경에 실패했습니다.");
     }
   };
 

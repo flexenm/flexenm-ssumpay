@@ -1,9 +1,9 @@
 import { useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { authApi } from "@/api";
-import { setAccessToken } from "@/utils/cookie";
+import { checkUsername as checkUsernameApi, login, register } from "@/api/auth";
 import { refreshMe } from "@/hooks/useMe";
+import { getApiError } from "@/utils/error";
 import {
   USERNAME_REGEX,
   PASSWORD_REGEX,
@@ -38,8 +38,8 @@ export default function RegisterPage() {
     }
     setError("");
     try {
-      const res = await authApi.checkUsername(form.username);
-      setUsernameStatus(res.available ? "ok" : "taken");
+      const available = await checkUsernameApi(form.username);
+      setUsernameStatus(available ? "ok" : "taken");
     } catch {
       setUsernameStatus(null);
       setError("중복확인에 실패했습니다. 잠시 후 다시 시도해주세요.");
@@ -73,7 +73,7 @@ export default function RegisterPage() {
     }
     const phoneValue = `${phone.prefix}-${phone.mid}-${phone.last}`;
     try {
-      await authApi.register({
+      await register({
         username: form.username,
         password: form.password,
         name,
@@ -82,12 +82,11 @@ export default function RegisterPage() {
       });
       // 가입 완료 후 같은 계정으로 자동 로그인
       try {
-        const res = await authApi.login({
+        await login({
           username: form.username,
           password: form.password,
         });
-        setAccessToken(res.accessToken, res.expiresIn);
-        refreshMe();
+        await refreshMe();
         alert("회원가입이 완료되었습니다.");
         navigate("/");
       } catch {
@@ -96,9 +95,8 @@ export default function RegisterPage() {
         navigate("/signin");
       }
     } catch (err) {
-      setError(
-        (err as { message?: string })?.message || "회원가입에 실패했습니다.",
-      );
+      const { message } = getApiError(err);
+      setError(message ?? "회원가입에 실패했습니다.");
     }
   };
 

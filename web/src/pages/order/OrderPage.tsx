@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import type { ReactNode } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { CreditCard, Mail } from "lucide-react";
-import { ordersApi } from "@/api";
+import { createOrder } from "@/api/orders";
+import { getApiError } from "@/utils/error";
 import { useProduct } from "@/hooks/useProducts";
 import type { PaymentMethod } from "@/types";
 
@@ -49,15 +50,16 @@ export default function OrderPage() {
     }
     setError("");
     try {
-      const res = await ordersApi.create({
+      const order = await createOrder({
         productId: Number(productId),
         flexUsername: form.flexUsername,
         flexPassword: form.flexPassword,
         paymentMethod: form.paymentMethod,
       });
-      navigate(`/order/complete/${res.data.orderNo}`);
+      navigate(`/order/complete/${order.orderNo}`);
     } catch (err) {
-      setError((err as { message?: string })?.message || "주문에 실패했습니다.");
+      const { message } = getApiError(err);
+      setError(message ?? "주문에 실패했습니다.");
     }
   };
 

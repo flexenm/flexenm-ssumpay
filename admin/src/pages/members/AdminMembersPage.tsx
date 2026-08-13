@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { adminMembersApi } from "@/api";
+import { fetchMembers, updateMemberStatus } from "@/api/members";
+import { getApiError } from "@/utils/error";
 import { MEMBER_STATUS } from "@/types";
 import type { Member } from "@/types";
 import DummyBadge from "@/components/ui/DummyBadge";
@@ -28,9 +29,8 @@ export default function AdminMembersPage() {
 
   const load = (kw = keyword) => {
     setLoading(true);
-    adminMembersApi
-      .list({ keyword: kw })
-      .then((r) => setMembers(r.data))
+    fetchMembers({ keyword: kw })
+      .then(setMembers)
       .catch(() => {})
       .finally(() => setLoading(false));
   };
@@ -40,18 +40,15 @@ export default function AdminMembersPage() {
 
   const toggleStatus = async (m: Member) => {
     try {
-      await adminMembersApi.updateStatus(m.id, {
-        status:
-          m.status === MEMBER_STATUS.NORMAL
-            ? MEMBER_STATUS.BLOCKED
-            : MEMBER_STATUS.NORMAL,
-      });
+      await updateMemberStatus(
+        m.id,
+        m.status === MEMBER_STATUS.NORMAL
+          ? MEMBER_STATUS.BLOCKED
+          : MEMBER_STATUS.NORMAL,
+      );
       load();
     } catch (e) {
-      alert(
-        (e as { message?: string })?.message ||
-          "회원 상태 변경 중 오류가 발생했습니다.",
-      );
+      alert(getApiError(e).message ?? "회원 상태 변경 중 오류가 발생했습니다.");
     }
   };
 

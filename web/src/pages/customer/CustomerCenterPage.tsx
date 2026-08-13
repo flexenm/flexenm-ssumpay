@@ -1,9 +1,16 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bookmark, ChevronRight, PenLine, Info, AlertCircle } from "lucide-react";
-import { noticesApi, inquiriesApi } from "@/api";
+import {
+  Bookmark,
+  ChevronRight,
+  PenLine,
+  Info,
+  AlertCircle,
+} from "lucide-react";
+import { fetchNotices } from "@/api/notices";
+import { fetchInquiries } from "@/api/inquiries";
 import type { Notice, Inquiry } from "@/types";
-import { getAccessToken } from "@/utils/cookie";
+import { useMe } from "@/hooks/useMe";
 import SegmentedTabs from "@/components/ui/SegmentedTabs";
 import Pagination from "@/components/ui/Pagination";
 import EmptyState from "@/components/ui/EmptyState";
@@ -28,22 +35,25 @@ export default function CustomerCenterPage() {
   const [loading, setLoading] = useState(true);
   const [noticePage, setNoticePage] = useState(1);
   const [inquiryPage, setInquiryPage] = useState(1);
-  const isLoggedIn = !!getAccessToken();
+  const { isLoggedIn } = useMe();
   const navigate = useNavigate();
 
   useEffect(() => {
     setLoading(true);
-    noticesApi
-      .list()
-      .then((r) => setNotices(r.data))
+    fetchNotices()
+      .then(setNotices)
       .catch(() => {})
       .finally(() => setLoading(false));
-    if (isLoggedIn)
-      inquiriesApi
-        .list()
-        .then((r) => setInquiries(r.data))
-        .catch(() => {});
   }, []);
+
+  // 로그인 여부는 서버 응답으로 판정하므로 첫 렌더에는 아직 false 다.
+  // 공지와 같은 effect 에 두면 마운트 시점에만 실행돼 문의 내역이 영영 조회되지 않는다.
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    fetchInquiries()
+      .then(setInquiries)
+      .catch(() => {});
+  }, [isLoggedIn]);
 
   const noticeTotalPages = Math.ceil(notices.length / PER_PAGE);
   const pagedNotices = notices.slice(
@@ -60,7 +70,9 @@ export default function CustomerCenterPage() {
     <div className="mx-auto max-w-[900px] px-6 py-14">
       <p className="mb-3 text-center text-[14px] text-ink/40">
         홈 &gt; 고객센터 &gt;{" "}
-        <span className="text-ink/60">{tab === 0 ? "공지사항" : "1:1문의"}</span>
+        <span className="text-ink/60">
+          {tab === 0 ? "공지사항" : "1:1문의"}
+        </span>
       </p>
       <h1 className="mb-3 text-center text-[48px] font-bold text-ink">
         고객센터

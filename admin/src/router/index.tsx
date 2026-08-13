@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 import { createBrowserRouter, Navigate } from "react-router-dom";
-import { getAdminAccessToken, removeAdminAccessToken } from "@/utils/cookie";
 import { useMe } from "@/hooks/useMe";
 
 import AdminLayout from "@/components/layout/AdminLayout";
@@ -15,18 +14,12 @@ import AdminNoticeFormPage from "@/pages/notices/AdminNoticeFormPage";
 import AdminInquiriesPage from "@/pages/inquiries/AdminInquiriesPage";
 import AdminInquiryDetailPage from "@/pages/inquiries/AdminInquiryDetailPage";
 
-// 가드는 쿠키 존재만 보지 않고 서버 /me 응답으로 실제 인증 상태를 확인한다.
-// 순서 주의: 쿠키 체크를 먼저(없으면 즉시 리다이렉트) → 그다음 로딩 → 에러 판정.
-// enabled:false 인 쿼리는 v5 에서 status:'pending' 이라, 쿠키 체크가 앞서지 않으면
-// 무한 로딩에 빠진다.
+// 토큰이 HttpOnly 쿠키라 JS 는 로그인 여부를 알 수 없다 — 판정은 전적으로 서버 /me 응답이다.
+// useMe 가 401 을 에러가 아닌 null(비로그인)로 돌려주므로 로딩 → 로그인 여부 두 단계로 끝난다.
 function AdminGuard({ children }: { children: ReactNode }) {
-  const { isPending, isError, data } = useMe();
-  if (!getAdminAccessToken()) return <Navigate to="/signin" replace />;
-  if (isPending) return null;
-  if (isError || !data) {
-    removeAdminAccessToken();
-    return <Navigate to="/signin" replace />;
-  }
+  const { isLoggedIn, isLoading } = useMe();
+  if (isLoading) return null;
+  if (!isLoggedIn) return <Navigate to="/signin" replace />;
   return children;
 }
 

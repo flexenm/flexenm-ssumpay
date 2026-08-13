@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Bookmark } from "lucide-react";
-import { noticesApi } from "@/api";
+import { fetchNotice } from "@/api/notices";
 import type { Notice } from "@/types";
 
 const fmtDate = (s: string) => {
@@ -15,9 +15,8 @@ export default function NoticeDetailPage() {
   const [notice, setNotice] = useState<Notice | null>(null);
 
   useEffect(() => {
-    noticesApi
-      .get(id!)
-      .then((r) => setNotice(r.data))
+    fetchNotice(id!)
+      .then(setNotice)
       .catch(() => navigate("/cs"));
   }, [id]);
 

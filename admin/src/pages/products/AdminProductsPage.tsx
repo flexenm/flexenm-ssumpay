@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import type { ChangeEvent, Dispatch, SetStateAction } from "react";
-import { adminProductsApi } from "@/api";
+import { createProduct, deleteProduct, fetchProducts, updateProduct } from "@/api/products";
+import { getApiError } from "@/utils/error";
 import type { Product } from "@/types";
 
 interface ProductFormState {
@@ -42,9 +43,8 @@ export default function AdminProductsPage() {
   // 등록·수정·삭제 후 재조회 시에도 적용 중인 검색어를 유지한다.
   const load = (kw = appliedKeyword) => {
     setLoading(true);
-    return adminProductsApi
-      .list(kw ? { keyword: kw } : undefined)
-      .then((r) => setProducts(r.data))
+    return fetchProducts(kw ? { keyword: kw } : undefined)
+      .then(setProducts)
       .catch(() => {})
       .finally(() => setLoading(false));
   };
@@ -98,23 +98,23 @@ export default function AdminProductsPage() {
     };
     delete data._imageFile;
     try {
-      if (modal === "create") await adminProductsApi.create(data);
-      else await adminProductsApi.update(selected!.id, data);
+      if (modal === "create") await createProduct(data);
+      else await updateProduct(selected!.id, data);
       revokePreview();
       setModal(null);
       load();
     } catch (e) {
-      alert((e as { message?: string })?.message || "저장 중 오류가 발생했습니다.");
+      alert(getApiError(e).message ?? "저장 중 오류가 발생했습니다.");
     }
   };
 
   const del = async () => {
     try {
-      await adminProductsApi.delete(selected!.id);
+      await deleteProduct(selected!.id);
       setModal(null);
       load();
     } catch (e) {
-      alert((e as { message?: string })?.message || "삭제 중 오류가 발생했습니다.");
+      alert(getApiError(e).message ?? "삭제 중 오류가 발생했습니다.");
     }
   };
 

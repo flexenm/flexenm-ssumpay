@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Tag, MoreVertical } from "lucide-react";
-import { inquiriesApi } from "@/api";
+import { deleteInquiry, fetchInquiry, updateInquiry } from "@/api/inquiries";
+import { getApiError } from "@/utils/error";
 import type { Inquiry } from "@/types";
 
 const typeLabel: Record<number, string> = {
@@ -27,9 +28,8 @@ export default function InquiryDetailPage() {
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    inquiriesApi
-      .get(id!)
-      .then((r) => setInquiry(r.data))
+    fetchInquiry(id!)
+      .then(setInquiry)
       .catch(() => navigate(-1));
   }, [id]);
 
@@ -50,21 +50,20 @@ export default function InquiryDetailPage() {
 
   const saveEdit = async () => {
     try {
-      await inquiriesApi.update(id!, editForm);
-      const r = await inquiriesApi.get(id!);
-      setInquiry(r.data);
+      await updateInquiry(id!, editForm);
+      setInquiry(await fetchInquiry(id!));
       setEditing(false);
     } catch (e) {
-      alert((e as { message?: string })?.message || "수정 중 오류가 발생했습니다.");
+      alert(getApiError(e).message ?? "수정 중 오류가 발생했습니다.");
     }
   };
 
   const del = async () => {
     try {
-      await inquiriesApi.delete(id!);
+      await deleteInquiry(id!);
       navigate(-1);
     } catch (e) {
-      alert((e as { message?: string })?.message || "삭제 중 오류가 발생했습니다.");
+      alert(getApiError(e).message ?? "삭제 중 오류가 발생했습니다.");
     }
   };
 

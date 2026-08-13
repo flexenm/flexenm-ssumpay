@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { adminNoticesApi } from "@/api";
-import type { NoticeInput } from "@/api";
+import { createNotice, deleteNotice, fetchNotice, updateNotice } from "@/api/notices";
+import type { NoticeParams } from "@/api/notices";
+import { getApiError } from "@/utils/error";
 
 interface NoticeForm {
   title: string;
@@ -31,14 +32,13 @@ export default function AdminNoticeFormPage() {
 
   useEffect(() => {
     if (!id) return;
-    adminNoticesApi
-      .get(id)
-      .then((r) =>
+    fetchNotice(id)
+      .then((notice) =>
         setForm({
-          title: r.data.title,
-          content: r.data.content,
-          isPinned: !!r.data.isPinned,
-          isActive: r.data.isActive,
+          title: notice.title,
+          content: notice.content,
+          isPinned: !!notice.isPinned,
+          isActive: notice.isActive,
         }),
       )
       .catch(() => {})
@@ -51,25 +51,21 @@ export default function AdminNoticeFormPage() {
       return;
     }
     try {
-      const payload = form as unknown as NoticeInput;
-      if (isEdit) await adminNoticesApi.update(id!, payload);
-      else await adminNoticesApi.create(payload);
+      const payload = form as unknown as NoticeParams;
+      if (isEdit) await updateNotice(id!, payload);
+      else await createNotice(payload);
       navigate("/notices");
     } catch (e) {
-      alert(
-        (e as { message?: string })?.message || "저장 중 오류가 발생했습니다.",
-      );
+      alert(getApiError(e).message ?? "저장 중 오류가 발생했습니다.");
     }
   };
 
   const del = async () => {
     try {
-      await adminNoticesApi.delete(id!);
+      await deleteNotice(id!);
       navigate("/notices");
     } catch (e) {
-      alert(
-        (e as { message?: string })?.message || "삭제 중 오류가 발생했습니다.",
-      );
+      alert(getApiError(e).message ?? "삭제 중 오류가 발생했습니다.");
     }
   };
 

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Check, Info } from "lucide-react";
-import { ordersApi } from "@/api";
+import { fetchOrder } from "@/api/orders";
 import type { Order } from "@/types";
 
 export default function OrderCompletePage() {
@@ -11,9 +11,8 @@ export default function OrderCompletePage() {
 
   useEffect(() => {
     if (!orderNo) return;
-    ordersApi
-      .get(orderNo)
-      .then((r) => setOrder(r.data))
+    fetchOrder(orderNo)
+      .then(setOrder)
       .catch(() => {});
   }, [orderNo]);
 

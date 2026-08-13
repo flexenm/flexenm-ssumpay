@@ -2,7 +2,8 @@ import { useState, useRef } from "react";
 import type { FormEvent, ChangeEvent, DragEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronDown, Upload, X } from "lucide-react";
-import { inquiriesApi } from "@/api";
+import { createInquiry } from "@/api/inquiries";
+import { getApiError } from "@/utils/error";
 
 const TITLE_MAX = 50;
 const CONTENT_MAX = 1000;
@@ -72,13 +73,12 @@ export default function InquiryFormPage() {
       return;
     }
     try {
-      await inquiriesApi.create({ ...(form as { type: number; title: string; content: string }), image });
+      await createInquiry({ ...(form as { type: number; title: string; content: string }), image });
       alert("문의가 등록되었습니다.");
       navigate("/cs");
     } catch (err) {
-      setError(
-        (err as { message?: string })?.message || "문의 등록에 실패했습니다.",
-      );
+      const { message } = getApiError(err);
+      setError(message ?? "문의 등록에 실패했습니다.");
     }
   };
 

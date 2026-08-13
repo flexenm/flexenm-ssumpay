@@ -1,8 +1,7 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { authApi } from "@/api";
-import { setAccessToken } from "@/utils/cookie";
+import { login } from "@/api/auth";
 import { refreshMe } from "@/hooks/useMe";
 
 export default function LoginPage() {
@@ -14,10 +13,10 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
     try {
-      const res = await authApi.login(form);
-      setAccessToken(res.accessToken, res.expiresIn);
+      // 서버가 Set-Cookie 로 토큰을 내려준다 — 클라이언트가 토큰을 저장하지 않는다.
+      await login(form);
       // 이전 세션의 내 정보 캐시를 무효화 → 가드가 새 계정으로 다시 조회
-      refreshMe();
+      await refreshMe();
       navigate("/");
     } catch {
       // 계정 열거 방지: 계정 없음 / 비밀번호 불일치를 구분하지 않고 항상 동일 메시지 노출

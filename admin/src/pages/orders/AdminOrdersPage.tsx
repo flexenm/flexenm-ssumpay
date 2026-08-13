@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { adminOrdersApi } from "@/api";
-import type { AdminOrderListParams } from "@/api";
+import { fetchOrders, updateChargeStatus } from "@/api/orders";
+import type { FetchOrdersParams } from "@/api/orders";
+import { getApiError } from "@/utils/error";
 import type { Order } from "@/types";
 
 const PAYMENT_LABEL: Record<number, string> = {
@@ -46,13 +47,12 @@ export default function AdminOrdersPage() {
   const [period, setPeriod] = useState("7");
 
   const load = (kw = keyword, cs = chargeStatus, pd = period) => {
-    const params: AdminOrderListParams = { startDate: startDateOf(pd) };
+    const params: FetchOrdersParams = { startDate: startDateOf(pd) };
     if (kw) params.keyword = kw;
     if (cs !== "") params.chargeStatus = Number(cs);
     setLoading(true);
-    adminOrdersApi
-      .list(params)
-      .then((r) => setOrders(r.data))
+    fetchOrders(params)
+      .then(setOrders)
       .catch(() => {})
       .finally(() => setLoading(false));
   };
@@ -63,13 +63,10 @@ export default function AdminOrdersPage() {
 
   const updateCharge = async (id: number, status: number) => {
     try {
-      await adminOrdersApi.updateChargeStatus(id, { chargeStatus: status });
+      await updateChargeStatus(id, status);
       load();
     } catch (e) {
-      alert(
-        (e as { message?: string })?.message ||
-          "충전 상태 변경 중 오류가 발생했습니다.",
-      );
+      alert(getApiError(e).message ?? "충전 상태 변경 중 오류가 발생했습니다.");
     }
   };
 

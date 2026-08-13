@@ -1,9 +1,9 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { adminAuthApi } from "@/api";
-import { setAdminAccessToken } from "@/utils/cookie";
+import { login } from "@/api/auth";
 import { refreshMe } from "@/hooks/useMe";
+import { getApiError } from "@/utils/error";
 
 export default function AdminLoginPage() {
   const navigate = useNavigate();
@@ -14,15 +14,14 @@ export default function AdminLoginPage() {
     e.preventDefault();
     setError("");
     try {
-      const res = await adminAuthApi.login(form);
-      setAdminAccessToken(res.accessToken, res.expiresIn);
+      // 서버가 Set-Cookie 로 토큰을 내려준다 — 클라이언트가 토큰을 저장하지 않는다.
+      await login(form);
       // 이전 세션의 관리자 정보 캐시를 무효화 → 가드/레이아웃이 새 계정으로 다시 조회
-      refreshMe();
+      await refreshMe();
       navigate("/dashboard");
     } catch (err) {
-      setError(
-        (err as { message?: string })?.message || "로그인에 실패했습니다.",
-      );
+      const { message } = getApiError(err);
+      setError(message ?? "로그인에 실패했습니다.");
     }
   };
 

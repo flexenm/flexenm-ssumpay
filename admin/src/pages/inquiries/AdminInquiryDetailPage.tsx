@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { adminInquiriesApi } from "@/api";
+import { answerInquiry, fetchInquiry } from "@/api/inquiries";
+import { getApiError } from "@/utils/error";
 import { INQUIRY_STATUS } from "@/types";
 import type { Inquiry, Member } from "@/types";
 
@@ -28,11 +29,10 @@ export default function AdminInquiryDetailPage() {
   const [answer, setAnswer] = useState("");
 
   useEffect(() => {
-    adminInquiriesApi
-      .get(id!)
-      .then((r) => {
-        setInquiry(r.data);
-        setAnswer(r.data.answer || "");
+    fetchInquiry(id!)
+      .then((data) => {
+        setInquiry(data);
+        setAnswer(data.answer || "");
       })
       .catch(() => navigate("/inquiries"));
   }, [id]);
@@ -40,14 +40,11 @@ export default function AdminInquiryDetailPage() {
   const submit = async () => {
     if (!answer) return alert("답변을 입력해주세요.");
     try {
-      await adminInquiriesApi.answer(id!, { answer });
+      await answerInquiry(id!, answer);
       alert("답변이 등록되었습니다.");
       navigate("/inquiries");
     } catch (e) {
-      alert(
-        (e as { message?: string })?.message ||
-          "답변 등록 중 오류가 발생했습니다.",
-      );
+      alert(getApiError(e).message ?? "답변 등록 중 오류가 발생했습니다.");
     }
   };
 

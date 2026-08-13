@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
-import { adminDashboardApi, adminOrdersApi } from "@/api";
+import { fetchDashboard } from "@/api/dashboard";
+import { fetchOrders } from "@/api/orders";
 import type { DashboardSummary, Order } from "@/types";
 import DummyBadge from "@/components/ui/DummyBadge";
 
@@ -26,13 +27,11 @@ export default function DashboardPage() {
   const [recent, setRecent] = useState<Order[]>([]);
 
   useEffect(() => {
-    adminDashboardApi
-      .get()
-      .then((r) => setData(r.data))
+    fetchDashboard()
+      .then(setData)
       .catch(() => {});
-    adminOrdersApi
-      .list({ limit: 8 })
-      .then((r) => setRecent(r.data))
+    fetchOrders({ limit: 8 })
+      .then(setRecent)
       .catch(() => {});
   }, []);
 

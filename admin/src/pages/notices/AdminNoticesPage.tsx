@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { adminNoticesApi } from "@/api";
-import type { AdminNoticeListParams } from "@/api";
+import { deleteNotice, fetchNotices } from "@/api/notices";
+import type { FetchNoticesParams } from "@/api/notices";
+import { getApiError } from "@/utils/error";
 import type { Notice } from "@/types";
 
 type ModalType = "view" | "delete";
@@ -27,13 +28,12 @@ export default function AdminNoticesPage() {
 
   // 등록·수정·삭제 후 재조회 시에도 적용 중인 필터를 유지한다.
   const load = (pinned = appliedFilter.pinned, title = appliedFilter.title) => {
-    const params: AdminNoticeListParams = {};
+    const params: FetchNoticesParams = {};
     if (pinned !== "") params.isPinned = pinned === "Y" ? 1 : 0;
     if (title) params.keyword = title;
     setLoading(true);
-    return adminNoticesApi
-      .list(params)
-      .then((r) => setNotices(r.data))
+    return fetchNotices(params)
+      .then(setNotices)
       .catch(() => {})
       .finally(() => setLoading(false));
   };
@@ -52,13 +52,11 @@ export default function AdminNoticesPage() {
 
   const del = async () => {
     try {
-      await adminNoticesApi.delete(selected!.id);
+      await deleteNotice(selected!.id);
       setModal(null);
       load();
     } catch (e) {
-      alert(
-        (e as { message?: string })?.message || "삭제 중 오류가 발생했습니다.",
-      );
+      alert(getApiError(e).message ?? "삭제 중 오류가 발생했습니다.");
     }
   };
 

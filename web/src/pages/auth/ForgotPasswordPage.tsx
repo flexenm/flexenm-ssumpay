@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { authApi } from "@/api";
+import { requestPasswordReset } from "@/api/auth";
 import emailSentImg from "@/assets/img/email-sent.png";
 
 export default function ForgotPasswordPage() {
@@ -15,7 +15,7 @@ export default function ForgotPasswordPage() {
     setSubmitting(true);
     try {
       // 서버는 계정 존재 여부와 무관하게 동일 응답을 주므로, 실패 여부와 관계없이 동일 안내를 노출한다.
-      await authApi.resetPassword(form);
+      await requestPasswordReset(form);
     } catch {
       // 열거 방지: 오류가 나더라도 계정 존재를 드러내지 않도록 동일 안내를 유지
     } finally {

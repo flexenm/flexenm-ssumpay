@@ -1,6 +1,6 @@
 import { Outlet, Link, useNavigate, useLocation } from "react-router-dom";
-import { removeAdminAccessToken } from "@/utils/cookie";
-import { useMe, removeMe } from "@/hooks/useMe";
+import { logout as logoutApi } from "@/api/auth";
+import { useMe, clearMe } from "@/hooks/useMe";
 
 const menus = [
   { path: "/dashboard", label: "대시보드" },
@@ -14,12 +14,18 @@ const menus = [
 export default function AdminLayout() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const { data: admin } = useMe();
+  const { me: admin } = useMe();
 
-  const logout = () => {
-    removeAdminAccessToken();
+  const logout = async () => {
+    // 쿠키가 HttpOnly 라 JS 가 지울 수 없다 — 서버가 만료시켜야 한다.
+    // 서버 호출이 실패해도(만료된 세션 등) 클라이언트 상태는 정리하고 로그인 화면으로 보낸다.
+    try {
+      await logoutApi();
+    } catch {
+      // 서버 폐기 실패는 사용자에게 알릴 것이 없다 — 로그아웃 자체는 진행한다.
+    }
     // 캐시에 남은 관리자 정보 제거 → 다른 계정 재로그인 시 이전 이름이 보이지 않도록
-    removeMe();
+    clearMe();
     navigate("/signin");
   };
 

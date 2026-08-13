@@ -1,7 +1,8 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { authApi } from "@/api";
+import { confirmPasswordReset } from "@/api/auth";
+import { getApiError } from "@/utils/error";
 import { PASSWORD_REGEX, ERROR_MSG } from "@/utils/validators";
 
 export default function ResetPasswordPage() {
@@ -30,16 +31,14 @@ export default function ResetPasswordPage() {
 
     setSubmitting(true);
     try {
-      await authApi.confirmResetPassword({
+      await confirmPasswordReset({
         token: token!,
         newPassword: form.newPassword,
       });
       setDone(true);
     } catch (err) {
-      setError(
-        (err as { message?: string })?.message ||
-          "비밀번호 재설정에 실패했습니다. 다시 시도해주세요.",
-      );
+      const { message } = getApiError(err);
+      setError(message ?? "비밀번호 재설정에 실패했습니다. 다시 시도해주세요.");
     } finally {
       setSubmitting(false);
     }

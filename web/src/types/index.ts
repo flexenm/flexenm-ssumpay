@@ -157,12 +157,10 @@ export interface AuthUser {
   email: string;
 }
 
+// 토큰은 body 에 없다 — 서버가 HttpOnly 쿠키(Set-Cookie)로만 내려준다.
+// 만료 시 갱신은 api/fetch.ts 의 응답 인터셉터가 /api/auth/refresh 로 처리한다.
 export interface LoginResponse extends BaseResponse {
-  accessToken: string;
-  expiresIn: number; // 토큰 만료까지 남은 초. 쿠키 maxAge 동기화에 사용
   member: AuthUser;
-  // NOTE: 서버는 refreshToken 도 함께 반환하지만(POST /api/auth/refresh) 프론트는 아직 쓰지 않는다.
-  // 갱신을 붙이기 전까지는 access token 만료(1h) 시 세션이 끊긴다.
 }
 
 export interface MeResponse extends BaseResponse {
