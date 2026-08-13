@@ -5,19 +5,19 @@ import { useMe } from "@/hooks/useMe";
 
 import UserLayout from "@/components/layout/UserLayout";
 
-import HomePage from "@/pages/user/home/HomePage";
-import LoginPage from "@/pages/user/auth/LoginPage";
-import RegisterPage from "@/pages/user/auth/RegisterPage";
-import ForgotPasswordPage from "@/pages/user/auth/ForgotPasswordPage";
-import ResetPasswordPage from "@/pages/user/auth/ResetPasswordPage";
-import ProductsPage from "@/pages/user/products/ProductsPage";
-import OrderPage from "@/pages/user/order/OrderPage";
-import OrderCompletePage from "@/pages/user/order/OrderCompletePage";
-import MyPage from "@/pages/user/mypage/MyPage";
-import CustomerCenterPage from "@/pages/user/customer/CustomerCenterPage";
-import NoticeDetailPage from "@/pages/user/customer/NoticeDetailPage";
-import InquiryFormPage from "@/pages/user/customer/InquiryFormPage";
-import InquiryDetailPage from "@/pages/user/customer/InquiryDetailPage";
+import HomePage from "@/pages/home/HomePage";
+import LoginPage from "@/pages/auth/LoginPage";
+import RegisterPage from "@/pages/auth/RegisterPage";
+import ForgotPasswordPage from "@/pages/auth/ForgotPasswordPage";
+import ResetPasswordPage from "@/pages/auth/ResetPasswordPage";
+import ProductsPage from "@/pages/products/ProductsPage";
+import OrderPage from "@/pages/order/OrderPage";
+import OrderCompletePage from "@/pages/order/OrderCompletePage";
+import MyPage from "@/pages/mypage/MyPage";
+import CustomerCenterPage from "@/pages/customer/CustomerCenterPage";
+import NoticeDetailPage from "@/pages/customer/NoticeDetailPage";
+import InquiryFormPage from "@/pages/customer/InquiryFormPage";
+import InquiryDetailPage from "@/pages/customer/InquiryDetailPage";
 
 // 가드는 쿠키 존재만 보지 않고 서버 /me 응답으로 실제 인증 상태를 확인한다.
 // 순서 주의: 쿠키 체크를 먼저(없으면 즉시 리다이렉트) → 그다음 로딩 → 에러 판정.
