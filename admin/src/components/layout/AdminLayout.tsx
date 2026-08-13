@@ -1,26 +1,26 @@
 import { Outlet, Link, useNavigate, useLocation } from "react-router-dom";
 import { removeAdminAccessToken } from "@/utils/cookie";
-import { useAdminMe, removeAdminMe } from "@/hooks/useAdminMe";
+import { useMe, removeMe } from "@/hooks/useMe";
 
 const menus = [
-  { path: "/admin/dashboard", label: "대시보드" },
-  { path: "/admin/orders", label: "주문·충전 관리" },
-  { path: "/admin/products", label: "상품 관리" },
-  { path: "/admin/members", label: "회원 관리" },
-  { path: "/admin/notices", label: "공지사항 관리" },
-  { path: "/admin/inquiries", label: "1:1 문의 관리" },
+  { path: "/dashboard", label: "대시보드" },
+  { path: "/orders", label: "주문·충전 관리" },
+  { path: "/products", label: "상품 관리" },
+  { path: "/members", label: "회원 관리" },
+  { path: "/notices", label: "공지사항 관리" },
+  { path: "/inquiries", label: "1:1 문의 관리" },
 ];
 
 export default function AdminLayout() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const { data: admin } = useAdminMe();
+  const { data: admin } = useMe();
 
   const logout = () => {
     removeAdminAccessToken();
     // 캐시에 남은 관리자 정보 제거 → 다른 계정 재로그인 시 이전 이름이 보이지 않도록
-    removeAdminMe();
-    navigate("/admin/login");
+    removeMe();
+    navigate("/signin");
   };
 
   return (

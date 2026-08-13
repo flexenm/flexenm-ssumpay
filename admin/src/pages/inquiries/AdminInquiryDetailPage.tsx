@@ -34,7 +34,7 @@ export default function AdminInquiryDetailPage() {
         setInquiry(r.data);
         setAnswer(r.data.answer || "");
       })
-      .catch(() => navigate("/admin/inquiries"));
+      .catch(() => navigate("/inquiries"));
   }, [id]);
 
   const submit = async () => {
@@ -42,7 +42,7 @@ export default function AdminInquiryDetailPage() {
     try {
       await adminInquiriesApi.answer(id!, { answer });
       alert("답변이 등록되었습니다.");
-      navigate("/admin/inquiries");
+      navigate("/inquiries");
     } catch (e) {
       alert(
         (e as { message?: string })?.message ||
@@ -61,7 +61,7 @@ export default function AdminInquiryDetailPage() {
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-[24px] font-bold text-admin">1:1 문의 답변</h1>
         <button
-          onClick={() => navigate("/admin/inquiries")}
+          onClick={() => navigate("/inquiries")}
           className="h-[44px] rounded-lg border border-admin-border bg-white px-5 text-[15px] text-ink"
         >
           목록으로
@@ -112,7 +112,7 @@ export default function AdminInquiryDetailPage() {
       {!answered && (
         <div className="mt-6 flex justify-end gap-3">
           <button
-            onClick={() => navigate("/admin/inquiries")}
+            onClick={() => navigate("/inquiries")}
             className="h-[56px] w-[200px] rounded-lg border border-admin-border bg-white text-[16px] font-medium text-ink"
           >
             취소

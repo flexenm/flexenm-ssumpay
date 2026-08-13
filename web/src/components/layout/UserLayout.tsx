@@ -11,7 +11,7 @@ export default function UserLayout() {
     removeAccessToken();
     // 캐시에 남은 내 정보 제거 → 다른 계정 재로그인 시 이전 정보가 남지 않도록
     removeMe();
-    navigate("/login");
+    navigate("/signin");
   };
 
   return (
@@ -21,7 +21,7 @@ export default function UserLayout() {
           <img src={logo} alt="ssumpay" className="h-[29px]" />
         </Link>
         <nav className="flex items-center gap-7 text-[15px] text-ink">
-          <Link to="/customer" className="hover:text-primary">
+          <Link to="/cs" className="hover:text-primary">
             고객센터
           </Link>
           {isLoggedIn ? (
@@ -38,7 +38,7 @@ export default function UserLayout() {
             </>
           ) : (
             <Link
-              to="/login"
+              to="/signin"
               className="rounded-full bg-primary px-4 py-1.5 text-sm text-white"
             >
               로그인
@@ -62,7 +62,7 @@ export default function UserLayout() {
               (t) => (
                 <Link
                   key={t}
-                  to="/customer"
+                  to="/cs"
                   className="text-white/50 hover:text-white/80"
                 >
                   {t}

@@ -18,7 +18,7 @@ export default function NoticeDetailPage() {
     noticesApi
       .get(id!)
       .then((r) => setNotice(r.data))
-      .catch(() => navigate("/customer"));
+      .catch(() => navigate("/cs"));
   }, [id]);
 
   if (!notice) return <div className="p-20 text-center">로딩중...</div>;
@@ -53,7 +53,7 @@ export default function NoticeDetailPage() {
       <div className="mt-10 flex justify-center">
         <button
           type="button"
-          onClick={() => navigate("/customer")}
+          onClick={() => navigate("/cs")}
           className="cursor-pointer rounded-lg bg-navy px-10 py-3 text-[15px] font-semibold text-white"
         >
           목록으로

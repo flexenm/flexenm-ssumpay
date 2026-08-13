@@ -49,7 +49,7 @@ export default function ForgotPasswordPage() {
           유효합니다.
         </p>
         <button
-          onClick={() => navigate("/login")}
+          onClick={() => navigate("/signin")}
           className="mt-10 cursor-pointer rounded-lg border-none bg-navy px-10 py-[13px] text-[15px] font-medium text-white"
         >
           로그인 하러 가기
@@ -65,7 +65,7 @@ export default function ForgotPasswordPage() {
             재발송
           </button>
           <span className="text-ink/30">|</span>
-          <Link to="/customer" className="font-medium text-ink/70">
+          <Link to="/cs" className="font-medium text-ink/70">
             고객센터 문의
           </Link>
         </div>

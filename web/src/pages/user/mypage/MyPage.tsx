@@ -262,7 +262,7 @@ export default function MyPage() {
           <div>
             <div className="mb-4 flex justify-end">
               <button
-                onClick={() => navigate("/customer/inquiries/new")}
+                onClick={() => navigate("/cs/inquiries/new")}
                 className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-navy px-5 py-[10px] text-[14px] font-medium text-white"
               >
                 <PenLine size={15} /> 문의하기

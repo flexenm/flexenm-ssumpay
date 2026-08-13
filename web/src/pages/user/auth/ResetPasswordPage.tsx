@@ -72,7 +72,7 @@ export default function ResetPasswordPage() {
   return (
     <div className={centerClass}>
       {done && (
-        <div className={overlayClass} onClick={() => navigate("/login")}>
+        <div className={overlayClass} onClick={() => navigate("/signin")}>
           <div className={modalClass} onClick={(e) => e.stopPropagation()}>
             <h3 className="mb-4 text-center text-xl font-bold text-ink">
               비밀번호 변경 완료
@@ -82,7 +82,7 @@ export default function ResetPasswordPage() {
               <br />새 비밀번호로 로그인해주세요.
             </p>
             <button
-              onClick={() => navigate("/login")}
+              onClick={() => navigate("/signin")}
               className={`${btnClass} cursor-pointer`}
             >
               로그인하기

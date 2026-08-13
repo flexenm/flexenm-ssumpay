@@ -72,7 +72,7 @@ export default function AdminNoticesPage() {
       <div className="mb-8 flex items-center justify-between">
         <h1 className="text-[24px] font-bold text-admin">공지사항 관리</h1>
         <button
-          onClick={() => navigate("/admin/notices/new")}
+          onClick={() => navigate("/notices/new")}
           className="h-[52px] rounded-lg bg-admin px-6 text-[15px] font-medium text-white"
         >
           + 공지 등록
@@ -154,7 +154,7 @@ export default function AdminNoticesPage() {
                   <td className={TD}>{n.isPinned ? "Y" : "N"}</td>
                   <td className={TD}>
                     <button
-                      onClick={() => navigate(`/admin/notices/${n.id}/edit`)}
+                      onClick={() => navigate(`/notices/${n.id}/edit`)}
                       className="text-admin-muted hover:text-admin hover:underline"
                     >
                       수정
@@ -201,7 +201,7 @@ export default function AdminNoticesPage() {
                 닫기
               </button>
               <button
-                onClick={() => navigate(`/admin/notices/${selected.id}/edit`)}
+                onClick={() => navigate(`/notices/${selected.id}/edit`)}
                 className="h-[52px] w-[120px] rounded-lg bg-admin text-[15px] font-medium text-white"
               >
                 수정

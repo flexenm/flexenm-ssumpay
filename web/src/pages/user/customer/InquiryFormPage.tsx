@@ -74,7 +74,7 @@ export default function InquiryFormPage() {
     try {
       await inquiriesApi.create({ ...(form as { type: number; title: string; content: string }), image });
       alert("문의가 등록되었습니다.");
-      navigate("/customer");
+      navigate("/cs");
     } catch (err) {
       setError(
         (err as { message?: string })?.message || "문의 등록에 실패했습니다.",

@@ -7,7 +7,7 @@ const opts = {
   secure: import.meta.env.PROD,
 } as const;
 
-// 사용자 토큰
+// 사용자 토큰. domain 미지정(host-only)이라 다른 서브도메인으로 새지 않는다.
 export const getAccessToken = (): string | null =>
   parseCookies().accessToken || null;
 export const setAccessToken = (t: string, maxAge: number): void => {
@@ -16,15 +16,3 @@ export const setAccessToken = (t: string, maxAge: number): void => {
 export const removeAccessToken = (): void => {
   destroyCookie(null, "accessToken", { path: "/" });
 };
-
-// 관리자 토큰
-export const getAdminAccessToken = (): string | null =>
-  parseCookies().adminAccessToken || null;
-export const setAdminAccessToken = (t: string, maxAge: number): void => {
-  setCookie(null, "adminAccessToken", t, { ...opts, maxAge });
-};
-export const removeAdminAccessToken = (): void => {
-  destroyCookie(null, "adminAccessToken", { path: "/" });
-};
-
-// 관리자 정보는 서버 /admin/my/profile(useAdminMe)로 조회하므로 쿠키에 저장하지 않는다.

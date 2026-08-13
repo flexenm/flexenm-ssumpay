@@ -25,19 +25,21 @@ export default function RegisterPage() {
     email: "",
   });
   const [phone, setPhone] = useState({ prefix: "010", mid: "", last: "" });
-  const [usernameStatus, setUsernameStatus] = useState<null | 'invalid' | 'taken' | 'ok'>(null);
+  const [usernameStatus, setUsernameStatus] = useState<
+    null | "invalid" | "taken" | "ok"
+  >(null);
   const [error, setError] = useState("");
 
   const checkUsername = async () => {
     if (!form.username) return;
     if (!USERNAME_REGEX.test(form.username)) {
-      setUsernameStatus('invalid');
+      setUsernameStatus("invalid");
       return;
     }
     setError("");
     try {
       const res = await authApi.checkUsername(form.username);
-      setUsernameStatus(res.available ? 'ok' : 'taken');
+      setUsernameStatus(res.available ? "ok" : "taken");
     } catch {
       setUsernameStatus(null);
       setError("중복확인에 실패했습니다. 잠시 후 다시 시도해주세요.");
@@ -47,7 +49,7 @@ export default function RegisterPage() {
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
-    if (usernameStatus !== 'ok') {
+    if (usernameStatus !== "ok") {
       setError("아이디 중복확인을 해주세요.");
       return;
     }
@@ -84,17 +86,19 @@ export default function RegisterPage() {
           username: form.username,
           password: form.password,
         });
-        setAccessToken(res.token, res.expiresIn);
+        setAccessToken(res.accessToken, res.expiresIn);
         refreshMe();
         alert("회원가입이 완료되었습니다.");
         navigate("/");
       } catch {
         // 자동 로그인 실패 시(레이트리밋 등) 수동 로그인으로 유도
         alert("회원가입이 완료되었습니다. 로그인해주세요.");
-        navigate("/login");
+        navigate("/signin");
       }
     } catch (err) {
-      setError((err as { message?: string })?.message || "회원가입에 실패했습니다.");
+      setError(
+        (err as { message?: string })?.message || "회원가입에 실패했습니다.",
+      );
     }
   };
 
@@ -141,14 +145,20 @@ export default function RegisterPage() {
                 중복확인
               </button>
             </div>
-            {usernameStatus === 'ok' && (
-              <p className="mt-1.5 text-xs text-[#22c55e]">사용 가능한 아이디입니다.</p>
+            {usernameStatus === "ok" && (
+              <p className="mt-1.5 text-xs text-[#22c55e]">
+                사용 가능한 아이디입니다.
+              </p>
             )}
-            {usernameStatus === 'taken' && (
-              <p className="mt-1.5 text-xs text-red-500">이미 사용 중인 아이디입니다.</p>
+            {usernameStatus === "taken" && (
+              <p className="mt-1.5 text-xs text-red-500">
+                이미 사용 중인 아이디입니다.
+              </p>
             )}
-            {usernameStatus === 'invalid' && (
-              <p className="mt-1.5 text-xs text-red-500">{ERROR_MSG.username}</p>
+            {usernameStatus === "invalid" && (
+              <p className="mt-1.5 text-xs text-red-500">
+                {ERROR_MSG.username}
+              </p>
             )}
           </div>
           <div>
@@ -249,7 +259,7 @@ export default function RegisterPage() {
         </form>
         <p className="mt-4 text-center text-[14px] text-ink/50">
           이미 계정이 있으신가요?{" "}
-          <Link to="/login" className="font-medium text-primary">
+          <Link to="/signin" className="font-medium text-primary">
             로그인
           </Link>
         </p>

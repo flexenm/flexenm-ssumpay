@@ -51,12 +51,12 @@ export default function DashboardPage() {
     {
       label: "충전 대기",
       value: `${data.pendingCharges}건`,
-      to: "/admin/orders",
+      to: "/orders",
     },
     {
       label: "미답변 문의",
       value: `${data.pendingInquiries}건`,
-      to: "/admin/inquiries",
+      to: "/inquiries",
     },
   ];
 

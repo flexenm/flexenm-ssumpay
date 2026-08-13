@@ -1,0 +1,12 @@
+import axios from "axios";
+import { getAdminAccessToken } from "@/utils/cookie";
+
+const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3100";
+
+export const adminApi = axios.create({ baseURL: BASE_URL });
+
+adminApi.interceptors.request.use((config) => {
+  const token = getAdminAccessToken();
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});

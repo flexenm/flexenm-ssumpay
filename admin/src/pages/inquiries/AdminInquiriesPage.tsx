@@ -142,7 +142,7 @@ export default function AdminInquiriesPage() {
                 return (
                   <tr
                     key={q.id}
-                    onClick={() => navigate(`/admin/inquiries/${q.id}`)}
+                    onClick={() => navigate(`/inquiries/${q.id}`)}
                     className="cursor-pointer border-b border-admin-line hover:bg-admin-bg"
                   >
                     <td className={TD}>{q.id}</td>

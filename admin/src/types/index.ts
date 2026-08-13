@@ -1,7 +1,7 @@
 // 백엔드(server/entities, server/migrations/001_init.sql, server/const.js)를 기준으로
 // 프론트가 실제로 주고받는 형태를 그대로 반영한 타입 정의.
 //
-// NOTE: 원본은 server/ 다. admin/src/types/index.ts 와 도메인 모델·열거값이 겹치며,
+// NOTE: 원본은 server/ 다. web/src/types/index.ts 와 도메인 모델·열거값이 겹치며,
 // 서버 스키마가 바뀌면 양쪽을 함께 고쳐야 한다. 서버가 OpenAPI 스펙을 내보내게 되면
 // 생성으로 대체할 것(현재 server/ 는 순수 JS이고 swagger 의존성이 없다).
 
@@ -150,25 +150,28 @@ export interface Inquiry {
 
 /* ---------------------- 로그인 등 비-엔벨로프 응답 ---------------------- */
 
-export interface AuthUser {
+export interface AdminUser {
   id: number;
   username: string;
   name: string;
-  email: string;
 }
 
-export interface LoginResponse extends BaseResponse {
+export interface AdminLoginResponse extends BaseResponse {
   accessToken: string;
   expiresIn: number; // 토큰 만료까지 남은 초. 쿠키 maxAge 동기화에 사용
-  member: AuthUser;
-  // NOTE: 서버는 refreshToken 도 함께 반환하지만(POST /api/auth/refresh) 프론트는 아직 쓰지 않는다.
-  // 갱신을 붙이기 전까지는 access token 만료(1h) 시 세션이 끊긴다.
+  admin: AdminUser;
+  // NOTE: 서버는 refreshToken 도 함께 반환하지만(POST /admin/auth/refresh) 프론트는 아직 쓰지 않는다.
+  // 갱신을 붙이기 전까지는 access token 만료(8h) 시 세션이 끊긴다.
 }
 
-export interface MeResponse extends BaseResponse {
-  member: AuthUser;
+export interface AdminMeResponse extends BaseResponse {
+  admin: AdminUser;
 }
 
-export interface CheckUsernameResponse extends BaseResponse {
-  available: boolean;
+export interface DashboardSummary {
+  totalMembers: number;
+  todayOrderCount: number;
+  pendingCharges: number;
+  pendingInquiries: number;
+  salesByDay: { date: string; total: number }[];
 }

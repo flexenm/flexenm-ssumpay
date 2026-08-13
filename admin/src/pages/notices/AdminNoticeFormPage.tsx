@@ -54,7 +54,7 @@ export default function AdminNoticeFormPage() {
       const payload = form as unknown as NoticeInput;
       if (isEdit) await adminNoticesApi.update(id!, payload);
       else await adminNoticesApi.create(payload);
-      navigate("/admin/notices");
+      navigate("/notices");
     } catch (e) {
       alert(
         (e as { message?: string })?.message || "저장 중 오류가 발생했습니다.",
@@ -65,7 +65,7 @@ export default function AdminNoticeFormPage() {
   const del = async () => {
     try {
       await adminNoticesApi.delete(id!);
-      navigate("/admin/notices");
+      navigate("/notices");
     } catch (e) {
       alert(
         (e as { message?: string })?.message || "삭제 중 오류가 발생했습니다.",
@@ -171,7 +171,7 @@ export default function AdminNoticeFormPage() {
         </div>
         <div className="flex gap-3">
           <button
-            onClick={() => navigate("/admin/notices")}
+            onClick={() => navigate("/notices")}
             className="h-[52px] w-[120px] rounded-lg border border-admin-border bg-white text-[15px] text-ink"
           >
             취소

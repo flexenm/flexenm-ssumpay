@@ -15,7 +15,7 @@ export default function LoginPage() {
     setError("");
     try {
       const res = await authApi.login(form);
-      setAccessToken(res.token, res.expiresIn);
+      setAccessToken(res.accessToken, res.expiresIn);
       // 이전 세션의 내 정보 캐시를 무효화 → 가드가 새 계정으로 다시 조회
       refreshMe();
       navigate("/");
@@ -56,7 +56,7 @@ export default function LoginPage() {
           </button>
         </form>
         <div className="mt-4 flex items-center justify-center gap-3 text-[14px] text-ink/40">
-          <Link to="/register" className="text-ink/40">
+          <Link to="/signup" className="text-ink/40">
             회원가입
           </Link>
           <span className="text-line">|</span>

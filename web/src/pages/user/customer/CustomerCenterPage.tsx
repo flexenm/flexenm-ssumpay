@@ -98,7 +98,7 @@ export default function CustomerCenterPage() {
               <button
                 key={n.id}
                 type="button"
-                onClick={() => navigate(`/customer/notices/${n.id}`)}
+                onClick={() => navigate(`/cs/notices/${n.id}`)}
                 className="flex w-full cursor-pointer items-center justify-between border-b border-line px-5 py-7 text-left"
               >
                 <div className="flex items-center gap-3">
@@ -131,7 +131,7 @@ export default function CustomerCenterPage() {
             <div className="mb-4 flex justify-end">
               <button
                 type="button"
-                onClick={() => navigate("/customer/inquiries/new")}
+                onClick={() => navigate("/cs/inquiries/new")}
                 className="flex cursor-pointer items-center gap-2 rounded-lg bg-navy px-5 py-2.5 text-[14px] font-medium text-white"
               >
                 <PenLine size={15} /> 문의하기
