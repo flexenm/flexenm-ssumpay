@@ -18,26 +18,28 @@ export default function ProductsPage() {
   }>();
 
   const currentCat = resolveCategory(categorySlug);
-  // 잘못된 카테고리 slug → 전체상품으로 리다이렉트
-  if (!currentCat) return <Navigate to="/products" replace />;
+  const currentSub = currentCat ? resolveSub(currentCat, subSlug) : undefined;
+  const comingSoon = currentCat?.comingSoon ?? false;
 
-  const currentSub = resolveSub(currentCat, subSlug);
-  // 카테고리엔 있으나 잘못된 하위 slug → 카테고리 목록으로 리다이렉트
-  if (subSlug && !currentSub) {
-    return <Navigate to={`/products/${currentCat.slug}`} replace />;
-  }
-
-  const comingSoon = currentCat.comingSoon ?? false;
+  // 리다이렉트 대상(잘못된 slug)이거나 준비중이면 요청하지 않는다.
+  const invalidSub = !!subSlug && !currentSub;
+  const canFetchProducts = !!currentCat && !invalidSub && !comingSoon;
 
   const {
     data: products = [],
     isLoading,
     isError,
   } = useProducts({
-    category: currentCat.category ?? undefined,
+    category: currentCat?.category ?? undefined,
     subcategory: currentSub?.subcategory,
-    enabled: !comingSoon,
+    enabled: canFetchProducts,
   });
+
+  // 잘못된 카테고리 slug → 전체상품으로 리다이렉트
+  if (!currentCat) return <Navigate to="/products" replace />;
+  // 카테고리엔 있으나 잘못된 하위 slug → 카테고리 목록으로 리다이렉트
+  if (invalidSub)
+    return <Navigate to={`/products/${currentCat.slug}`} replace />;
 
   const listTitle = currentSub?.label ?? currentCat.label;
 
@@ -56,7 +58,9 @@ export default function ProductsPage() {
               <Link
                 to="/products"
                 className={
-                  currentCat.slug ? "text-ink/40 hover:text-ink/60" : "text-ink/60"
+                  currentCat.slug
+                    ? "text-ink/40 hover:text-ink/60"
+                    : "text-ink/60"
                 }
               >
                 전체상품
