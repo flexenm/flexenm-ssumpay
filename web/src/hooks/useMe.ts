@@ -1,25 +1,45 @@
 import { useQuery } from "@tanstack/react-query";
-import { authApi } from "@/api";
-import { getAccessToken } from "@/utils/cookie";
+import { isAxiosError } from "axios";
+import { fetchMe, meApiPath } from "@/api/auth";
 import { queryClient } from "@/queryClient";
+import type { AuthUser } from "@/types";
 
-// 현재 로그인 사용자 정보. 서버 /api/my/profile 로 토큰 유효성까지 확인한다.
-// 쿠키가 없으면 요청 자체를 보내지 않는다(enabled). 위조/만료 토큰은 401 → isError.
+// 401 을 에러가 아니라 "비로그인"이라는 정상 데이터(null)로 취급한다.
+// 이 한 가지로 enabled 플래그가 필요 없어지고(= v5 의 enabled:false → status:'pending' 무한 로딩 함정
+// 자체가 사라진다), 가드에서 isError 분기도 사라진다.
+async function loadMe(): Promise<AuthUser | null> {
+  try {
+    return await fetchMe();
+  } catch (error) {
+    if (isAxiosError(error) && error.response?.status === 401) return null;
+    // 비-401(500·네트워크)은 의도적으로 rethrow → 쿼리 에러 → 비로그인 취급 → /signin.
+    // 인증 상태가 불확실할 때 통과시키는 것보다 넘어뜨리는 쪽이 안전하다.
+    throw error;
+  }
+}
+
+// 로그인 직후: 캐시된 이전 사용자 정보를 무효화 → 새 계정으로 다시 조회.
+// refetchType:"all" 이 필수다. 기본값 "active" 는 구독 중인 쿼리만 재요청하는데,
+// 로그인 화면에는 useMe 를 쓰는 컴포넌트가 없어 이 쿼리가 inactive 다. 그러면 재요청 없이 즉시
+// resolve 되고, 캐시에는 로그아웃 시절의 null 이 남아 있어 이동 직후 가드가 다시 로그인 화면으로 되돌린다.
+export async function refreshMe() {
+  await queryClient.invalidateQueries({ queryKey: [meApiPath], refetchType: "all" });
+}
+
+// 인증 종료 시 me 캐시를 재요청 없이 비로그인(null)으로 정리한다
+export function clearMe() {
+  queryClient.setQueryData([meApiPath], null);
+}
+
 export function useMe() {
-  return useQuery({
-    queryKey: ["me"],
-    queryFn: async () => (await authApi.me()).member,
-    enabled: !!getAccessToken(),
-    staleTime: 5 * 60 * 1000,
+  const {
+    data: me,
+    refetch,
+    isLoading,
+  } = useQuery<AuthUser | null>({
+    queryKey: [meApiPath],
+    queryFn: loadMe,
   });
-}
 
-// 로그인 직후: 캐시된 이전 사용자 정보를 무효화 → 새 계정으로 다시 조회
-export function refreshMe() {
-  return queryClient.invalidateQueries({ queryKey: ["me"] });
-}
-
-// 로그아웃 시: 사용자 정보 캐시 제거 → 이전 계정 정보가 남지 않도록
-export function removeMe() {
-  queryClient.removeQueries({ queryKey: ["me"] });
+  return { me, isLoggedIn: !!me, isLoading, refetch };
 }

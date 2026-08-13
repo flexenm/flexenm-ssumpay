@@ -1,0 +1,1 @@
+ALTER TABLE orders ADD COLUMN payerName VARCHAR(50) NULL DEFAULT NULL AFTER virtualAccountExpiredAt;

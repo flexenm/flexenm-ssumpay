@@ -3,6 +3,10 @@ server/.env
 *.log
 .claude
 .playwright-mcp
+CLAUDE.md
 docs
 node_modules
 dist
+.env
+CLAUDE.local.md
+.mcp.json

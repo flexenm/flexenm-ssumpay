@@ -1,0 +1,3 @@
+ALTER TABLE orders ADD COLUMN virtualAccountNo VARCHAR(50) NULL DEFAULT NULL AFTER pgTid;
+ALTER TABLE orders ADD COLUMN virtualAccountBank VARCHAR(50) NULL DEFAULT NULL AFTER virtualAccountNo;
+ALTER TABLE orders ADD COLUMN virtualAccountExpiredAt DATETIME NULL DEFAULT NULL AFTER virtualAccountBank;

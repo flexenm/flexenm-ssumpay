@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { productsApi } from "@/api";
+import { fetchProduct, fetchProducts } from "@/api/products";
 
 // 상품 목록. category/subcategory 파라미터별로 캐시를 분리한다.
 // 전체상품은 파라미터 없이 호출된다.
@@ -10,8 +10,12 @@ export function useProducts(params?: {
 }) {
   const { enabled = true, ...listParams } = params ?? {};
   return useQuery({
-    queryKey: ["products", listParams.category ?? null, listParams.subcategory ?? null],
-    queryFn: async () => (await productsApi.list(listParams)).data,
+    queryKey: [
+      "products",
+      listParams.category ?? null,
+      listParams.subcategory ?? null,
+    ],
+    queryFn: () => fetchProducts(listParams),
     enabled,
     staleTime: 60 * 1000,
   });
@@ -21,7 +25,7 @@ export function useProducts(params?: {
 export function useProduct(id?: number | string) {
   return useQuery({
     queryKey: ["product", id],
-    queryFn: async () => (await productsApi.get(id!)).data,
+    queryFn: () => fetchProduct(id!),
     enabled: id != null && id !== "",
     staleTime: 60 * 1000,
   });

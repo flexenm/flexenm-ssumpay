@@ -1,19 +1,21 @@
 // 백엔드(server/entities, server/migrations/001_init.sql, server/const.js)를 기준으로
 // 프론트가 실제로 주고받는 형태를 그대로 반영한 타입 정의.
+//
+// NOTE: 원본은 server/ 다. admin/src/types/index.ts 와 도메인 모델·열거값이 겹치며,
+// 서버 스키마가 바뀌면 양쪽을 함께 고쳐야 한다. 서버가 OpenAPI 스펙을 내보내게 되면
+// 생성으로 대체할 것(현재 server/ 는 순수 JS이고 swagger 의존성이 없다).
 
 /* ----------------------------- 공통 응답 형태 ----------------------------- */
 
-export interface BaseResponse {
-  code: number;
-  message?: string;
+// 서버가 envelope 없이 데이터를 그대로 반환한다 (FlexTV wrap 스타일 — server/routes/shared/handler-wrap.js).
+// 성공/실패는 HTTP status 로 판단하고, 에러 응답만 { message } 형태다.
+
+export interface MessageResponse {
+  message: string;
 }
 
-export interface DataResponse<T> extends BaseResponse {
-  data: T;
-}
-
-export interface ListResponse<T> extends BaseResponse {
-  data: T[];
+export interface ListResult<T> {
+  items: T[];
   total: number;
   page: number;
   limit: number;
@@ -153,40 +155,16 @@ export interface AuthUser {
   email: string;
 }
 
-export interface LoginResponse extends BaseResponse {
-  token: string;
-  expiresIn: number; // 토큰 만료까지 남은 초. 쿠키 maxAge 동기화에 사용
+// 토큰은 body 에 없다 — 서버가 HttpOnly 쿠키(Set-Cookie)로만 내려준다.
+// 만료 시 갱신은 api/fetch.ts 의 응답 인터셉터가 /api/auth/refresh 로 처리한다.
+export interface LoginResponse {
   member: AuthUser;
 }
 
-export interface MeResponse extends BaseResponse {
+export interface MeResponse {
   member: AuthUser;
 }
 
-export interface CheckUsernameResponse extends BaseResponse {
+export interface CheckUsernameResponse {
   available: boolean;
-}
-
-export interface AdminUser {
-  id: number;
-  username: string;
-  name: string;
-}
-
-export interface AdminLoginResponse extends BaseResponse {
-  token: string;
-  expiresIn: number; // 토큰 만료까지 남은 초. 쿠키 maxAge 동기화에 사용
-  admin: AdminUser;
-}
-
-export interface AdminMeResponse extends BaseResponse {
-  admin: AdminUser;
-}
-
-export interface DashboardSummary {
-  totalMembers: number;
-  todayOrderCount: number;
-  pendingCharges: number;
-  pendingInquiries: number;
-  salesByDay: { date: string; total: number }[];
 }
