@@ -1,5 +1,5 @@
 import { api } from "@/api/fetch";
-import type { DataResponse, ListResponse, Notice } from "@/types";
+import type { ListResult, Notice } from "@/types";
 
 /* ---------------------------------- 경로 ---------------------------------- */
 
@@ -18,15 +18,15 @@ export interface FetchNoticesParams {
 /* ---------------------------------- 함수 ---------------------------------- */
 
 export async function fetchNotices(params?: FetchNoticesParams) {
-  const { data } = await api.get<ListResponse<Notice>>(fetchNoticesApiPath, {
+  const { data } = await api.get<ListResult<Notice>>(fetchNoticesApiPath, {
     params,
   });
-  return data.data;
+  return data.items;
 }
 
 export async function fetchNotice(id: number | string) {
-  const { data } = await api.get<DataResponse<Notice>>(
+  const { data } = await api.get<Notice>(
     getFetchNoticeApiPath(id),
   );
-  return data.data;
+  return data;
 }

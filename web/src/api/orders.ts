@@ -1,5 +1,5 @@
 import { api } from "@/api/fetch";
-import type { DataResponse, ListResponse, Order, PaymentMethod } from "@/types";
+import type { ListResult, Order, PaymentMethod } from "@/types";
 
 /* ---------------------------------- 경로 ---------------------------------- */
 
@@ -28,21 +28,21 @@ export interface FetchMyOrdersParams {
 
 export async function createOrder(params: CreateOrderParams) {
   const { data } = await api.post<
-    DataResponse<{ orderNo: string; id: number; price: number }>
+    { orderNo: string; id: number; price: number }
   >(createOrderApiPath, params);
-  return data.data;
+  return data;
 }
 
 export async function fetchMyOrders(params?: FetchMyOrdersParams) {
-  const { data } = await api.get<ListResponse<Order>>(fetchMyOrdersApiPath, {
+  const { data } = await api.get<ListResult<Order>>(fetchMyOrdersApiPath, {
     params,
   });
-  return data.data;
+  return data.items;
 }
 
 export async function fetchOrder(orderNo: string) {
-  const { data } = await api.get<DataResponse<Order>>(
+  const { data } = await api.get<Order>(
     getFetchOrderApiPath(orderNo),
   );
-  return data.data;
+  return data;
 }

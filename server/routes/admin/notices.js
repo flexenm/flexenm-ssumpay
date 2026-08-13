@@ -1,33 +1,44 @@
 const Router = require('koa-router')
 const noticeService = require('../../services/notice')
+const { wrap } = require('../shared/handler-wrap')
 
 const router = new Router()
 
-router.get('/', async ctx => {
-  const { page = 1, limit = 20, keyword, isPinned } = ctx.query
-  const { items, total } = await noticeService.listForAdmin({ page, limit, keyword, isPinned })
-  ctx.body = { code: 200, data: items, total, page: Number(page), limit: Number(limit) }
-})
+router.get(
+  '/',
+  wrap(async ({ page = 1, limit = 20, keyword, isPinned }) => {
+    const { items, total } = await noticeService.listForAdmin({ page, limit, keyword, isPinned })
+    return { items, total, page: Number(page), limit: Number(limit) }
+  })
+)
 
-router.get('/:id', async ctx => {
-  const notice = await noticeService.getByIdForAdmin(ctx.params.id)
-  ctx.body = { code: 200, data: notice }
-})
+router.get(
+  '/:id',
+  wrap(async ({ id }) => {
+    return await noticeService.getByIdForAdmin(id)
+  })
+)
 
-router.post('/', async ctx => {
-  const notice = await noticeService.createNotice(ctx.request.body)
-  ctx.status = 201
-  ctx.body = { code: 201, data: notice }
-})
+router.post(
+  '/',
+  wrap(async ({ title, content, isPinned }) => {
+    return await noticeService.createNotice({ title, content, isPinned })
+  })
+)
 
-router.put('/:id', async ctx => {
-  const updated = await noticeService.updateNotice(ctx.params.id, ctx.request.body)
-  ctx.body = { code: 200, data: updated }
-})
+router.put(
+  '/:id',
+  wrap(async ({ id, title, content, isPinned, isActive }) => {
+    return await noticeService.updateNotice(id, { title, content, isPinned, isActive })
+  })
+)
 
-router.delete('/:id', async ctx => {
-  await noticeService.deleteNotice(ctx.params.id)
-  ctx.body = { code: 200, message: '공지사항이 삭제되었습니다.' }
-})
+router.delete(
+  '/:id',
+  wrap(async ({ id }) => {
+    await noticeService.deleteNotice(id)
+    return { message: '공지사항이 삭제되었습니다.' }
+  })
+)
 
 module.exports = router

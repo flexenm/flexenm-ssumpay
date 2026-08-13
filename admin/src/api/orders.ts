@@ -1,5 +1,5 @@
 import { adminApi } from "@/api/fetch";
-import type { DataResponse, ListResponse, Order } from "@/types";
+import type { ListResult, Order } from "@/types";
 
 /* ---------------------------------- 경로 ---------------------------------- */
 
@@ -26,17 +26,17 @@ export interface FetchOrdersParams {
 /* ---------------------------------- 함수 ---------------------------------- */
 
 export async function fetchOrders(params?: FetchOrdersParams) {
-  const { data } = await adminApi.get<ListResponse<Order>>(fetchOrdersApiPath, {
+  const { data } = await adminApi.get<ListResult<Order>>(fetchOrdersApiPath, {
     params,
   });
-  return data.data;
+  return data.items;
 }
 
 export async function fetchOrder(id: number | string) {
-  const { data } = await adminApi.get<DataResponse<Order>>(
+  const { data } = await adminApi.get<Order>(
     getFetchOrderApiPath(id),
   );
-  return data.data;
+  return data;
 }
 
 export async function updateChargeStatus(

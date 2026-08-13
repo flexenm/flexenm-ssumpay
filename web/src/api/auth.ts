@@ -1,10 +1,5 @@
 import { api, plainApi } from "@/api/fetch";
-import type {
-  BaseResponse,
-  CheckUsernameResponse,
-  LoginResponse,
-  MeResponse,
-} from "@/types";
+import type { CheckUsernameResponse, LoginResponse, MeResponse, MessageResponse } from "@/types";
 
 /* ---------------------------------- 경로 ---------------------------------- */
 
@@ -63,7 +58,7 @@ export async function refreshAccessToken() {
 
 // plainApi — 이미 만료된 세션의 로그아웃이 갱신을 유발하지 않도록
 export async function logout() {
-  await plainApi.post<BaseResponse>(logoutApiPath);
+  await plainApi.post<MessageResponse>(logoutApiPath);
 }
 
 export async function checkUsername(username: string) {
@@ -74,13 +69,13 @@ export async function checkUsername(username: string) {
 }
 
 export async function register(params: RegisterParams) {
-  await api.post<BaseResponse>(registerApiPath, params);
+  await api.post<MessageResponse>(registerApiPath, params);
 }
 
 export async function requestPasswordReset(params: ResetPasswordParams) {
-  await api.post<BaseResponse>(passwordResetApiPath, params);
+  await api.post<MessageResponse>(passwordResetApiPath, params);
 }
 
 export async function confirmPasswordReset(params: ConfirmResetPasswordParams) {
-  await api.post<BaseResponse>(passwordResetConfirmApiPath, params);
+  await api.post<MessageResponse>(passwordResetConfirmApiPath, params);
 }

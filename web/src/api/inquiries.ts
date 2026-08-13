@@ -1,5 +1,5 @@
 import { api } from "@/api/fetch";
-import type { DataResponse, Inquiry, ListResponse } from "@/types";
+import type { Inquiry, ListResult } from "@/types";
 
 /* ---------------------------------- 경로 ---------------------------------- */
 
@@ -42,34 +42,34 @@ function toFormData(params: Record<string, unknown>, image?: File | null) {
 }
 
 export async function fetchInquiries(params?: FetchInquiriesParams) {
-  const { data } = await api.get<ListResponse<Inquiry>>(fetchInquiriesApiPath, {
+  const { data } = await api.get<ListResult<Inquiry>>(fetchInquiriesApiPath, {
     params,
   });
-  return data.data;
+  return data.items;
 }
 
 export async function fetchInquiry(id: number | string) {
-  const { data } = await api.get<DataResponse<Inquiry>>(getInquiryApiPath(id));
-  return data.data;
+  const { data } = await api.get<Inquiry>(getInquiryApiPath(id));
+  return data;
 }
 
 export async function createInquiry({ image, ...rest }: CreateInquiryParams) {
-  const { data } = await api.post<DataResponse<Inquiry>>(
+  const { data } = await api.post<Inquiry>(
     createInquiryApiPath,
     toFormData(rest, image),
   );
-  return data.data;
+  return data;
 }
 
 export async function updateInquiry(
   id: number | string,
   { image, ...rest }: UpdateInquiryParams,
 ) {
-  const { data } = await api.put<DataResponse<Inquiry>>(
+  const { data } = await api.put<Inquiry>(
     getInquiryApiPath(id),
     toFormData(rest, image),
   );
-  return data.data;
+  return data;
 }
 
 export async function deleteInquiry(id: number | string) {

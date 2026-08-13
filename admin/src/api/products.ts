@@ -1,5 +1,5 @@
 import { adminApi } from "@/api/fetch";
-import type { DataResponse, Product } from "@/types";
+import type { Product } from "@/types";
 
 /* ---------------------------------- 경로 ---------------------------------- */
 
@@ -28,18 +28,18 @@ export interface ProductParams {
 /* ---------------------------------- 함수 ---------------------------------- */
 
 export async function fetchProducts(params?: FetchProductsParams) {
-  const { data } = await adminApi.get<DataResponse<Product[]>>(fetchProductsApiPath, { params });
-  return data.data;
+  const { data } = await adminApi.get<Product[]>(fetchProductsApiPath, { params });
+  return data;
 }
 
 export async function createProduct(params: ProductParams) {
-  const { data } = await adminApi.post<DataResponse<Product>>(createProductApiPath, params);
-  return data.data;
+  const { data } = await adminApi.post<Product>(createProductApiPath, params);
+  return data;
 }
 
 export async function updateProduct(id: number | string, params: Partial<ProductParams>) {
-  const { data } = await adminApi.put<DataResponse<Product>>(getProductApiPath(id), params);
-  return data.data;
+  const { data } = await adminApi.put<Product>(getProductApiPath(id), params);
+  return data;
 }
 
 export async function deleteProduct(id: number | string) {

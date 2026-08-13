@@ -7,17 +7,15 @@
 
 /* ----------------------------- 공통 응답 형태 ----------------------------- */
 
-export interface BaseResponse {
-  code: number;
-  message?: string;
+// 서버가 envelope 없이 데이터를 그대로 반환한다 (FlexTV wrap 스타일 — server/routes/shared/handler-wrap.js).
+// 성공/실패는 HTTP status 로 판단하고, 에러 응답만 { message } 형태다.
+
+export interface MessageResponse {
+  message: string;
 }
 
-export interface DataResponse<T> extends BaseResponse {
-  data: T;
-}
-
-export interface ListResponse<T> extends BaseResponse {
-  data: T[];
+export interface ListResult<T> {
+  items: T[];
   total: number;
   page: number;
   limit: number;
@@ -159,14 +157,14 @@ export interface AuthUser {
 
 // 토큰은 body 에 없다 — 서버가 HttpOnly 쿠키(Set-Cookie)로만 내려준다.
 // 만료 시 갱신은 api/fetch.ts 의 응답 인터셉터가 /api/auth/refresh 로 처리한다.
-export interface LoginResponse extends BaseResponse {
+export interface LoginResponse {
   member: AuthUser;
 }
 
-export interface MeResponse extends BaseResponse {
+export interface MeResponse {
   member: AuthUser;
 }
 
-export interface CheckUsernameResponse extends BaseResponse {
+export interface CheckUsernameResponse {
   available: boolean;
 }

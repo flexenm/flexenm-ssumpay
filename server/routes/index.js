@@ -13,7 +13,7 @@ router.use(async (ctx, next) => {
   } catch (err) {
     if (err instanceof UserError) {
       ctx.status = err.code || 400
-      ctx.body = { code: ctx.status, message: err.message }
+      ctx.body = { message: err.message }
     } else {
       throw err
     }

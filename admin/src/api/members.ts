@@ -1,5 +1,5 @@
 import { adminApi } from "@/api/fetch";
-import type { DataResponse, ListResponse, Member } from "@/types";
+import type { ListResult, Member } from "@/types";
 
 /* ---------------------------------- 경로 ---------------------------------- */
 
@@ -19,13 +19,13 @@ export interface FetchMembersParams {
 /* ---------------------------------- 함수 ---------------------------------- */
 
 export async function fetchMembers(params?: FetchMembersParams) {
-  const { data } = await adminApi.get<ListResponse<Member>>(fetchMembersApiPath, { params });
-  return data.data;
+  const { data } = await adminApi.get<ListResult<Member>>(fetchMembersApiPath, { params });
+  return data.items;
 }
 
 export async function fetchMember(id: number | string) {
-  const { data } = await adminApi.get<DataResponse<Member>>(getFetchMemberApiPath(id));
-  return data.data;
+  const { data } = await adminApi.get<Member>(getFetchMemberApiPath(id));
+  return data;
 }
 
 export async function updateMemberStatus(id: number | string, status: number) {

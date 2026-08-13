@@ -1,5 +1,5 @@
 import { adminApi } from "@/api/fetch";
-import type { DataResponse, Inquiry, ListResponse } from "@/types";
+import type { Inquiry, ListResult } from "@/types";
 
 /* ---------------------------------- 경로 ---------------------------------- */
 
@@ -23,18 +23,18 @@ export interface FetchInquiriesParams {
 /* ---------------------------------- 함수 ---------------------------------- */
 
 export async function fetchInquiries(params?: FetchInquiriesParams) {
-  const { data } = await adminApi.get<ListResponse<Inquiry>>(
+  const { data } = await adminApi.get<ListResult<Inquiry>>(
     fetchInquiriesApiPath,
     { params },
   );
-  return data.data;
+  return data.items;
 }
 
 export async function fetchInquiry(id: number | string) {
-  const { data } = await adminApi.get<DataResponse<Inquiry>>(
+  const { data } = await adminApi.get<Inquiry>(
     getFetchInquiryApiPath(id),
   );
-  return data.data;
+  return data;
 }
 
 export async function answerInquiry(id: number | string, answer: string) {

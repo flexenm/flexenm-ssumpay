@@ -1,9 +1,5 @@
 import { adminApi, plainAdminApi } from "@/api/fetch";
-import type {
-  AdminLoginResponse,
-  AdminMeResponse,
-  BaseResponse,
-} from "@/types";
+import type { AdminLoginResponse, AdminMeResponse, MessageResponse } from "@/types";
 
 /* ---------------------------------- 경로 ---------------------------------- */
 // 어드민은 전용 도메인이라 라우트에 /admin prefix 가 없지만, API 경로는 서버 계약이라 유지한다.
@@ -44,5 +40,5 @@ export async function refreshAccessToken() {
 
 // plainAdminApi — 이미 만료된 세션의 로그아웃이 갱신을 유발하지 않도록
 export async function logout() {
-  await plainAdminApi.post<BaseResponse>(logoutApiPath);
+  await plainAdminApi.post<MessageResponse>(logoutApiPath);
 }

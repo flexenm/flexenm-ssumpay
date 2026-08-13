@@ -1,5 +1,5 @@
 import { api } from "@/api/fetch";
-import type { BaseResponse, DataResponse, Member } from "@/types";
+import type { Member, MessageResponse } from "@/types";
 
 /* ---------------------------------- 경로 ---------------------------------- */
 
@@ -22,15 +22,15 @@ export interface ChangePasswordParams {
 /* ---------------------------------- 함수 ---------------------------------- */
 
 export async function fetchMypage() {
-  const { data } = await api.get<DataResponse<Member>>(mypageApiPath);
-  return data.data;
+  const { data } = await api.get<Member>(mypageApiPath);
+  return data;
 }
 
 export async function updateMypage(params: UpdateMypageParams) {
-  const { data } = await api.patch<DataResponse<Member>>(mypageApiPath, params);
-  return data.data;
+  const { data } = await api.patch<Member>(mypageApiPath, params);
+  return data;
 }
 
 export async function changePassword(params: ChangePasswordParams) {
-  await api.patch<BaseResponse>(changePasswordApiPath, params);
+  await api.patch<MessageResponse>(changePasswordApiPath, params);
 }

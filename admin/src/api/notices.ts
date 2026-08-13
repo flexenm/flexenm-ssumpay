@@ -1,5 +1,5 @@
 import { adminApi } from "@/api/fetch";
-import type { DataResponse, ListResponse, Notice } from "@/types";
+import type { ListResult, Notice } from "@/types";
 
 /* ---------------------------------- 경로 ---------------------------------- */
 
@@ -26,23 +26,23 @@ export interface NoticeParams {
 /* ---------------------------------- 함수 ---------------------------------- */
 
 export async function fetchNotices(params?: FetchNoticesParams) {
-  const { data } = await adminApi.get<ListResponse<Notice>>(fetchNoticesApiPath, { params });
-  return data.data;
+  const { data } = await adminApi.get<ListResult<Notice>>(fetchNoticesApiPath, { params });
+  return data.items;
 }
 
 export async function fetchNotice(id: number | string) {
-  const { data } = await adminApi.get<DataResponse<Notice>>(getNoticeApiPath(id));
-  return data.data;
+  const { data } = await adminApi.get<Notice>(getNoticeApiPath(id));
+  return data;
 }
 
 export async function createNotice(params: NoticeParams) {
-  const { data } = await adminApi.post<DataResponse<Notice>>(createNoticeApiPath, params);
-  return data.data;
+  const { data } = await adminApi.post<Notice>(createNoticeApiPath, params);
+  return data;
 }
 
 export async function updateNotice(id: number | string, params: Partial<NoticeParams>) {
-  const { data } = await adminApi.put<DataResponse<Notice>>(getNoticeApiPath(id), params);
-  return data.data;
+  const { data } = await adminApi.put<Notice>(getNoticeApiPath(id), params);
+  return data;
 }
 
 export async function deleteNotice(id: number | string) {

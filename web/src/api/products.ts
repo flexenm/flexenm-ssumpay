@@ -1,5 +1,5 @@
 import { api } from "@/api/fetch";
-import type { DataResponse, Product } from "@/types";
+import type { Product } from "@/types";
 
 /* ---------------------------------- 경로 ---------------------------------- */
 
@@ -17,16 +17,11 @@ export interface FetchProductsParams {
 /* ---------------------------------- 함수 ---------------------------------- */
 
 export async function fetchProducts(params?: FetchProductsParams) {
-  const { data } = await api.get<DataResponse<Product[]>>(
-    fetchProductsApiPath,
-    { params },
-  );
-  return data.data;
+  const { data } = await api.get<Product[]>(fetchProductsApiPath, { params });
+  return data;
 }
 
 export async function fetchProduct(id: number | string) {
-  const { data } = await api.get<DataResponse<Product>>(
-    getFetchProductApiPath(id),
-  );
-  return data.data;
+  const { data } = await api.get<Product>(getFetchProductApiPath(id));
+  return data;
 }
