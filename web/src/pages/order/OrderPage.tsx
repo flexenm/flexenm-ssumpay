@@ -2,11 +2,12 @@ import { useState, useEffect } from "react";
 import type { ReactNode } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { CreditCard, Mail } from "lucide-react";
-import { createOrder } from "@/api/orders";
+import { createOrder, createCardPayment } from "@/api/orders";
 import { getApiError } from "@/utils/error";
+import { openPaymentWindow } from "@/utils/payment";
 import { useFetchProduct } from "@/hooks/useProducts";
 import { refreshMyOrders } from "@/hooks/useOrders";
-import type { PaymentMethod } from "@/types";
+import { PAYMENT_METHOD, type PaymentMethod } from "@/types";
 
 interface OrderForm {
   flexUsername: string;
@@ -34,6 +35,8 @@ export default function OrderPage() {
   });
   const [agreed, setAgreed] = useState(false);
   const [error, setError] = useState("");
+  // 중복 클릭 방지 — 한 번 더 눌리면 주문과 결제 시도가 각각 한 건씩 더 생긴다.
+  const [submitting, setSubmitting] = useState(false);
 
   // 없는 상품 등 조회 실패 → 목록으로
   useEffect(() => {
@@ -53,7 +56,10 @@ export default function OrderPage() {
       setError("이용약관에 동의해주세요.");
       return;
     }
+    if (submitting) return;
+
     setError("");
+    setSubmitting(true);
     try {
       const order = await createOrder({
         productId: Number(productId),
@@ -62,10 +68,24 @@ export default function OrderPage() {
         paymentMethod: form.paymentMethod,
       });
       await refreshMyOrders();
-      navigate(`/order/complete/${order.orderNo}`);
+
+      // 무통장은 주문 생성으로 끝. 카드는 결제창을 한 번 더 거친다.
+      if (form.paymentMethod !== PAYMENT_METHOD.CARD) {
+        navigate(`/order/complete/${order.orderNo}`);
+        return;
+      }
+
+      // 서버가 만든 결제 전문을 헥토 SDK(SettlePG)로 넘겨 결제창을 띄운다.
+      // 지금은 self(현재 창 전환) — 팝업으로 바꾸려면 두 번째 인자에 "popup".
+      // 파라미터를 받으면 곧바로 호출한다: 요청시각(trdDt/trdTm)이 해시에 굳어 있어
+      // 받아두고 사용자 액션을 한 번 더 기다리면 stale 타임스탬프가 전송된다.
+      const params = await createCardPayment(order.orderNo);
+      await openPaymentWindow(params);
+      // 결제창으로 페이지가 전환되므로 submitting 을 되돌리지 않는다 — 전환 중 재클릭 방지.
     } catch (err) {
       const { message } = getApiError(err);
       setError(message ?? "주문에 실패했습니다.");
+      setSubmitting(false);
     }
   };
 
@@ -216,9 +236,12 @@ export default function OrderPage() {
         <div className="flex flex-col items-center gap-4">
           <button
             onClick={submit}
-            className="cursor-pointer rounded-lg border-none bg-navy px-10 py-3 text-[15px] font-bold text-white"
+            disabled={submitting}
+            className="cursor-pointer rounded-lg border-none bg-navy px-10 py-3 text-[15px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {product.price.toLocaleString()}원 결제하기
+            {submitting
+              ? "결제 진행 중..."
+              : `${product.price.toLocaleString()}원 결제하기`}
           </button>
           <button
             onClick={() => navigate(-1)}

@@ -1,25 +1,54 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { Check, Info } from "lucide-react";
-import { useFetchOrder } from "@/hooks/useOrders";
+import { Check, Info, Loader2, TriangleAlert } from "lucide-react";
+import { useWaitForPayment } from "@/hooks/useOrders";
 
 export default function OrderCompletePage() {
   const { orderNo } = useParams<{ orderNo: string }>();
   const navigate = useNavigate();
-  const { order } = useFetchOrder({ orderNo });
+  const { order, isPending, timedOut } = useWaitForPayment({ orderNo });
+
+  // 결제 확정은 PG 노티로만 이뤄지고 이 화면 도착과 순서가 보장되지 않는다.
+  // 아직 대기면 확인 중, 기다려도 안 오면 지연 안내를 보여준다.
+  //
+  // isPending 은 order 가 아직 없는 상태도 포함한다 — 조회 전이나 조회 실패를
+  // 성공으로 읽으면 "결제 완료"를 거짓으로 단언하게 된다.
+  const showWaiting = isPending && !timedOut;
+  const showDelayed = isPending && timedOut;
+  const showSuccess = !isPending;
 
   return (
     <div className="mx-auto max-w-[840px] px-6 py-20">
       {/* 완료 헤더 */}
       <div className="text-center">
         <div className="mx-auto mb-6 flex h-[110px] w-[110px] items-center justify-center rounded-full bg-primary-soft">
-          <div className="flex h-[72px] w-[72px] items-center justify-center rounded-full bg-primary">
-            <Check size={40} color="#fff" strokeWidth={3} />
+          <div
+            className={`flex h-[72px] w-[72px] items-center justify-center rounded-full ${showDelayed ? "bg-ink/30" : "bg-primary"}`}
+          >
+            {showWaiting && (
+              <Loader2
+                size={40}
+                color="#fff"
+                strokeWidth={3}
+                className="animate-spin"
+              />
+            )}
+            {showDelayed && (
+              <TriangleAlert size={40} color="#fff" strokeWidth={3} />
+            )}
+            {showSuccess && <Check size={40} color="#fff" strokeWidth={3} />}
           </div>
         </div>
         <h1 className="mb-2 text-[28px] font-bold text-ink">
-          결제가 완료되었습니다
+          {showWaiting && "결제를 확인하고 있습니다"}
+          {showDelayed && "결제 확인이 지연되고 있습니다"}
+          {showSuccess && "결제가 완료되었습니다"}
         </h1>
-        <p className="text-[15px] text-ink/50">이용해주셔서 감사합니다</p>
+        <p className="text-[15px] text-ink/50">
+          {showWaiting && "잠시만 기다려 주세요"}
+          {showDelayed &&
+            "구매 내역에서 상태를 확인하시거나 고객센터로 문의해 주세요"}
+          {showSuccess && "이용해주셔서 감사합니다"}
+        </p>
       </div>
 
       {/* 주문 상품 */}
