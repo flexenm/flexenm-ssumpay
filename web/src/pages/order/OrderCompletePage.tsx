@@ -1,20 +1,11 @@
-import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Check, Info } from "lucide-react";
-import { fetchOrder } from "@/api/orders";
-import type { Order } from "@/types";
+import { useFetchOrder } from "@/hooks/useOrders";
 
 export default function OrderCompletePage() {
   const { orderNo } = useParams<{ orderNo: string }>();
   const navigate = useNavigate();
-  const [order, setOrder] = useState<Order | null>(null);
-
-  useEffect(() => {
-    if (!orderNo) return;
-    fetchOrder(orderNo)
-      .then(setOrder)
-      .catch(() => {});
-  }, [orderNo]);
+  const { order } = useFetchOrder({ orderNo });
 
   return (
     <div className="mx-auto max-w-[840px] px-6 py-20">
@@ -25,7 +16,9 @@ export default function OrderCompletePage() {
             <Check size={40} color="#fff" strokeWidth={3} />
           </div>
         </div>
-        <h1 className="mb-2 text-[28px] font-bold text-ink">결제가 완료되었습니다</h1>
+        <h1 className="mb-2 text-[28px] font-bold text-ink">
+          결제가 완료되었습니다
+        </h1>
         <p className="text-[15px] text-ink/50">이용해주셔서 감사합니다</p>
       </div>
 
@@ -46,7 +39,9 @@ export default function OrderCompletePage() {
               </p>
               <p className="mt-0.5 text-[14px] text-ink/50">수량: 1개</p>
               {orderNo && (
-                <p className="mt-0.5 text-[13px] text-ink/40">주문번호: {orderNo}</p>
+                <p className="mt-0.5 text-[13px] text-ink/40">
+                  주문번호: {orderNo}
+                </p>
               )}
             </div>
           </div>
@@ -65,7 +60,8 @@ export default function OrderCompletePage() {
               결제 완료 후 최대 30분 내 처리됩니다
             </p>
             <p className="mt-1 text-[13px] text-ink/60">
-              렉스 충전은 결제 완료 후 최대 30분 내 처리됩니다. 충전이 지연될 경우 고객센터로 문의해 주세요.
+              렉스 충전은 결제 완료 후 최대 30분 내 처리됩니다. 충전이 지연될
+              경우 고객센터로 문의해 주세요.
             </p>
           </div>
         </div>

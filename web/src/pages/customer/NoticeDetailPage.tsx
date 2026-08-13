@@ -1,8 +1,7 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Bookmark } from "lucide-react";
-import { fetchNotice } from "@/api/notices";
-import type { Notice } from "@/types";
+import { useFetchNotice } from "@/hooks/useNotices";
 
 const fmtDate = (s: string) => {
   const d = new Date(s);
@@ -12,13 +11,12 @@ const fmtDate = (s: string) => {
 export default function NoticeDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [notice, setNotice] = useState<Notice | null>(null);
+  const { notice, isError } = useFetchNotice({ id });
 
+  // 없는 공지 등 조회 실패 → 목록으로
   useEffect(() => {
-    fetchNotice(id!)
-      .then(setNotice)
-      .catch(() => navigate("/cs"));
-  }, [id]);
+    if (isError) navigate("/cs");
+  }, [isError, navigate]);
 
   if (!notice) return <div className="p-20 text-center">로딩중...</div>;
 
@@ -33,7 +31,11 @@ export default function NoticeDetailPage() {
 
       <div className="mb-5 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Bookmark size={18} className="shrink-0 text-primary" strokeWidth={2} />
+          <Bookmark
+            size={18}
+            className="shrink-0 text-primary"
+            strokeWidth={2}
+          />
           <h2 className="text-[20px] font-bold text-ink">{notice.title}</h2>
         </div>
         <span className="ml-4 shrink-0 text-[13px] text-ink/40">

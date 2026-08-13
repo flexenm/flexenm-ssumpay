@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Tag, MoreVertical } from "lucide-react";
-import { deleteInquiry, fetchInquiry, updateInquiry } from "@/api/inquiries";
+import { deleteInquiry, updateInquiry } from "@/api/inquiries";
+import { refreshInquiries, useFetchInquiry } from "@/hooks/useInquiries";
 import { getApiError } from "@/utils/error";
-import type { Inquiry } from "@/types";
 
 const typeLabel: Record<number, string> = {
   1: "충전",
@@ -20,18 +20,18 @@ const fmtDate = (s: string) => {
 export default function InquiryDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [inquiry, setInquiry] = useState<Inquiry | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editForm, setEditForm] = useState({ title: "", content: "" });
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
+  const { inquiry, refetch, isError } = useFetchInquiry({ id });
+
+  // 없는 문의 등 조회 실패 → 이전 화면으로
   useEffect(() => {
-    fetchInquiry(id!)
-      .then(setInquiry)
-      .catch(() => navigate(-1));
-  }, [id]);
+    if (isError) navigate(-1);
+  }, [isError, navigate]);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -51,7 +51,7 @@ export default function InquiryDetailPage() {
   const saveEdit = async () => {
     try {
       await updateInquiry(id!, editForm);
-      setInquiry(await fetchInquiry(id!));
+      await refetch();
       setEditing(false);
     } catch (e) {
       alert(getApiError(e).message ?? "수정 중 오류가 발생했습니다.");
@@ -61,6 +61,7 @@ export default function InquiryDetailPage() {
   const del = async () => {
     try {
       await deleteInquiry(id!);
+      await refreshInquiries({ id });
       navigate(-1);
     } catch (e) {
       alert(getApiError(e).message ?? "삭제 중 오류가 발생했습니다.");
