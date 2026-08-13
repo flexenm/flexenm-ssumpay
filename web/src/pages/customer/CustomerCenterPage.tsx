@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Bookmark,
@@ -7,9 +7,8 @@ import {
   Info,
   AlertCircle,
 } from "lucide-react";
-import { fetchNotices } from "@/api/notices";
-import { fetchInquiries } from "@/api/inquiries";
-import type { Notice, Inquiry } from "@/types";
+import { useFetchNotices } from "@/hooks/useNotices";
+import { useFetchInquiries } from "@/hooks/useInquiries";
 import { useMe } from "@/hooks/useMe";
 import SegmentedTabs from "@/components/ui/SegmentedTabs";
 import Pagination from "@/components/ui/Pagination";
@@ -30,30 +29,16 @@ const fmtDateTime = (s: string) => {
 
 export default function CustomerCenterPage() {
   const [tab, setTab] = useState(0);
-  const [notices, setNotices] = useState<Notice[]>([]);
-  const [inquiries, setInquiries] = useState<Inquiry[]>([]);
-  const [loading, setLoading] = useState(true);
   const [noticePage, setNoticePage] = useState(1);
   const [inquiryPage, setInquiryPage] = useState(1);
   const { isLoggedIn } = useMe();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    setLoading(true);
-    fetchNotices()
-      .then(setNotices)
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
+  const { notices, isLoading: loading } = useFetchNotices();
 
   // 로그인 여부는 서버 응답으로 판정하므로 첫 렌더에는 아직 false 다.
-  // 공지와 같은 effect 에 두면 마운트 시점에만 실행돼 문의 내역이 영영 조회되지 않는다.
-  useEffect(() => {
-    if (!isLoggedIn) return;
-    fetchInquiries()
-      .then(setInquiries)
-      .catch(() => {});
-  }, [isLoggedIn]);
+  // enabled 가 false → true 로 바뀌면 훅이 알아서 조회한다.
+  const { inquiries } = useFetchInquiries({ enabled: isLoggedIn });
 
   const noticeTotalPages = Math.ceil(notices.length / PER_PAGE);
   const pagedNotices = notices.slice(

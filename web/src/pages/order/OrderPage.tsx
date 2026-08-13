@@ -2,10 +2,12 @@ import { useState, useEffect } from "react";
 import type { ReactNode } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { CreditCard, Mail } from "lucide-react";
-import { createOrder } from "@/api/orders";
+import { createOrder, createCardPayment } from "@/api/orders";
 import { getApiError } from "@/utils/error";
-import { useProduct } from "@/hooks/useProducts";
-import type { PaymentMethod } from "@/types";
+import { openPaymentWindow } from "@/utils/payment";
+import { useFetchProduct } from "@/hooks/useProducts";
+import { refreshMyOrders } from "@/hooks/useOrders";
+import { PAYMENT_METHOD, type PaymentMethod } from "@/types";
 
 interface OrderForm {
   flexUsername: string;
@@ -13,7 +15,11 @@ interface OrderForm {
   paymentMethod: PaymentMethod;
 }
 
-const PAYMENT_OPTIONS: { value: PaymentMethod; label: string; Icon: typeof CreditCard }[] = [
+const PAYMENT_OPTIONS: {
+  value: PaymentMethod;
+  label: string;
+  Icon: typeof CreditCard;
+}[] = [
   { value: 1, label: "신용카드", Icon: CreditCard },
   { value: 2, label: "무통장", Icon: Mail },
 ];
@@ -21,7 +27,7 @@ const PAYMENT_OPTIONS: { value: PaymentMethod; label: string; Icon: typeof Credi
 export default function OrderPage() {
   const { productId } = useParams<{ productId: string }>();
   const navigate = useNavigate();
-  const { data: product, isError } = useProduct(productId);
+  const { product, isError } = useFetchProduct({ id: productId });
   const [form, setForm] = useState<OrderForm>({
     flexUsername: "",
     flexPassword: "",
@@ -29,6 +35,8 @@ export default function OrderPage() {
   });
   const [agreed, setAgreed] = useState(false);
   const [error, setError] = useState("");
+  // 중복 클릭 방지 — 한 번 더 눌리면 주문과 결제 시도가 각각 한 건씩 더 생긴다.
+  const [submitting, setSubmitting] = useState(false);
 
   // 없는 상품 등 조회 실패 → 목록으로
   useEffect(() => {
@@ -48,7 +56,10 @@ export default function OrderPage() {
       setError("이용약관에 동의해주세요.");
       return;
     }
+    if (submitting) return;
+
     setError("");
+    setSubmitting(true);
     try {
       const order = await createOrder({
         productId: Number(productId),
@@ -56,10 +67,25 @@ export default function OrderPage() {
         flexPassword: form.flexPassword,
         paymentMethod: form.paymentMethod,
       });
-      navigate(`/order/complete/${order.orderNo}`);
+      await refreshMyOrders();
+
+      // 무통장은 주문 생성으로 끝. 카드는 결제창을 한 번 더 거친다.
+      if (form.paymentMethod !== PAYMENT_METHOD.CARD) {
+        navigate(`/order/complete/${order.orderNo}`);
+        return;
+      }
+
+      // 서버가 만든 결제 전문을 헥토 SDK(SettlePG)로 넘겨 결제창을 띄운다.
+      // 지금은 self(현재 창 전환) — 팝업으로 바꾸려면 두 번째 인자에 "popup".
+      // 파라미터를 받으면 곧바로 호출한다: 요청시각(trdDt/trdTm)이 해시에 굳어 있어
+      // 받아두고 사용자 액션을 한 번 더 기다리면 stale 타임스탬프가 전송된다.
+      const params = await createCardPayment(order.orderNo);
+      await openPaymentWindow(params);
+      // 결제창으로 페이지가 전환되므로 submitting 을 되돌리지 않는다 — 전환 중 재클릭 방지.
     } catch (err) {
       const { message } = getApiError(err);
       setError(message ?? "주문에 실패했습니다.");
+      setSubmitting(false);
     }
   };
 
@@ -69,7 +95,9 @@ export default function OrderPage() {
     <div>
       {/* 타이틀 배너 */}
       <div className="border-b border-line py-16 text-center">
-        <p className="mb-3 text-[14px] text-ink/40">홈 &gt; 상품목록 &gt; 주문/결제</p>
+        <p className="mb-3 text-[14px] text-ink/40">
+          홈 &gt; 상품목록 &gt; 주문/결제
+        </p>
         <h1 className="text-[48px] font-bold text-ink">주문/결제</h1>
         <p className="mt-3 text-[15px] text-ink/50">
           안전한 결제를 위해 주문 정보를 확인해주세요
@@ -102,7 +130,9 @@ export default function OrderPage() {
               <label className={labelClass}>플렉스티비 아이디 *</label>
               <input
                 value={form.flexUsername}
-                onChange={(e) => setForm((p) => ({ ...p, flexUsername: e.target.value }))}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, flexUsername: e.target.value }))
+                }
                 placeholder="충전할 플렉스티비 아이디 입력"
                 className={inputClass}
               />
@@ -112,14 +142,17 @@ export default function OrderPage() {
               <input
                 type="password"
                 value={form.flexPassword}
-                onChange={(e) => setForm((p) => ({ ...p, flexPassword: e.target.value }))}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, flexPassword: e.target.value }))
+                }
                 placeholder="충전할 플렉스티비 비밀번호 입력"
                 className={inputClass}
               />
             </div>
           </div>
           <p className="mt-3 text-[13px] text-ink/40">
-            ※ 입력한 아이디로 충전이 진행됩니다. 오입력 시 복구/환불이 어려우니 다시 확인해 주세요.
+            ※ 입력한 아이디로 충전이 진행됩니다. 오입력 시 복구/환불이 어려우니
+            다시 확인해 주세요.
           </p>
         </Section>
 
@@ -131,7 +164,9 @@ export default function OrderPage() {
               return (
                 <div
                   key={m.value}
-                  onClick={() => setForm((p) => ({ ...p, paymentMethod: m.value }))}
+                  onClick={() =>
+                    setForm((p) => ({ ...p, paymentMethod: m.value }))
+                  }
                   className={`relative cursor-pointer rounded-2xl p-6 text-center transition-colors ${
                     selected
                       ? "border-2 border-primary bg-primary-soft"
@@ -140,7 +175,12 @@ export default function OrderPage() {
                 >
                   {selected && (
                     <span className="absolute right-3 top-3 inline-flex h-[18px] w-[18px] items-center justify-center rounded-full bg-primary">
-                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                      <svg
+                        width="10"
+                        height="10"
+                        viewBox="0 0 10 10"
+                        fill="none"
+                      >
                         <path
                           d="M2 5l2 2 4-4"
                           stroke="#fff"
@@ -158,7 +198,9 @@ export default function OrderPage() {
                       strokeWidth={1.5}
                     />
                   </div>
-                  <p className={selected ? "text-primary" : "text-ink/60"}>{m.label}</p>
+                  <p className={selected ? "text-primary" : "text-ink/60"}>
+                    {m.label}
+                  </p>
                 </div>
               );
             })}
@@ -168,7 +210,9 @@ export default function OrderPage() {
         {/* 최종 금액 */}
         <div className="mb-5 flex items-center justify-between rounded-2xl bg-primary px-6 py-5 text-white">
           <span className="text-[16px] font-semibold">최종 결제 금액</span>
-          <span className="text-[26px] font-bold">{product.price.toLocaleString()}원</span>
+          <span className="text-[26px] font-bold">
+            {product.price.toLocaleString()}원
+          </span>
         </div>
 
         <div className="mb-8 flex items-center gap-2">
@@ -179,19 +223,25 @@ export default function OrderPage() {
             id="agree"
           />
           <label htmlFor="agree" className="text-[14px] text-ink/70">
-            주문 내용을 확인하였으며, <span className="text-primary">이용약관</span> 및{" "}
+            주문 내용을 확인하였으며,{" "}
+            <span className="text-primary">이용약관</span> 및{" "}
             <span className="text-primary">개인정보처리방침</span>에 동의합니다.
           </label>
         </div>
 
-        {error && <p className="mb-3 text-center text-[13px] text-red-500">{error}</p>}
+        {error && (
+          <p className="mb-3 text-center text-[13px] text-red-500">{error}</p>
+        )}
 
         <div className="flex flex-col items-center gap-4">
           <button
             onClick={submit}
-            className="cursor-pointer rounded-lg border-none bg-navy px-10 py-3 text-[15px] font-bold text-white"
+            disabled={submitting}
+            className="cursor-pointer rounded-lg border-none bg-navy px-10 py-3 text-[15px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {product.price.toLocaleString()}원 결제하기
+            {submitting
+              ? "결제 진행 중..."
+              : `${product.price.toLocaleString()}원 결제하기`}
           </button>
           <button
             onClick={() => navigate(-1)}
@@ -205,7 +255,15 @@ export default function OrderPage() {
   );
 }
 
-function Section({ num, title, children }: { num: number; title: string; children: ReactNode }) {
+function Section({
+  num,
+  title,
+  children,
+}: {
+  num: number;
+  title: string;
+  children: ReactNode;
+}) {
   return (
     <div className="mb-12">
       <h2 className="mb-3 flex items-center gap-2 border-b-2 border-navy-rule pb-3 text-[18px] font-bold text-ink">

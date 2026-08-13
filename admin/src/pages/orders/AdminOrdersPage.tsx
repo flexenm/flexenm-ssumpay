@@ -1,8 +1,7 @@
-import { useState, useEffect } from "react";
-import { fetchOrders, updateChargeStatus } from "@/api/orders";
-import type { FetchOrdersParams } from "@/api/orders";
+import { useState } from "react";
+import { updateChargeStatus } from "@/api/orders";
+import { useFetchOrders } from "@/hooks/useOrders";
 import { getApiError } from "@/utils/error";
-import type { Order } from "@/types";
 
 const PAYMENT_LABEL: Record<number, string> = {
   0: "대기",
@@ -22,14 +21,6 @@ const METHOD_LABEL: Record<number, string> = {
   2: "무통장입금",
 };
 
-// "최근 N일"은 오늘을 포함한 N일. 백엔드는 createdAt >= startDate 로 비교한다.
-const startDateOf = (days: string) => {
-  const d = new Date();
-  d.setDate(d.getDate() - (Number(days) - 1));
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-};
-
 const formatDateTime = (iso: string) => {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
@@ -40,31 +31,29 @@ const formatDateTime = (iso: string) => {
 };
 
 export default function AdminOrdersPage() {
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
   const [keyword, setKeyword] = useState("");
+  // 입력 중인 keyword 를 그대로 조회 조건에 쓰면 타자마다 요청이 나간다.
+  // 검색(Enter·버튼)으로 확정된 값만 조회에 반영한다.
+  const [appliedKeyword, setAppliedKeyword] = useState("");
   const [chargeStatus, setChargeStatus] = useState("");
   const [period, setPeriod] = useState("7");
 
-  const load = (kw = keyword, cs = chargeStatus, pd = period) => {
-    const params: FetchOrdersParams = { startDate: startDateOf(pd) };
-    if (kw) params.keyword = kw;
-    if (cs !== "") params.chargeStatus = Number(cs);
-    setLoading(true);
-    fetchOrders(params)
-      .then(setOrders)
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  };
+  const {
+    orders,
+    refetch,
+    isLoading: loading,
+  } = useFetchOrders({
+    period,
+    keyword: appliedKeyword || undefined,
+    chargeStatus: chargeStatus === "" ? undefined : Number(chargeStatus),
+  });
 
-  useEffect(() => {
-    load("", "");
-  }, []);
+  const search = () => setAppliedKeyword(keyword);
 
   const updateCharge = async (id: number, status: number) => {
     try {
       await updateChargeStatus(id, status);
-      load();
+      refetch();
     } catch (e) {
       alert(getApiError(e).message ?? "충전 상태 변경 중 오류가 발생했습니다.");
     }
@@ -77,10 +66,7 @@ export default function AdminOrdersPage() {
       <div className="mb-5 flex flex-wrap items-center gap-3">
         <select
           value={period}
-          onChange={(e) => {
-            setPeriod(e.target.value);
-            load(keyword, chargeStatus, e.target.value);
-          }}
+          onChange={(e) => setPeriod(e.target.value)}
           className={selectClass}
         >
           <option value="7">기간: 최근 7일</option>
@@ -89,10 +75,7 @@ export default function AdminOrdersPage() {
         </select>
         <select
           value={chargeStatus}
-          onChange={(e) => {
-            setChargeStatus(e.target.value);
-            load(keyword, e.target.value, period);
-          }}
+          onChange={(e) => setChargeStatus(e.target.value)}
           className={selectClass}
         >
           <option value="">충전 상태: 전체</option>
@@ -103,12 +86,12 @@ export default function AdminOrdersPage() {
         <input
           value={keyword}
           onChange={(e) => setKeyword(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && load(keyword, chargeStatus, period)}
+          onKeyDown={(e) => e.key === "Enter" && search()}
           placeholder="주문번호 / 회원 / 플렉스티비 아이디"
           className={`${inputClass} w-[360px] max-w-full`}
         />
         <button
-          onClick={() => load(keyword, chargeStatus)}
+          onClick={search}
           className="h-[52px] cursor-pointer rounded-lg bg-admin px-8 text-[15px] font-semibold text-white"
         >
           검색
@@ -187,8 +170,8 @@ export default function AdminOrdersPage() {
 
       <div className="mt-4 space-y-1 text-[13px] text-admin-muted">
         <p>
-          ※ [충전완료] 클릭 시 충전 상태 변경 → 사용자 구매 내역에 반영 (완료 알림
-          이메일 선택)
+          ※ [충전완료] 클릭 시 충전 상태 변경 → 사용자 구매 내역에 반영 (완료
+          알림 이메일 선택)
         </p>
         <p>※ 취소/환불은 PG사 관리자에서 처리 후 이 화면에서 상태 변경</p>
       </div>

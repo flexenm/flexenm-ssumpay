@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
-import { fetchMembers, updateMemberStatus } from "@/api/members";
+import { useState } from "react";
+import { updateMemberStatus } from "@/api/members";
+import { useFetchMembers } from "@/hooks/useMembers";
 import { getApiError } from "@/utils/error";
 import { MEMBER_STATUS } from "@/types";
 import type { Member } from "@/types";
@@ -23,20 +24,17 @@ const TH = "px-5 h-[52px] text-left text-[14px] font-medium text-admin-muted";
 const TD = "px-5 py-4 text-[14px] text-ink";
 
 export default function AdminMembersPage() {
-  const [members, setMembers] = useState<Member[]>([]);
-  const [loading, setLoading] = useState(true);
   const [keyword, setKeyword] = useState("");
+  // 검색(Enter·버튼)으로 확정된 값만 조회에 반영한다 — 입력값을 그대로 쓰면 타자마다 요청이 나간다.
+  const [appliedKeyword, setAppliedKeyword] = useState("");
 
-  const load = (kw = keyword) => {
-    setLoading(true);
-    fetchMembers({ keyword: kw })
-      .then(setMembers)
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  };
-  useEffect(() => {
-    load("");
-  }, []);
+  const {
+    members,
+    refetch,
+    isLoading: loading,
+  } = useFetchMembers({ keyword: appliedKeyword || undefined });
+
+  const search = () => setAppliedKeyword(keyword);
 
   const toggleStatus = async (m: Member) => {
     try {
@@ -46,7 +44,7 @@ export default function AdminMembersPage() {
           ? MEMBER_STATUS.BLOCKED
           : MEMBER_STATUS.NORMAL,
       );
-      load();
+      refetch();
     } catch (e) {
       alert(getApiError(e).message ?? "회원 상태 변경 중 오류가 발생했습니다.");
     }
@@ -60,12 +58,12 @@ export default function AdminMembersPage() {
         <input
           value={keyword}
           onChange={(e) => setKeyword(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && load(keyword)}
+          onKeyDown={(e) => e.key === "Enter" && search()}
           placeholder="아이디 / 이메일 검색"
           className="h-[52px] w-[360px] max-w-full rounded-lg border border-admin-border bg-admin-bg px-4 text-[15px] text-ink outline-none placeholder:text-[#a6a6a6]"
         />
         <button
-          onClick={() => load(keyword)}
+          onClick={search}
           className="h-[52px] w-[110px] rounded-lg bg-admin text-[15px] font-medium text-white"
         >
           검색

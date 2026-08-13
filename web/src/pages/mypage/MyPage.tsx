@@ -1,12 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import type { FormEvent } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ChevronRight, Lock, PenLine } from "lucide-react";
-import { changePassword as changePasswordApi, fetchMypage } from "@/api/mypage";
-import { fetchMyOrders } from "@/api/orders";
-import { fetchInquiries } from "@/api/inquiries";
+import { changePassword as changePasswordApi } from "@/api/mypage";
+import { useFetchMypage } from "@/hooks/useMypage";
+import { useFetchMyOrders } from "@/hooks/useOrders";
+import { useFetchInquiries } from "@/hooks/useInquiries";
 import { getApiError } from "@/utils/error";
-import type { Member, Order, Inquiry } from "@/types";
 import SegmentedTabs from "@/components/ui/SegmentedTabs";
 import Pagination from "@/components/ui/Pagination";
 
@@ -24,10 +24,6 @@ export default function MyPage() {
     const t = Number(searchParams.get("tab"));
     return t >= 0 && t <= 2 ? t : 0;
   });
-  const [info, setInfo] = useState<Member | null>(null);
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [inquiries, setInquiries] = useState<Inquiry[]>([]);
-  const [loading, setLoading] = useState(false);
   const [orderPage, setOrderPage] = useState(1);
   const [inquiryPage, setInquiryPage] = useState(1);
   const [pwForm, setPwForm] = useState({
@@ -39,34 +35,22 @@ export default function MyPage() {
   const [pwSuccess, setPwSuccess] = useState("");
   const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchMypage()
-      .then(setInfo)
-      .catch(() => {});
-  }, []);
+  const { mypage } = useFetchMypage();
+  // 탭이 활성일 때만 조회한다. 탭을 떠났다 돌아오면 캐시가 즉시 채워주고 뒤에서 갱신된다.
+  const { myOrders, isLoading: ordersLoading } = useFetchMyOrders({
+    enabled: tab === 1,
+  });
+  const { inquiries, isLoading: inquiriesLoading } = useFetchInquiries({
+    enabled: tab === 2,
+  });
+  const loading = ordersLoading || inquiriesLoading;
 
-  useEffect(() => {
-    if (tab === 1) {
-      setLoading(true);
-      fetchMyOrders()
-        .then((data) => {
-          setOrders(data);
-          setOrderPage(1);
-        })
-        .catch(() => {})
-        .finally(() => setLoading(false));
-    }
-    if (tab === 2) {
-      setLoading(true);
-      fetchInquiries()
-        .then((data) => {
-          setInquiries(data);
-          setInquiryPage(1);
-        })
-        .catch(() => {})
-        .finally(() => setLoading(false));
-    }
-  }, [tab]);
+  // 탭을 옮기면 목록 페이지를 처음으로 되돌린다
+  const changeTab = (next: number) => {
+    setTab(next);
+    setOrderPage(1);
+    setInquiryPage(1);
+  };
 
   const changePassword = async (e: FormEvent) => {
     e.preventDefault();
@@ -82,17 +66,21 @@ export default function MyPage() {
         newPassword: pwForm.newPassword,
       });
       setPwSuccess("비밀번호가 변경되었습니다.");
-      setPwForm({ currentPassword: "", newPassword: "", newPasswordConfirm: "" });
+      setPwForm({
+        currentPassword: "",
+        newPassword: "",
+        newPasswordConfirm: "",
+      });
     } catch (err) {
       const { message } = getApiError(err);
       setPwError(message ?? "비밀번호 변경에 실패했습니다.");
     }
   };
 
-  const infoRows: [string, string][] = info
+  const infoRows: [string, string][] = mypage
     ? [
-        ["아이디", info.username],
-        ["이메일", info.email],
+        ["아이디", mypage.username],
+        ["이메일", mypage.email],
       ]
     : [];
   const pwFields: [keyof typeof pwForm, string, string][] = [
@@ -101,8 +89,8 @@ export default function MyPage() {
     ["newPasswordConfirm", "새 비밀번호 확인", "재입력"],
   ];
 
-  const orderTotalPages = Math.ceil(orders.length / PAGE_SIZE);
-  const pagedOrders = orders.slice(
+  const orderTotalPages = Math.ceil(myOrders.length / PAGE_SIZE);
+  const pagedOrders = myOrders.slice(
     (orderPage - 1) * PAGE_SIZE,
     orderPage * PAGE_SIZE,
   );
@@ -130,13 +118,13 @@ export default function MyPage() {
         <SegmentedTabs
           tabs={tabItems}
           value={String(tab)}
-          onChange={(k) => setTab(Number(k))}
+          onChange={(k) => changeTab(Number(k))}
         />
       </div>
 
       <div className="mx-auto max-w-[730px]">
         {/* 내 정보 */}
-        {tab === 0 && info && (
+        {tab === 0 && mypage && (
           <div>
             {/* 회원 정보 */}
             <h2 className="mb-6 border-b-2 border-navy-rule pb-4 text-[18px] font-bold text-ink">
@@ -182,7 +170,9 @@ export default function MyPage() {
                   />
                 </div>
               ))}
-              {pwError && <p className="mt-2 text-[13px] text-red-500">{pwError}</p>}
+              {pwError && (
+                <p className="mt-2 text-[13px] text-red-500">{pwError}</p>
+              )}
               {pwSuccess && (
                 <p className="mt-2 text-[13px] text-green-600">{pwSuccess}</p>
               )}
@@ -205,7 +195,7 @@ export default function MyPage() {
               <p className="py-16 text-center text-[15px] text-ink/50">
                 불러오는 중...
               </p>
-            ) : orders.length === 0 ? (
+            ) : myOrders.length === 0 ? (
               <p className="py-16 text-center text-[15px] text-ink/50">
                 구매 내역이 없습니다.
               </p>
@@ -214,14 +204,16 @@ export default function MyPage() {
                 <table className="w-full border-collapse">
                   <thead>
                     <tr className="border-y border-line bg-page">
-                      {["주문 일시", "주문번호", "상품", "금액", "상태"].map((h) => (
-                        <th
-                          key={h}
-                          className="px-4 py-4 text-center text-[14px] font-semibold text-ink"
-                        >
-                          {h}
-                        </th>
-                      ))}
+                      {["주문 일시", "주문번호", "상품", "금액", "상태"].map(
+                        (h) => (
+                          <th
+                            key={h}
+                            className="px-4 py-4 text-center text-[14px] font-semibold text-ink"
+                          >
+                            {h}
+                          </th>
+                        ),
+                      )}
                     </tr>
                   </thead>
                   <tbody>
@@ -230,7 +222,9 @@ export default function MyPage() {
                         <td className={tdClass}>{formatDate(o.createdAt)}</td>
                         <td className={tdClass}>{o.orderNo}</td>
                         <td className={tdClass}>{o.productName}</td>
-                        <td className={tdClass}>{o.price?.toLocaleString()}원</td>
+                        <td className={tdClass}>
+                          {o.price?.toLocaleString()}원
+                        </td>
                         <td className={tdClass}>
                           <span
                             className={`inline-block rounded-full px-3.5 py-[5px] text-[13px] font-semibold ${

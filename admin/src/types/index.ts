@@ -144,6 +144,8 @@ export interface Inquiry {
   answeredAt: string | null;
   createdAt: string;
   updatedAt: string;
+  // 관리자 목록·상세는 member 를 조인해서 함께 반환한다 (Order 와 동일)
+  member?: Member;
 }
 
 /* ---------------------- 로그인 등 비-엔벨로프 응답 ---------------------- */

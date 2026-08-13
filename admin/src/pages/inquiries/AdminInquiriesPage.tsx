@@ -1,12 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { fetchInquiries } from "@/api/inquiries";
+import { useFetchInquiries } from "@/hooks/useInquiries";
 import { INQUIRY_STATUS } from "@/types";
-import type { Inquiry, Member } from "@/types";
-
-interface AdminInquiry extends Inquiry {
-  member?: Member;
-}
 
 const typeLabel: Record<number, string> = {
   1: "충전",
@@ -26,29 +21,15 @@ const TD = "px-5 py-4 text-[14px] text-ink";
 
 export default function AdminInquiriesPage() {
   const navigate = useNavigate();
-  const [inquiries, setInquiries] = useState<AdminInquiry[]>([]);
-  const [loading, setLoading] = useState(true);
   const [type, setType] = useState("");
   const [status, setStatus] = useState("");
   const [keyword, setKeyword] = useState("");
   const [appliedKeyword, setAppliedKeyword] = useState("");
 
   // 유형·상태는 백엔드 파라미터(server/routes/admin/inquiries.js)로 조회한다.
-  const load = (s = status, t = type) => {
-    setLoading(true);
-    return fetchInquiries({ status: s, type: t })
-      .then(setInquiries)
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  };
-  useEffect(() => {
-    load("", "");
-  }, []);
+  const { inquiries, isLoading: loading } = useFetchInquiries({ status, type });
 
-  const search = () => {
-    setAppliedKeyword(keyword);
-    load(status, type);
-  };
+  const search = () => setAppliedKeyword(keyword);
 
   // 아이디 검색은 백엔드 미지원이라 클라이언트 측에서 필터한다.
   const filtered = appliedKeyword
@@ -64,10 +45,7 @@ export default function AdminInquiriesPage() {
       <div className="mb-6 flex flex-wrap gap-3">
         <select
           value={type}
-          onChange={(e) => {
-            setType(e.target.value);
-            load(status, e.target.value);
-          }}
+          onChange={(e) => setType(e.target.value)}
           className="h-[52px] w-[200px] rounded-lg border border-admin-border bg-admin-bg px-4 text-[15px] text-ink outline-none"
         >
           <option value="">유형: 전체</option>
@@ -78,10 +56,7 @@ export default function AdminInquiriesPage() {
         </select>
         <select
           value={status}
-          onChange={(e) => {
-            setStatus(e.target.value);
-            load(e.target.value, type);
-          }}
+          onChange={(e) => setStatus(e.target.value)}
           className="h-[52px] w-[200px] rounded-lg border border-admin-border bg-admin-bg px-4 text-[15px] text-ink outline-none"
         >
           <option value="">상태: 전체</option>

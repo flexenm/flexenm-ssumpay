@@ -1,6 +1,6 @@
 import { useNavigate, useParams, Navigate, Link } from "react-router-dom";
 import { ChevronRight, AlertCircle } from "lucide-react";
-import { useProducts } from "@/hooks/useProducts";
+import { useFetchProducts } from "@/hooks/useProducts";
 import {
   productCategories,
   resolveCategory,
@@ -25,11 +25,7 @@ export default function ProductsPage() {
   const invalidSub = !!subSlug && !currentSub;
   const canFetchProducts = !!currentCat && !invalidSub && !comingSoon;
 
-  const {
-    data: products = [],
-    isLoading,
-    isError,
-  } = useProducts({
+  const { products, isLoading, isError } = useFetchProducts({
     category: currentCat?.category ?? undefined,
     subcategory: currentSub?.subcategory,
     enabled: canFetchProducts,
