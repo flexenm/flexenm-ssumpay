@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { createNotice, deleteNotice, fetchNotice, updateNotice } from "@/api/notices";
+import { createNotice, deleteNotice, updateNotice } from "@/api/notices";
 import type { NoticeParams } from "@/api/notices";
+import { refreshNotices, useFetchNotice } from "@/hooks/useNotices";
 import { getApiError } from "@/utils/error";
 
 interface NoticeForm {
@@ -27,23 +28,23 @@ export default function AdminNoticeFormPage() {
   const isEdit = !!id;
 
   const [form, setForm] = useState<NoticeForm>(empty);
-  const [loading, setLoading] = useState(isEdit);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
+  const { notice, isLoading: loading } = useFetchNotice({ id });
+
+  // 조회된 공지를 편집 상태의 초기값으로 옮긴다 (조회가 아니라 폼 시딩용 effect)
+  // 의존성은 notice 자체가 아니라 notice?.id 다. 객체를 걸면 백그라운드 재조회(창 포커스 등)로
+  // 참조가 바뀔 때마다 다시 시딩돼 작성 중이던 입력이 덮어써진다.
   useEffect(() => {
-    if (!id) return;
-    fetchNotice(id)
-      .then((notice) =>
-        setForm({
-          title: notice.title,
-          content: notice.content,
-          isPinned: !!notice.isPinned,
-          isActive: notice.isActive,
-        }),
-      )
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [id]);
+    if (!notice) return;
+    setForm({
+      title: notice.title,
+      content: notice.content,
+      isPinned: !!notice.isPinned,
+      isActive: notice.isActive,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [notice?.id]);
 
   const submit = async () => {
     if (!form.title.trim() || !form.content.trim()) {
@@ -54,6 +55,7 @@ export default function AdminNoticeFormPage() {
       const payload = form as unknown as NoticeParams;
       if (isEdit) await updateNotice(id!, payload);
       else await createNotice(payload);
+      await refreshNotices({ id });
       navigate("/notices");
     } catch (e) {
       alert(getApiError(e).message ?? "저장 중 오류가 발생했습니다.");
@@ -63,6 +65,7 @@ export default function AdminNoticeFormPage() {
   const del = async () => {
     try {
       await deleteNotice(id!);
+      await refreshNotices({ id });
       navigate("/notices");
     } catch (e) {
       alert(getApiError(e).message ?? "삭제 중 오류가 발생했습니다.");
@@ -101,7 +104,9 @@ export default function AdminNoticeFormPage() {
           </label>
           <textarea
             value={form.content}
-            onChange={(e) => setForm((p) => ({ ...p, content: e.target.value }))}
+            onChange={(e) =>
+              setForm((p) => ({ ...p, content: e.target.value }))
+            }
             placeholder="공지 내용을 입력해 주세요"
             className="min-h-[380px] w-full resize-y rounded-lg border border-admin-border bg-admin-bg px-4 py-3 text-[15px] leading-relaxed text-ink outline-none placeholder:text-[#a6a6a6]"
           />

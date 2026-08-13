@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { deleteNotice, fetchNotices } from "@/api/notices";
-import type { FetchNoticesParams } from "@/api/notices";
+import { deleteNotice } from "@/api/notices";
+import { useFetchNotices } from "@/hooks/useNotices";
 import { getApiError } from "@/utils/error";
 import type { Notice } from "@/types";
 
@@ -18,28 +18,26 @@ const TD = "px-5 py-4 text-[14px] text-ink";
 
 export default function AdminNoticesPage() {
   const navigate = useNavigate();
-  const [notices, setNotices] = useState<Notice[]>([]);
-  const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState<ModalType | null>(null);
   const [selected, setSelected] = useState<Notice | null>(null);
   const [pinnedFilter, setPinnedFilter] = useState("");
   const [titleKeyword, setTitleKeyword] = useState("");
   const [appliedFilter, setAppliedFilter] = useState({ pinned: "", title: "" });
 
-  // 등록·수정·삭제 후 재조회 시에도 적용 중인 필터를 유지한다.
-  const load = (pinned = appliedFilter.pinned, title = appliedFilter.title) => {
-    const params: FetchNoticesParams = {};
-    if (pinned !== "") params.isPinned = pinned === "Y" ? 1 : 0;
-    if (title) params.keyword = title;
-    setLoading(true);
-    return fetchNotices(params)
-      .then(setNotices)
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  };
-  useEffect(() => {
-    load("", "");
-  }, []);
+  // 적용 중인 필터로만 조회한다 — 등록·수정·삭제 후 재조회에도 그대로 유지된다.
+  const {
+    notices,
+    refetch,
+    isLoading: loading,
+  } = useFetchNotices({
+    isPinned:
+      appliedFilter.pinned === ""
+        ? undefined
+        : appliedFilter.pinned === "Y"
+          ? 1
+          : 0,
+    keyword: appliedFilter.title || undefined,
+  });
 
   const openView = (n: Notice) => {
     setSelected(n);
@@ -54,16 +52,14 @@ export default function AdminNoticesPage() {
     try {
       await deleteNotice(selected!.id);
       setModal(null);
-      load();
+      refetch();
     } catch (e) {
       alert(getApiError(e).message ?? "삭제 중 오류가 발생했습니다.");
     }
   };
 
-  const applySearch = () => {
+  const applySearch = () =>
     setAppliedFilter({ pinned: pinnedFilter, title: titleKeyword });
-    load(pinnedFilter, titleKeyword);
-  };
 
   return (
     <div>
@@ -83,7 +79,6 @@ export default function AdminNoticesPage() {
           onChange={(e) => {
             setPinnedFilter(e.target.value);
             setAppliedFilter((f) => ({ ...f, pinned: e.target.value }));
-            load(e.target.value, appliedFilter.title);
           }}
           className="h-[52px] w-[200px] rounded-lg border border-admin-border bg-admin-bg px-4 text-[15px] text-ink outline-none"
         >

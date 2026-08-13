@@ -1,13 +1,9 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { answerInquiry, fetchInquiry } from "@/api/inquiries";
+import { answerInquiry } from "@/api/inquiries";
+import { refreshInquiries, useFetchInquiry } from "@/hooks/useInquiries";
 import { getApiError } from "@/utils/error";
 import { INQUIRY_STATUS } from "@/types";
-import type { Inquiry, Member } from "@/types";
-
-interface AdminInquiry extends Inquiry {
-  member?: Member;
-}
 
 const typeLabel: Record<number, string> = {
   1: "충전",
@@ -25,22 +21,26 @@ const fmtDateTime = (s: string) => {
 export default function AdminInquiryDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [inquiry, setInquiry] = useState<AdminInquiry | null>(null);
+  const { inquiry, isError } = useFetchInquiry({ id });
   const [answer, setAnswer] = useState("");
 
+  // 조회된 답변을 편집 상태의 초기값으로 옮긴다 (조회가 아니라 폼 시딩용 effect)
+  // 의존성은 inquiry 자체가 아니라 inquiry?.id 다. 객체를 걸면 백그라운드 재조회(창 포커스 등)로
+  // 참조가 바뀔 때마다 다시 시딩돼 작성 중이던 답변이 덮어써진다.
   useEffect(() => {
-    fetchInquiry(id!)
-      .then((data) => {
-        setInquiry(data);
-        setAnswer(data.answer || "");
-      })
-      .catch(() => navigate("/inquiries"));
-  }, [id]);
+    if (inquiry) setAnswer(inquiry.answer || "");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inquiry?.id]);
+
+  useEffect(() => {
+    if (isError) navigate("/inquiries");
+  }, [isError, navigate]);
 
   const submit = async () => {
     if (!answer) return alert("답변을 입력해주세요.");
     try {
       await answerInquiry(id!, answer);
+      await refreshInquiries({ id });
       alert("답변이 등록되었습니다.");
       navigate("/inquiries");
     } catch (e) {

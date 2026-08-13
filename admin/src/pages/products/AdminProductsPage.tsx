@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import type { ChangeEvent, Dispatch, SetStateAction } from "react";
-import { createProduct, deleteProduct, fetchProducts, updateProduct } from "@/api/products";
+import { createProduct, deleteProduct, updateProduct } from "@/api/products";
+import { useFetchProducts } from "@/hooks/useProducts";
 import { getApiError } from "@/utils/error";
 import type { Product } from "@/types";
 
@@ -20,11 +21,16 @@ interface ProductFormState {
   _imageFile?: File;
 }
 
-const empty: ProductFormState = { name: "", price: "", lexAmount: "", sort: "", isActive: 1, imageUrl: "" };
+const empty: ProductFormState = {
+  name: "",
+  price: "",
+  lexAmount: "",
+  sort: "",
+  isActive: 1,
+  imageUrl: "",
+};
 
 export default function AdminProductsPage() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState<"create" | "edit" | "delete" | null>(null);
   const [form, setForm] = useState<ProductFormState>(empty);
   const [selected, setSelected] = useState<Product | null>(null);
@@ -40,22 +46,15 @@ export default function AdminProductsPage() {
     }
   };
 
-  // 등록·수정·삭제 후 재조회 시에도 적용 중인 검색어를 유지한다.
-  const load = (kw = appliedKeyword) => {
-    setLoading(true);
-    return fetchProducts(kw ? { keyword: kw } : undefined)
-      .then(setProducts)
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  };
-  useEffect(() => {
-    load("");
-  }, []);
+  // 적용 중인 검색어로만 조회한다 — 등록·수정·삭제 후 재조회에도 그대로 유지된다.
+  const {
+    products,
+    refetch,
+    isLoading: loading,
+  } = useFetchProducts({ keyword: appliedKeyword || undefined });
 
-  const search = () => {
-    setAppliedKeyword(keyword);
-    load(keyword);
-  };
+  const search = () => setAppliedKeyword(keyword);
+
   useEffect(() => () => revokePreview(), []);
 
   const openCreate = () => {
@@ -102,7 +101,7 @@ export default function AdminProductsPage() {
       else await updateProduct(selected!.id, data);
       revokePreview();
       setModal(null);
-      load();
+      refetch();
     } catch (e) {
       alert(getApiError(e).message ?? "저장 중 오류가 발생했습니다.");
     }
@@ -112,7 +111,7 @@ export default function AdminProductsPage() {
     try {
       await deleteProduct(selected!.id);
       setModal(null);
-      load();
+      refetch();
     } catch (e) {
       alert(getApiError(e).message ?? "삭제 중 오류가 발생했습니다.");
     }
@@ -149,8 +148,18 @@ export default function AdminProductsPage() {
       <table className="w-full border-collapse">
         <thead>
           <tr className="h-[52px] bg-admin-head">
-            {["상품명", "렉스 수량", "판매가", "노출 여부", "정렬 순서", "관리"].map((h) => (
-              <th key={h} className="px-4 text-left text-[14px] font-medium text-admin-muted">
+            {[
+              "상품명",
+              "렉스 수량",
+              "판매가",
+              "노출 여부",
+              "정렬 순서",
+              "관리",
+            ].map((h) => (
+              <th
+                key={h}
+                className="px-4 text-left text-[14px] font-medium text-admin-muted"
+              >
                 {h}
               </th>
             ))}
@@ -159,13 +168,19 @@ export default function AdminProductsPage() {
         <tbody>
           {loading ? (
             <tr>
-              <td colSpan={6} className="p-10 text-center text-[14px] text-admin-muted">
+              <td
+                colSpan={6}
+                className="p-10 text-center text-[14px] text-admin-muted"
+              >
                 불러오는 중...
               </td>
             </tr>
           ) : products.length === 0 ? (
             <tr>
-              <td colSpan={6} className="p-10 text-center text-[14px] text-admin-muted">
+              <td
+                colSpan={6}
+                className="p-10 text-center text-[14px] text-admin-muted"
+              >
                 {appliedKeyword ? "검색 결과가 없습니다." : "상품이 없습니다."}
               </td>
             </tr>
@@ -178,11 +193,17 @@ export default function AdminProductsPage() {
                 <td className={tdClass}>{p.isActive ? "ON" : "OFF"}</td>
                 <td className={tdClass}>{p.sort}</td>
                 <td className={tdClass}>
-                  <button onClick={() => openEdit(p)} className="text-ink hover:underline cursor-pointer">
+                  <button
+                    onClick={() => openEdit(p)}
+                    className="text-ink hover:underline cursor-pointer"
+                  >
                     수정
                   </button>
                   <span className="mx-1.5 text-admin-muted">·</span>
-                  <button onClick={() => openDelete(p)} className="text-ink hover:underline cursor-pointer">
+                  <button
+                    onClick={() => openDelete(p)}
+                    className="text-ink hover:underline cursor-pointer"
+                  >
                     삭제
                   </button>
                 </td>
@@ -221,7 +242,9 @@ export default function AdminProductsPage() {
       {modal === "delete" && (
         <div className={overlayClass}>
           <div className="bg-white rounded-2xl w-[467px] px-10 pt-10 pb-8">
-            <p className="text-[18px] font-bold text-center text-ink mb-4">상품을 삭제하시겠습니까?</p>
+            <p className="text-[18px] font-bold text-center text-ink mb-4">
+              상품을 삭제하시겠습니까?
+            </p>
             <p className="text-[15px] text-admin-muted text-center leading-[1.7] mb-4">
               삭제 시 사용자 상품 목록에서 즉시 제거됩니다.
               <br />
@@ -257,24 +280,45 @@ interface ProductModalProps {
   onConfirm: () => void;
 }
 
-function ProductModal({ title, form, setForm, preview, onImage, onRemoveImage, isEdit, onClose, onConfirm }: ProductModalProps) {
+function ProductModal({
+  title,
+  form,
+  setForm,
+  preview,
+  onImage,
+  onRemoveImage,
+  isEdit,
+  onClose,
+  onConfirm,
+}: ProductModalProps) {
   const fileRef = useRef<HTMLInputElement>(null);
 
   return (
     <div className={overlayClass}>
       <div className="bg-white rounded-2xl w-[720px] max-h-[90vh] overflow-y-auto p-10">
-        <h3 className="text-[22px] font-bold text-center text-ink mb-8">{title}</h3>
+        <h3 className="text-[22px] font-bold text-center text-ink mb-8">
+          {title}
+        </h3>
 
         {/* 이미지 */}
         <div className="mb-6">
           <label className={labelClass}>상품 이미지</label>
           <div className="flex items-start gap-4">
             <div className="w-[110px] h-[110px] rounded-lg border border-admin-border bg-admin-head flex items-center justify-center text-[14px] text-admin-muted overflow-hidden shrink-0">
-              {preview ? <img src={preview} className="w-full h-full object-cover" /> : isEdit ? "등록됨" : "이미지"}
+              {preview ? (
+                <img src={preview} className="w-full h-full object-cover" />
+              ) : isEdit ? (
+                "등록됨"
+              ) : (
+                "이미지"
+              )}
             </div>
             <div>
               <div className="flex gap-2 mb-2">
-                <button onClick={() => fileRef.current?.click()} className={imageBtnClass}>
+                <button
+                  onClick={() => fileRef.current?.click()}
+                  className={imageBtnClass}
+                >
                   {isEdit ? "이미지 변경" : "이미지 업로드"}
                 </button>
                 {isEdit && preview && (
@@ -283,7 +327,13 @@ function ProductModal({ title, form, setForm, preview, onImage, onRemoveImage, i
                   </button>
                 )}
               </div>
-              <input ref={fileRef} type="file" accept="image/jpg,image/jpeg,image/png" onChange={onImage} className="hidden" />
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/jpg,image/jpeg,image/png"
+                onChange={onImage}
+                className="hidden"
+              />
               <p className="text-[13px] text-admin-muted leading-[1.6]">
                 권장 1:1 비율 · 500×500px 이상 · jpg/png · 최대 5MB
                 <br />
@@ -311,7 +361,9 @@ function ProductModal({ title, form, setForm, preview, onImage, onRemoveImage, i
             <input
               type="number"
               value={form.lexAmount ?? ""}
-              onChange={(e) => setForm((p) => ({ ...p, lexAmount: e.target.value }))}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, lexAmount: e.target.value }))
+              }
               placeholder="숫자만 입력"
               className={inputClass}
             />
@@ -321,7 +373,9 @@ function ProductModal({ title, form, setForm, preview, onImage, onRemoveImage, i
             <input
               type="number"
               value={form.price ?? ""}
-              onChange={(e) => setForm((p) => ({ ...p, price: e.target.value }))}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, price: e.target.value }))
+              }
               placeholder="숫자만 입력"
               className={inputClass}
             />
@@ -339,9 +393,13 @@ function ProductModal({ title, form, setForm, preview, onImage, onRemoveImage, i
               ].map(({ v, label }) => (
                 <button
                   key={v}
-                  onClick={() => setForm((p) => ({ ...p, isActive: v as 0 | 1 }))}
+                  onClick={() =>
+                    setForm((p) => ({ ...p, isActive: v as 0 | 1 }))
+                  }
                   className={`w-[76px] h-[44px] rounded-lg text-[15px] font-medium cursor-pointer ${
-                    form.isActive === v ? "bg-admin text-white" : "bg-white border border-admin-border text-admin-muted"
+                    form.isActive === v
+                      ? "bg-admin text-white"
+                      : "bg-white border border-admin-border text-admin-muted"
                   }`}
                 >
                   {label}
@@ -391,6 +449,9 @@ const tdClass = "px-4 text-[14px] text-ink";
 const labelClass = "block text-[15px] font-medium text-ink mb-2";
 const inputClass =
   "h-[52px] w-full rounded-lg border border-admin-border bg-admin-bg px-4 text-[15px] text-ink placeholder:text-[#a6a6a6] outline-none box-border";
-const imageBtnClass = "h-[40px] px-4 rounded-lg border border-admin-border bg-white text-ink text-[14px] cursor-pointer";
-const cancelBtnClass = "flex-1 h-[56px] rounded-lg border border-admin-border bg-white text-ink text-[15px] font-medium cursor-pointer";
-const confirmBtnClass = "flex-1 h-[56px] rounded-lg bg-admin text-white text-[15px] font-medium cursor-pointer";
+const imageBtnClass =
+  "h-[40px] px-4 rounded-lg border border-admin-border bg-white text-ink text-[14px] cursor-pointer";
+const cancelBtnClass =
+  "flex-1 h-[56px] rounded-lg border border-admin-border bg-white text-ink text-[15px] font-medium cursor-pointer";
+const confirmBtnClass =
+  "flex-1 h-[56px] rounded-lg bg-admin text-white text-[15px] font-medium cursor-pointer";

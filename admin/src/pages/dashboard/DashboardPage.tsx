@@ -1,9 +1,7 @@
-import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
-import { fetchDashboard } from "@/api/dashboard";
-import { fetchOrders } from "@/api/orders";
-import type { DashboardSummary, Order } from "@/types";
+import { useFetchDashboard } from "@/hooks/useDashboard";
+import { useFetchOrders } from "@/hooks/useOrders";
 import DummyBadge from "@/components/ui/DummyBadge";
 
 const CHARGE_LABEL: Record<number, string> = {
@@ -23,17 +21,8 @@ const formatDateTime = (iso: string) => {
 
 export default function DashboardPage() {
   const navigate = useNavigate();
-  const [data, setData] = useState<DashboardSummary | null>(null);
-  const [recent, setRecent] = useState<Order[]>([]);
-
-  useEffect(() => {
-    fetchDashboard()
-      .then(setData)
-      .catch(() => {});
-    fetchOrders({ limit: 8 })
-      .then(setRecent)
-      .catch(() => {});
-  }, []);
+  const { dashboard: data } = useFetchDashboard();
+  const { orders: recent } = useFetchOrders({ limit: 8 });
 
   if (!data) return <div className="text-admin-muted">로딩중...</div>;
 
@@ -105,16 +94,21 @@ export default function DashboardPage() {
       <table className="w-full border-collapse">
         <thead>
           <tr className="bg-admin-head">
-            {["주문번호", "주문일시", "회원 아이디", "상품", "금액", "충전 상태"].map(
-              (h) => (
-                <th
-                  key={h}
-                  className="h-[52px] px-4 text-left text-[14px] font-medium text-admin-muted"
-                >
-                  {h}
-                </th>
-              ),
-            )}
+            {[
+              "주문번호",
+              "주문일시",
+              "회원 아이디",
+              "상품",
+              "금액",
+              "충전 상태",
+            ].map((h) => (
+              <th
+                key={h}
+                className="h-[52px] px-4 text-left text-[14px] font-medium text-admin-muted"
+              >
+                {h}
+              </th>
+            ))}
           </tr>
         </thead>
         <tbody>
