@@ -35,13 +35,13 @@ export default function CustomerCenterPage() {
     setLoading(true);
     noticesApi
       .list()
-      .then((r) => setNotices(r.data))
+      .then((r) => setNotices(r.items))
       .catch(() => {})
       .finally(() => setLoading(false));
     if (isLoggedIn)
       inquiriesApi
         .list()
-        .then((r) => setInquiries(r.data))
+        .then((r) => setInquiries(r.items))
         .catch(() => {});
   }, []);
 

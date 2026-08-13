@@ -33,7 +33,7 @@ export default function AdminNoticesPage() {
     setLoading(true);
     return adminNoticesApi
       .list(params)
-      .then((r) => setNotices(r.data))
+      .then((r) => setNotices(r.items))
       .catch(() => {})
       .finally(() => setLoading(false));
   };

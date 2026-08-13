@@ -31,8 +31,8 @@ export default function AdminInquiryDetailPage() {
     adminInquiriesApi
       .get(id!)
       .then((r) => {
-        setInquiry(r.data);
-        setAnswer(r.data.answer || "");
+        setInquiry(r);
+        setAnswer(r.answer || "");
       })
       .catch(() => navigate("/admin/inquiries"));
   }, [id]);

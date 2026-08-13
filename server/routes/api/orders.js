@@ -1,6 +1,7 @@
 const Router = require("koa-router");
 const orderService = require("../../services/order");
 const rateLimit = require("../../middlewares/rate-limit");
+const { wrap } = require("../shared/handler-wrap");
 
 const router = new Router();
 
@@ -13,34 +14,35 @@ const memberLimiter = rateLimit({
   keyBy: (ctx) => `order:member:${ctx.state.member.id}`,
 });
 
-router.post("/", memberLimiter, async (ctx) => {
-  const { productId, flexUsername, flexPassword, paymentMethod = 1 } = ctx.request.body;
+router.post(
+  "/",
+  memberLimiter,
+  wrap(async ({ caller, productId, flexUsername, flexPassword, paymentMethod = 1 }, ctx) => {
+    const order = await orderService.createOrder({
+      memberId: caller,
+      productId,
+      flexUsername,
+      flexPassword,
+      paymentMethod,
+      ipAddr: ctx.ip,
+    });
+    return { orderNo: order.orderNo, id: order.id, price: order.price };
+  })
+);
 
-  const order = await orderService.createOrder({
-    memberId: ctx.state.member.id,
-    productId,
-    flexUsername,
-    flexPassword,
-    paymentMethod,
-    ipAddr: ctx.ip,
-  });
+router.get(
+  "/my",
+  wrap(async ({ caller, page = 1, limit = 10 }) => {
+    const { items, total } = await orderService.listMyOrders(caller, { page, limit });
+    return { items, total, page: Number(page), limit: Number(limit) };
+  })
+);
 
-  ctx.status = 201;
-  ctx.body = {
-    code: 201,
-    data: { orderNo: order.orderNo, id: order.id, price: order.price },
-  };
-});
-
-router.get("/my", async (ctx) => {
-  const { page = 1, limit = 10 } = ctx.query;
-  const { items, total } = await orderService.listMyOrders(ctx.state.member.id, { page, limit });
-  ctx.body = { code: 200, data: items, total, page: Number(page), limit: Number(limit) };
-});
-
-router.get("/:orderNo", async (ctx) => {
-  const order = await orderService.getByOrderNoForMember(ctx.params.orderNo, ctx.state.member.id);
-  ctx.body = { code: 200, data: order };
-});
+router.get(
+  "/:orderNo",
+  wrap(async ({ caller, orderNo }) => {
+    return await orderService.getByOrderNoForMember(orderNo, caller);
+  })
+);
 
 module.exports = router;

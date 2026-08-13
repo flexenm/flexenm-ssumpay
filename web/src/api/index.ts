@@ -3,15 +3,14 @@ import { api, adminApi } from "./fetch";
 import type {
   AdminLoginResponse,
   AdminMeResponse,
-  BaseResponse,
   CheckUsernameResponse,
   DashboardSummary,
-  DataResponse,
   Inquiry,
-  ListResponse,
+  ListResult,
   LoginResponse,
   Member,
   MeResponse,
+  MessageResponse,
   Notice,
   Order,
   PaymentMethod,
@@ -125,71 +124,71 @@ export const authApi = {
       api.get("/api/auth/check-username", { params: { username } }),
     ),
   register: (data: RegisterInput) =>
-    handle<BaseResponse>(api.post("/api/auth/register", data)),
+    handle<MessageResponse>(api.post("/api/auth/register", data)),
   login: (data: LoginInput) =>
     handle<LoginResponse>(api.post("/api/auth/login", data)),
   me: () => handle<MeResponse>(api.get("/api/my/profile")),
   resetPassword: (data: ResetPasswordInput) =>
-    handle<BaseResponse>(api.post("/api/auth/password/reset", data)),
+    handle<MessageResponse>(api.post("/api/auth/password/reset", data)),
   confirmResetPassword: (data: ConfirmResetPasswordInput) =>
-    handle<BaseResponse>(api.post("/api/auth/password/reset/confirm", data)),
+    handle<MessageResponse>(api.post("/api/auth/password/reset/confirm", data)),
 };
 
 /* -------------------------------- Products -------------------------------- */
 
 export const productsApi = {
   list: (params?: { category?: string; subcategory?: string }) =>
-    handle<DataResponse<Product[]>>(api.get("/api/products", { params })),
+    handle<Product[]>(api.get("/api/products", { params })),
   get: (id: number | string) =>
-    handle<DataResponse<Product>>(api.get(`/api/products/${id}`)),
+    handle<Product>(api.get(`/api/products/${id}`)),
 };
 
 /* --------------------------------- Orders --------------------------------- */
 
 export const ordersApi = {
   create: (data: CreateOrderInput) =>
-    handle<DataResponse<{ orderNo: string; id: number; price: number }>>(
+    handle<{ orderNo: string; id: number; price: number }>(
       api.post("/api/orders", data),
     ),
   my: (params?: ListParams) =>
-    handle<ListResponse<Order>>(api.get("/api/orders/my", { params })),
+    handle<ListResult<Order>>(api.get("/api/orders/my", { params })),
   get: (orderNo: string) =>
-    handle<DataResponse<Order>>(api.get(`/api/orders/${orderNo}`)),
+    handle<Order>(api.get(`/api/orders/${orderNo}`)),
 };
 
 /* --------------------------------- Mypage --------------------------------- */
 
 export const mypageApi = {
-  get: () => handle<DataResponse<Member>>(api.get("/api/mypage")),
+  get: () => handle<Member>(api.get("/api/mypage")),
   update: (data: UpdateMypageInput) =>
-    handle<DataResponse<Member>>(api.patch("/api/mypage", data)),
+    handle<Member>(api.patch("/api/mypage", data)),
   changePassword: (data: ChangePasswordInput) =>
-    handle<BaseResponse>(api.patch("/api/mypage/password", data)),
+    handle<MessageResponse>(api.patch("/api/mypage/password", data)),
 };
 
 /* --------------------------------- Notices -------------------------------- */
 
 export const noticesApi = {
   list: (params?: ListParams) =>
-    handle<ListResponse<Notice>>(api.get("/api/notices", { params })),
+    handle<ListResult<Notice>>(api.get("/api/notices", { params })),
   get: (id: number | string) =>
-    handle<DataResponse<Notice>>(api.get(`/api/notices/${id}`)),
+    handle<Notice>(api.get(`/api/notices/${id}`)),
 };
 
 /* -------------------------------- Inquiries ------------------------------- */
 
 export const inquiriesApi = {
   list: (params?: ListParams) =>
-    handle<ListResponse<Inquiry>>(api.get("/api/inquiries", { params })),
+    handle<ListResult<Inquiry>>(api.get("/api/inquiries", { params })),
   get: (id: number | string) =>
-    handle<DataResponse<Inquiry>>(api.get(`/api/inquiries/${id}`)),
+    handle<Inquiry>(api.get(`/api/inquiries/${id}`)),
   create: ({ image, ...rest }: CreateInquiryInput) => {
     const fd = new FormData();
     (Object.entries(rest) as [string, unknown][]).forEach(([k, v]) =>
       fd.append(k, String(v)),
     );
     if (image) fd.append("image", image);
-    return handle<DataResponse<Inquiry>>(
+    return handle<Inquiry>(
       api.post("/api/inquiries", fd, { headers: { "Content-Type": "multipart/form-data" } }),
     );
   },
@@ -199,12 +198,12 @@ export const inquiriesApi = {
       if (v !== undefined) fd.append(k, String(v));
     });
     if (image) fd.append("image", image);
-    return handle<DataResponse<Inquiry>>(
+    return handle<Inquiry>(
       api.put(`/api/inquiries/${id}`, fd, { headers: { "Content-Type": "multipart/form-data" } }),
     );
   },
   delete: (id: number | string) =>
-    handle<BaseResponse>(api.delete(`/api/inquiries/${id}`)),
+    handle<MessageResponse>(api.delete(`/api/inquiries/${id}`)),
 };
 
 /* ---------------------------------- Admin --------------------------------- */
@@ -217,62 +216,62 @@ export const adminAuthApi = {
 
 export const adminDashboardApi = {
   get: () =>
-    handle<DataResponse<DashboardSummary>>(adminApi.get("/admin/dashboard")),
+    handle<DashboardSummary>(adminApi.get("/admin/dashboard")),
 };
 
 export const adminOrdersApi = {
   list: (params?: AdminOrderListParams) =>
-    handle<ListResponse<Order>>(adminApi.get("/admin/orders", { params })),
+    handle<ListResult<Order>>(adminApi.get("/admin/orders", { params })),
   get: (id: number | string) =>
-    handle<DataResponse<Order>>(adminApi.get(`/admin/orders/${id}`)),
+    handle<Order>(adminApi.get(`/admin/orders/${id}`)),
   updateChargeStatus: (id: number | string, data: { chargeStatus: number }) =>
-    handle<BaseResponse>(
+    handle<MessageResponse>(
       adminApi.patch(`/admin/orders/${id}/charge-status`, data),
     ),
   updateMemo: (id: number | string, data: { memo: string }) =>
-    handle<BaseResponse>(adminApi.patch(`/admin/orders/${id}/memo`, data)),
+    handle<MessageResponse>(adminApi.patch(`/admin/orders/${id}/memo`, data)),
 };
 
 export const adminProductsApi = {
   list: (params?: { category?: string; keyword?: string }) =>
-    handle<DataResponse<Product[]>>(
+    handle<Product[]>(
       adminApi.get("/admin/products", { params }),
     ),
   create: (data: ProductInput) =>
-    handle<DataResponse<Product>>(adminApi.post("/admin/products", data)),
+    handle<Product>(adminApi.post("/admin/products", data)),
   update: (id: number | string, data: Partial<ProductInput>) =>
-    handle<DataResponse<Product>>(adminApi.put(`/admin/products/${id}`, data)),
+    handle<Product>(adminApi.put(`/admin/products/${id}`, data)),
   delete: (id: number | string) =>
-    handle<BaseResponse>(adminApi.delete(`/admin/products/${id}`)),
+    handle<MessageResponse>(adminApi.delete(`/admin/products/${id}`)),
 };
 
 export const adminMembersApi = {
   list: (params?: ListParams) =>
-    handle<ListResponse<Member>>(adminApi.get("/admin/members", { params })),
+    handle<ListResult<Member>>(adminApi.get("/admin/members", { params })),
   get: (id: number | string) =>
-    handle<DataResponse<Member>>(adminApi.get(`/admin/members/${id}`)),
+    handle<Member>(adminApi.get(`/admin/members/${id}`)),
   updateStatus: (id: number | string, data: { status: number }) =>
-    handle<BaseResponse>(adminApi.patch(`/admin/members/${id}/status`, data)),
+    handle<MessageResponse>(adminApi.patch(`/admin/members/${id}/status`, data)),
 };
 
 export const adminNoticesApi = {
   list: (params?: AdminNoticeListParams) =>
-    handle<ListResponse<Notice>>(adminApi.get("/admin/notices", { params })),
+    handle<ListResult<Notice>>(adminApi.get("/admin/notices", { params })),
   get: (id: number | string) =>
-    handle<DataResponse<Notice>>(adminApi.get(`/admin/notices/${id}`)),
+    handle<Notice>(adminApi.get(`/admin/notices/${id}`)),
   create: (data: NoticeInput) =>
-    handle<DataResponse<Notice>>(adminApi.post("/admin/notices", data)),
+    handle<Notice>(adminApi.post("/admin/notices", data)),
   update: (id: number | string, data: Partial<NoticeInput>) =>
-    handle<DataResponse<Notice>>(adminApi.put(`/admin/notices/${id}`, data)),
+    handle<Notice>(adminApi.put(`/admin/notices/${id}`, data)),
   delete: (id: number | string) =>
-    handle<BaseResponse>(adminApi.delete(`/admin/notices/${id}`)),
+    handle<MessageResponse>(adminApi.delete(`/admin/notices/${id}`)),
 };
 
 export const adminInquiriesApi = {
   list: (params?: ListParams) =>
-    handle<ListResponse<Inquiry>>(adminApi.get("/admin/inquiries", { params })),
+    handle<ListResult<Inquiry>>(adminApi.get("/admin/inquiries", { params })),
   get: (id: number | string) =>
-    handle<DataResponse<Inquiry>>(adminApi.get(`/admin/inquiries/${id}`)),
+    handle<Inquiry>(adminApi.get(`/admin/inquiries/${id}`)),
   answer: (id: number | string, data: { answer: string }) =>
-    handle<BaseResponse>(adminApi.post(`/admin/inquiries/${id}/answer`, data)),
+    handle<MessageResponse>(adminApi.post(`/admin/inquiries/${id}/answer`, data)),
 };

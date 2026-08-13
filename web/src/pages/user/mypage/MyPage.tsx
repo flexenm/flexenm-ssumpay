@@ -39,7 +39,7 @@ export default function MyPage() {
   useEffect(() => {
     mypageApi
       .get()
-      .then((r) => setInfo(r.data))
+      .then((r) => setInfo(r))
       .catch(() => {});
   }, []);
 
@@ -49,7 +49,7 @@ export default function MyPage() {
       ordersApi
         .my()
         .then((r) => {
-          setOrders(r.data);
+          setOrders(r.items);
           setOrderPage(1);
         })
         .catch(() => {})
@@ -60,7 +60,7 @@ export default function MyPage() {
       inquiriesApi
         .list()
         .then((r) => {
-          setInquiries(r.data);
+          setInquiries(r.items);
           setInquiryPage(1);
         })
         .catch(() => {})

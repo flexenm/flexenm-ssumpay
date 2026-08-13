@@ -17,7 +17,7 @@ export default function NoticeDetailPage() {
   useEffect(() => {
     noticesApi
       .get(id!)
-      .then((r) => setNotice(r.data))
+      .then((r) => setNotice(r))
       .catch(() => navigate("/customer"));
   }, [id]);
 

@@ -44,7 +44,7 @@ export default function AdminProductsPage() {
     setLoading(true);
     return adminProductsApi
       .list(kw ? { keyword: kw } : undefined)
-      .then((r) => setProducts(r.data))
+      .then((r) => setProducts(r))
       .catch(() => {})
       .finally(() => setLoading(false));
   };

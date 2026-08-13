@@ -28,11 +28,11 @@ export default function DashboardPage() {
   useEffect(() => {
     adminDashboardApi
       .get()
-      .then((r) => setData(r.data))
+      .then((r) => setData(r))
       .catch(() => {});
     adminOrdersApi
       .list({ limit: 8 })
-      .then((r) => setRecent(r.data))
+      .then((r) => setRecent(r.items))
       .catch(() => {});
   }, []);
 

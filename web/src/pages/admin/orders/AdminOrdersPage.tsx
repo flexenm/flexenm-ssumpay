@@ -52,7 +52,7 @@ export default function AdminOrdersPage() {
     setLoading(true);
     adminOrdersApi
       .list(params)
-      .then((r) => setOrders(r.data))
+      .then((r) => setOrders(r.items))
       .catch(() => {})
       .finally(() => setLoading(false));
   };

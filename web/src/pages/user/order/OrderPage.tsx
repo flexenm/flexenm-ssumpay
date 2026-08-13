@@ -55,7 +55,7 @@ export default function OrderPage() {
         flexPassword: form.flexPassword,
         paymentMethod: form.paymentMethod,
       });
-      navigate(`/order/complete/${res.data.orderNo}`);
+      navigate(`/order/complete/${res.orderNo}`);
     } catch (err) {
       setError((err as { message?: string })?.message || "주문에 실패했습니다.");
     }

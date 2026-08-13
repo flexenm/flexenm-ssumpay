@@ -39,7 +39,7 @@ export default function AdminInquiriesPage() {
     setLoading(true);
     return adminInquiriesApi
       .list({ status: s, type: t } as ListParams)
-      .then((r) => setInquiries(r.data))
+      .then((r) => setInquiries(r.items))
       .catch(() => {})
       .finally(() => setLoading(false));
   };

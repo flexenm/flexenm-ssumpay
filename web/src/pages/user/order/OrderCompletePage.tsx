@@ -13,7 +13,7 @@ export default function OrderCompletePage() {
     if (!orderNo) return;
     ordersApi
       .get(orderNo)
-      .then((r) => setOrder(r.data))
+      .then((r) => setOrder(r))
       .catch(() => {});
   }, [orderNo]);
 

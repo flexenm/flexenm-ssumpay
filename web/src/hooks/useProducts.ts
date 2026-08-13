@@ -11,7 +11,7 @@ export function useProducts(params?: {
   const { enabled = true, ...listParams } = params ?? {};
   return useQuery({
     queryKey: ["products", listParams.category ?? null, listParams.subcategory ?? null],
-    queryFn: async () => (await productsApi.list(listParams)).data,
+    queryFn: async () => await productsApi.list(listParams),
     enabled,
     staleTime: 60 * 1000,
   });
@@ -21,7 +21,7 @@ export function useProducts(params?: {
 export function useProduct(id?: number | string) {
   return useQuery({
     queryKey: ["product", id],
-    queryFn: async () => (await productsApi.get(id!)).data,
+    queryFn: async () => await productsApi.get(id!),
     enabled: id != null && id !== "",
     staleTime: 60 * 1000,
   });

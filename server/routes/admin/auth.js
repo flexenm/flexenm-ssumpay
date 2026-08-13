@@ -1,21 +1,29 @@
 const Router = require("koa-router");
 const adminService = require("../../services/admin");
+const { wrap } = require("../shared/handler-wrap");
 
 const router = new Router();
 
-router.post("/login", async (ctx) => {
-  const result = await adminService.login(ctx.request.body);
-  ctx.body = { code: 200, ...result };
-});
+router.post(
+  "/login",
+  wrap(async ({ username, password }) => {
+    return await adminService.login({ username, password });
+  })
+);
 
-router.post("/refresh", async (ctx) => {
-  const result = await adminService.refresh(ctx.request.body);
-  ctx.body = { code: 200, ...result };
-});
+router.post(
+  "/refresh",
+  wrap(async ({ refreshToken }) => {
+    return await adminService.refresh({ refreshToken });
+  })
+);
 
-router.post("/logout", async (ctx) => {
-  await adminService.logout(ctx.request.body);
-  ctx.body = { code: 200, message: "로그아웃되었습니다." };
-});
+router.post(
+  "/logout",
+  wrap(async ({ refreshToken }) => {
+    await adminService.logout({ refreshToken });
+    return { message: "로그아웃되었습니다." };
+  })
+);
 
 module.exports = router;

@@ -29,7 +29,7 @@ export default function InquiryDetailPage() {
   useEffect(() => {
     inquiriesApi
       .get(id!)
-      .then((r) => setInquiry(r.data))
+      .then((r) => setInquiry(r))
       .catch(() => navigate(-1));
   }, [id]);
 
@@ -52,7 +52,7 @@ export default function InquiryDetailPage() {
     try {
       await inquiriesApi.update(id!, editForm);
       const r = await inquiriesApi.get(id!);
-      setInquiry(r.data);
+      setInquiry(r);
       setEditing(false);
     } catch (e) {
       alert((e as { message?: string })?.message || "수정 중 오류가 발생했습니다.");

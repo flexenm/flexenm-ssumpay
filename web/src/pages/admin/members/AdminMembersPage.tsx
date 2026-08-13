@@ -30,7 +30,7 @@ export default function AdminMembersPage() {
     setLoading(true);
     adminMembersApi
       .list({ keyword: kw })
-      .then((r) => setMembers(r.data))
+      .then((r) => setMembers(r.items))
       .catch(() => {})
       .finally(() => setLoading(false));
   };

@@ -3,6 +3,7 @@ const multer = require("@koa/multer");
 const inquiryService = require("../../services/inquiry");
 const UserError = require("../../utils/UserError");
 const { ALLOWED_MIME, MAX_SIZE } = require("../../utils/storage");
+const { wrap } = require("../shared/handler-wrap");
 
 // 업로드 스트림 단계에서 조기 차단 — storage.js의 검증은 버퍼가 메모리에 다 올라온 뒤 동작한다.
 const upload = multer({
@@ -34,49 +35,51 @@ async function withImageUpload(ctx, next) {
 
 const router = new Router();
 
-router.get("/", async (ctx) => {
-  const { page = 1, limit = 10 } = ctx.query;
-  const { items, total } = await inquiryService.listByMember(ctx.state.member.id, { page, limit });
-  ctx.body = { code: 200, data: items, total, page: Number(page), limit: Number(limit) };
-});
+router.get(
+  "/",
+  wrap(async ({ caller, page = 1, limit = 10 }) => {
+    const { items, total } = await inquiryService.listByMember(caller, { page, limit });
+    return { items, total, page: Number(page), limit: Number(limit) };
+  })
+);
 
-router.get("/:id", async (ctx) => {
-  const inquiry = await inquiryService.getByIdForMember(ctx.params.id, ctx.state.member.id);
-  ctx.body = { code: 200, data: inquiry };
-});
+router.get(
+  "/:id",
+  wrap(async ({ caller, id }) => {
+    return await inquiryService.getByIdForMember(id, caller);
+  })
+);
 
-router.post("/", withImageUpload, async (ctx) => {
-  const { type, title, content } = ctx.request.body;
-  const imageBuffer = ctx.files?.image?.[0]?.buffer ?? null;
+router.post(
+  "/",
+  withImageUpload,
+  wrap(async ({ caller, type, title, content }, ctx) => {
+    const imageBuffer = ctx.files?.image?.[0]?.buffer ?? null;
+    return await inquiryService.createInquiry({
+      memberId: caller,
+      type,
+      title,
+      content,
+      imageBuffer,
+    });
+  })
+);
 
-  const inquiry = await inquiryService.createInquiry({
-    memberId: ctx.state.member.id,
-    type,
-    title,
-    content,
-    imageBuffer,
-  });
+router.put(
+  "/:id",
+  withImageUpload,
+  wrap(async ({ caller, id, title, content }, ctx) => {
+    const imageBuffer = ctx.files?.image?.[0]?.buffer ?? null;
+    return await inquiryService.updateInquiry(id, caller, { title, content, imageBuffer });
+  })
+);
 
-  ctx.status = 201;
-  ctx.body = { code: 201, data: inquiry };
-});
-
-router.put("/:id", withImageUpload, async (ctx) => {
-  const { title, content } = ctx.request.body;
-  const imageBuffer = ctx.files?.image?.[0]?.buffer ?? null;
-
-  const updated = await inquiryService.updateInquiry(ctx.params.id, ctx.state.member.id, {
-    title,
-    content,
-    imageBuffer,
-  });
-
-  ctx.body = { code: 200, data: updated };
-});
-
-router.delete("/:id", async (ctx) => {
-  await inquiryService.deleteInquiry(ctx.params.id, ctx.state.member.id);
-  ctx.body = { code: 200, message: "문의가 삭제되었습니다." };
-});
+router.delete(
+  "/:id",
+  wrap(async ({ caller, id }) => {
+    await inquiryService.deleteInquiry(id, caller);
+    return { message: "문의가 삭제되었습니다." };
+  })
+);
 
 module.exports = router;

@@ -35,10 +35,10 @@ export default function AdminNoticeFormPage() {
       .get(id)
       .then((r) =>
         setForm({
-          title: r.data.title,
-          content: r.data.content,
-          isPinned: !!r.data.isPinned,
-          isActive: r.data.isActive,
+          title: r.title,
+          content: r.content,
+          isPinned: !!r.isPinned,
+          isActive: r.isActive,
         }),
       )
       .catch(() => {})

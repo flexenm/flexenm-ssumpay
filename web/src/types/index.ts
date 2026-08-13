@@ -2,18 +2,15 @@
 // 프론트가 실제로 주고받는 형태를 그대로 반영한 타입 정의.
 
 /* ----------------------------- 공통 응답 형태 ----------------------------- */
+// 서버가 envelope 없이 데이터를 그대로 반환한다 (FlexTV wrap 스타일).
+// 에러 응답은 { message: string } 형태 (HTTP status 로 성공/실패 판단).
 
-export interface BaseResponse {
-  code: number;
-  message?: string;
+export interface MessageResponse {
+  message: string;
 }
 
-export interface DataResponse<T> extends BaseResponse {
-  data: T;
-}
-
-export interface ListResponse<T> extends BaseResponse {
-  data: T[];
+export interface ListResult<T> {
+  items: T[];
   total: number;
   page: number;
   limit: number;
@@ -144,7 +141,7 @@ export interface Inquiry {
   updatedAt: string;
 }
 
-/* ---------------------- 로그인 등 비-엔벨로프 응답 ---------------------- */
+/* ---------------------------- 인증 관련 응답 ---------------------------- */
 
 export interface AuthUser {
   id: number;
@@ -153,17 +150,17 @@ export interface AuthUser {
   email: string;
 }
 
-export interface LoginResponse extends BaseResponse {
+export interface LoginResponse {
   token: string;
   expiresIn: number; // 토큰 만료까지 남은 초. 쿠키 maxAge 동기화에 사용
   member: AuthUser;
 }
 
-export interface MeResponse extends BaseResponse {
+export interface MeResponse {
   member: AuthUser;
 }
 
-export interface CheckUsernameResponse extends BaseResponse {
+export interface CheckUsernameResponse {
   available: boolean;
 }
 
@@ -173,13 +170,13 @@ export interface AdminUser {
   name: string;
 }
 
-export interface AdminLoginResponse extends BaseResponse {
+export interface AdminLoginResponse {
   token: string;
   expiresIn: number; // 토큰 만료까지 남은 초. 쿠키 maxAge 동기화에 사용
   admin: AdminUser;
 }
 
-export interface AdminMeResponse extends BaseResponse {
+export interface AdminMeResponse {
   admin: AdminUser;
 }
 
