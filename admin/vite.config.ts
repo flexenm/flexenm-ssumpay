@@ -7,7 +7,7 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   // web(5173)과 동시에 띄울 수 있도록 포트를 분리한다.
-  server: { port: 5174 },
+  server: { port: 5174, allowedHosts: ["admin.dev.ssumpay.co.kr"] },
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
