@@ -77,8 +77,11 @@ router.post(
   authLimiter,
   wrap(async (_params, ctx) => {
     const refreshToken = getRefreshToken(ctx, "member");
-    // Redis 폐기가 실패하더라도 쿠키는 정리한다 — 클라이언트를 로그인 상태로 남기지 않는다.
-    if (refreshToken) await authService.logout({ refreshToken });
+    if (refreshToken) {
+      authService.logout({ refreshToken }).catch((err) => {
+        console.error("[ERROR] member logout revoke failed:", err);
+      });
+    }
     clearAuthCookies(ctx, "member");
     return { message: "로그아웃되었습니다." };
   }),
