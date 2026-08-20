@@ -1,4 +1,5 @@
 const axios = require('axios')
+const crypto = require('crypto')
 const db = require('../../db')
 const OrdersRepo = require('../../repositories/Orders')
 const ProductsRepo = require('../../repositories/Products')
@@ -8,7 +9,6 @@ const UserError = require('../../utils/UserError')
 const { PAYMENT_METHOD, CHARGE_STATUS, PAYMENT_STATUS } = require('../../const')
 
 const FLEXTV_API_URL = process.env.FLEXTV_API_URL
-const ORDER_NO_MAX_RETRIES = 3
 
 async function verifyFlexAccount(loginId, password) {
   if (!FLEXTV_API_URL) throw Object.assign(new Error('FlexTV 서비스 연결 설정이 없습니다.'), { status: 503 })
@@ -30,14 +30,19 @@ async function verifyFlexAccount(loginId, password) {
   }
 }
 
-function generateOrderNo() {
+// 주문번호: SP + yyyyMMddHHmmss + 회원ID + 랜덤 6자(대문자 영숫자).
+// 회원ID가 들어가 서로 다른 회원끼리는 충돌이 불가능하고, 같은 회원이 같은 초에 주문해도
+// 36^6(≈22억) 조합의 랜덤이 겹쳐야 하므로 중복 재시도 없이 단일 insert로 충분하다.
+// 최대 길이 2+14+10(INT UNSIGNED 최대)+6 = 32 — orderNo VARCHAR(40) 이내 (013 마이그레이션).
+function generateOrderNo(memberId) {
   const now = new Date()
   const pad = (n) => String(n).padStart(2, '0')
   const datePart = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`
-  return `SP${datePart}${Math.floor(Math.random() * 9000) + 1000}`
+  const rand = crypto.randomBytes(4).readUInt32BE(0).toString(36).toUpperCase().padStart(6, '0').slice(-6)
+  return `SP${datePart}${memberId}${rand}`
 }
 
-async function createOrder({ memberId, productId, flexUsername, flexPassword, paymentMethod = 1, payerName, ipAddr }) {
+async function createOrder({ memberId, productId, flexUsername, flexPassword, paymentMethod, payerName, ipAddr }) {
   if (!Object.values(PAYMENT_METHOD).includes(paymentMethod)) {
     throw new UserError('올바르지 않은 결제 수단입니다.', 400)
   }
@@ -46,7 +51,6 @@ async function createOrder({ memberId, productId, flexUsername, flexPassword, pa
     throw new UserError('상품, FlexTV 아이디, 비밀번호를 입력해주세요.', 400)
   }
 
-  // 무통장입금은 웹훅 확인 시 금액만으로는 입금자를 특정할 수 없어 입금자명 대조가 필요하다.
   if (paymentMethod === PAYMENT_METHOD.BANK && !payerName) {
     throw new UserError('입금자명을 입력해주세요.', 400)
   }
@@ -74,20 +78,15 @@ async function createOrder({ memberId, productId, flexUsername, flexPassword, pa
     ipAddr
   }
 
-  // orderNo는 초당 9000개 조합의 랜덤 접미사라 동시 주문 시 충돌 가능 — ER_DUP_ENTRY면 새 orderNo로 재시도.
-  // 여기까지 왔다는 건 FlexTV 인증이 이미 끝났다는 뜻이라, 그 비용을 버리지 않도록 insert만 재시도한다.
-  let order
-  for (let attempt = 0; attempt < ORDER_NO_MAX_RETRIES; attempt++) {
-    try {
-      order = await OrdersRepo.insert({ ...orderData, orderNo: generateOrderNo() })
-      break
-    } catch (err) {
-      if (err.code !== 'ER_DUP_ENTRY' || attempt === ORDER_NO_MAX_RETRIES - 1) throw err
-    }
-  }
+  const order = await OrdersRepo.insert({ ...orderData, orderNo: generateOrderNo(memberId) })
 
   if (paymentMethod === PAYMENT_METHOD.BANK) {
-    const account = await PaymentGateway.issueVirtualAccount({ orderNo: order.orderNo, amount: order.price })
+    const account = await PaymentGateway.issueVirtualAccount({
+      orderNo: order.orderNo,
+      amount: order.price,
+      productName: order.productName,
+      payerName: order.payerName
+    })
     await OrdersRepo.attachVirtualAccount(order.orderNo, {
       virtualAccountNo: account.accountNo,
       virtualAccountBank: account.bankName,
@@ -99,6 +98,21 @@ async function createOrder({ memberId, productId, flexUsername, flexPassword, pa
   }
 
   return order
+}
+
+// 카드 결제창 파라미터 준비. 주문 소유자만, 결제 대기 상태에서만 허용한다.
+async function preparePaymentForMember(orderNo, memberId) {
+  const order = await OrdersRepo.findByOrderNoForMember(orderNo, memberId)
+  if (!order) {
+    throw new UserError('주문을 찾을 수 없습니다.', 404)
+  }
+  if (order.paymentStatus !== PAYMENT_STATUS.PENDING) {
+    throw new UserError('결제 대기 상태의 주문이 아닙니다.', 400)
+  }
+  if (order.paymentMethod !== PAYMENT_METHOD.CARD) {
+    throw new UserError('카드 결제 주문만 결제창을 사용할 수 있습니다.', 400)
+  }
+  return PaymentGateway.preparePayment({ order })
 }
 
 // 카드결제 확인 — 클라이언트가 보낸 paymentKey를 그대로 믿지 않고 PG 서버 승인 API로 재확인한다.
@@ -122,30 +136,51 @@ async function confirmPayment(orderNo, memberId, { paymentKey, amount }) {
   return OrdersRepo.findByOrderNoForMember(orderNo, memberId)
 }
 
-// PG 웹훅(무통장입금 확인) 처리 — 라우트에서 서명 검증을 마친 뒤에만 호출된다.
-async function confirmWebhookPayment({ orderNo, amount, transactionId, payerName }) {
+// PG 웹훅(카드 승인·가상계좌 입금) 처리 — 라우트에서 해시 검증을 마친 뒤에만 호출된다.
+// 성공(이미 완료 포함) 시 true — 라우트가 이 값으로 노티 응답(OK/FAIL)을 결정한다.
+async function confirmWebhookPayment({ orderNo, amount, transactionId, pgTid, payerName }) {
   const order = await OrdersRepo.findByOrderNo(orderNo)
   if (!order) {
     console.error(`[confirmWebhookPayment] order not found orderNo=${orderNo}`)
-    return
+    return false
   }
 
   if (order.paymentStatus === PAYMENT_STATUS.DONE) {
-    return
+    return true
   }
 
   if (amount !== order.price) {
     console.error(`[confirmWebhookPayment] amount mismatch orderNo=${orderNo} expected=${order.price} actual=${amount}`)
-    return
+    return false
   }
 
-  // 무통장입금은 금액만으로 입금자를 특정할 수 없어 주문 시 등록한 입금자명과도 대조한다.
-  if (order.paymentMethod === PAYMENT_METHOD.BANK && payerName !== order.payerName) {
+  // 헥토 가상계좌는 주문별 1회용 채번이라 계좌 자체가 주문을 특정한다.
+  // 입금자명 대조는 노티가 입금자명을 제공하는 경우에만 수행한다.
+  if (order.paymentMethod === PAYMENT_METHOD.BANK && payerName != null && payerName !== order.payerName) {
     console.error(`[confirmWebhookPayment] payer name mismatch orderNo=${orderNo} expected=${order.payerName} actual=${payerName}`)
-    return
+    return false
   }
 
-  await OrdersRepo.markPaymentDone(orderNo, { pgTrxNo: transactionId })
+  await OrdersRepo.markPaymentDone(orderNo, { pgTrxNo: transactionId, pgTid })
+  return true
+}
+
+// 가상계좌 채번 노티(0051) 반영. 채번 API 응답으로 이미 저장돼 있어도 노티 기준으로 덮어쓴다(멱등).
+async function attachVirtualAccountFromNoti({ orderNo, accountNo, bankName, expireDt }) {
+  const order = await OrdersRepo.findByOrderNo(orderNo)
+  if (!order) {
+    console.error(`[attachVirtualAccountFromNoti] order not found orderNo=${orderNo}`)
+    return false
+  }
+  const s = expireDt && String(expireDt).length === 14 ? String(expireDt) : null
+  await OrdersRepo.attachVirtualAccount(orderNo, {
+    virtualAccountNo: accountNo,
+    virtualAccountBank: bankName,
+    virtualAccountExpiredAt: s
+      ? `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)} ${s.slice(8, 10)}:${s.slice(10, 12)}:${s.slice(12, 14)}`
+      : null
+  })
+  return true
 }
 
 // 무통장입금 웹훅이 안 오는 등 예외 상황에서 관리자가 입금을 직접 확인하고 승인하는 경로.
@@ -173,6 +208,33 @@ async function confirmPaymentManually(id, adminId, { memo } = {}) {
 
   const note = `[관리자 수동 결제확인 #admin${adminId} ${new Date().toISOString()}] ${memo}`
   await OrdersRepo.patchMemo(id, order.memo ? `${order.memo}\n${note}` : note)
+}
+
+// 관리자 결제 취소. 카드·결제완료 건은 헥토 승인취소 API를 먼저 성공시켜야 상태를 바꾼다.
+async function cancelPaymentByAdmin(id) {
+  const order = await OrdersRepo.findById(id)
+  if (!order) {
+    throw new UserError('주문을 찾을 수 없습니다.', 404)
+  }
+  if (order.paymentStatus === PAYMENT_STATUS.CANCELLED) {
+    throw new UserError('이미 취소된 주문입니다.', 400)
+  }
+  if (order.chargeStatus === CHARGE_STATUS.DONE) {
+    throw new UserError('충전 완료된 주문은 취소할 수 없습니다. 환불 절차로 처리해주세요.', 400)
+  }
+
+  if (order.paymentStatus === PAYMENT_STATUS.DONE) {
+    if (order.paymentMethod === PAYMENT_METHOD.BANK) {
+      throw new UserError('가상계좌 입금 완료 건은 수동 환불 후 메모와 함께 처리해주세요.', 400)
+    }
+    // 카드 승인취소 — PG 취소가 성공해야만 상태를 바꾼다 (실패 시 그대로 에러 전파)
+    await PaymentGateway.cancelPayment({ orderNo: order.orderNo, pgTrxNo: order.pgTrxNo, amount: order.price })
+    await OrdersRepo.markPaymentCancelled(order.id, PAYMENT_STATUS.DONE)
+    return
+  }
+
+  // 결제 전(PENDING) — PG 호출 없이 주문만 취소. 가상계좌는 입금기한 만료로 자연 소멸된다.
+  await OrdersRepo.markPaymentCancelled(order.id, PAYMENT_STATUS.PENDING)
 }
 
 async function listMyOrders(memberId, { page, limit }) {
@@ -258,9 +320,12 @@ async function updateMemo(id, memo) {
 
 module.exports = {
   createOrder,
+  preparePaymentForMember,
   confirmPayment,
   confirmWebhookPayment,
+  attachVirtualAccountFromNoti,
   confirmPaymentManually,
+  cancelPaymentByAdmin,
   listMyOrders,
   getByOrderNoForMember,
   searchForAdmin,
