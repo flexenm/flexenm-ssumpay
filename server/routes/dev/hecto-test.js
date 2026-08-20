@@ -96,7 +96,7 @@ async function createOrder() {
 async function openPayWindow() {
   if (!currentOrder) return log('pay', '주문을 먼저 생성하세요');
   try {
-    const ready = await api('/api/payments/ready', { method: 'POST', body: { orderNo: currentOrder.orderNo } });
+    const ready = await api('/api/orders/' + currentOrder.orderNo + '/payment/params', { method: 'POST' });
     log('ready', ready);
     const s = document.createElement('script');
     s.src = ready.sdkUrl;
@@ -119,7 +119,12 @@ async function refreshOrder() {
 </body>
 </html>`
 
+// POST 도 받는다 — 결제창 복귀(nextUrl/cancUrl)를 이 페이지로 지정하면 헥토가 POST 로 보낸다
 router.get('/dev/hecto-test', (ctx) => {
+  ctx.type = 'html'
+  ctx.body = PAGE
+})
+router.post('/dev/hecto-test', (ctx) => {
   ctx.type = 'html'
   ctx.body = PAGE
 })
