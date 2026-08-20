@@ -7,6 +7,7 @@ const noticesRouter = require("./notices");
 const myRouter = require("./my");
 const mypageRouter = require("./mypage");
 const ordersRouter = require("./orders");
+const paymentsRouter = require("./payments");
 const inquiriesRouter = require("./inquiries");
 
 const router = new Router({ prefix: "/api" });
@@ -21,6 +22,7 @@ router.use("/notices", noticesRouter.routes());
 router.use("/my", userAuth, myRouter.routes());
 router.use("/mypage", userAuth, mypageRouter.routes());
 router.use("/orders", userAuth, ordersRouter.routes());
+router.use("/payments", userAuth, paymentsRouter.routes());
 router.use("/inquiries", userAuth, inquiriesRouter.routes());
 
 module.exports = router;

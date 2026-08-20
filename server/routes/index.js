@@ -28,4 +28,10 @@ router.use(apiRouter.routes(), apiRouter.allowedMethods())
 // 사용자 인증이 없는 PG 서버-투-서버 웹훅. userAuth 대신 PG 서명 검증으로 신뢰 경계를 둔다.
 router.use(pgWebhookRouter.routes(), pgWebhookRouter.allowedMethods())
 
+// 개발용 헥토 결제 테스트 페이지 — 운영에서는 HECTO_TEST_PAGE 를 설정하지 않는다.
+if (process.env.HECTO_TEST_PAGE === '1') {
+  const hectoTestRouter = require('./dev/hecto-test')
+  router.use(hectoTestRouter.routes())
+}
+
 module.exports = router
