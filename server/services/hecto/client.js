@@ -38,6 +38,13 @@ function notiUrl() {
   return `${serverUrl.replace(/\/$/, '')}/webhooks/pg/payment`
 }
 
+// 결제창 복귀 주소. 헥토가 POST 로 보내므로 SPA 가 아닌 서버(routes/payment-return.js)가 받는다.
+function returnUrl(kind) {
+  const { serverUrl } = cfg()
+  if (!serverUrl) return ''
+  return `${serverUrl.replace(/\/$/, '')}/payments/${kind}`
+}
+
 // yyyyMMddHHmmss → MySQL DATETIME 문자열
 function toDatetime(dtm) {
   if (!dtm || String(dtm).length !== 14) return null
@@ -133,4 +140,4 @@ async function cancelCard({ orgTrdNo, mchtTrdNo, amount }) {
   return { cancelTrdNo: out.trdNo }
 }
 
-module.exports = { cfg, assertConfigured, nowDtTm, notiUrl, toDatetime, issueVirtualAccount, cancelCard }
+module.exports = { cfg, assertConfigured, nowDtTm, notiUrl, returnUrl, toDatetime, issueVirtualAccount, cancelCard }
