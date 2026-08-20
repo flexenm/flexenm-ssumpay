@@ -57,8 +57,10 @@ export type CardPaymentParams = Record<string, string>;
 // 호출할 때마다 서버에 결제 시도가 1건 생기고 요청시각이 해시에 굳는다.
 // 결제 버튼을 누른 시점에 호출하고 곧바로 결제창을 열 것 — 미리 받아두면 안 된다.
 export async function createCardPayment(orderNo: string) {
-  const { data } = await api.post<CardPaymentParams>(
-    getCreateCardPaymentApiPath(orderNo),
-  );
-  return data;
+  const { data } = await api.post<{
+    payUrl: string;
+    sdkUrl: string;
+    params: CardPaymentParams;
+  }>(getCreateCardPaymentApiPath(orderNo));
+  return data.params;
 }
