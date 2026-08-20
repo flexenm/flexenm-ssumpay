@@ -115,27 +115,6 @@ async function preparePaymentForMember(orderNo, memberId) {
   return PaymentGateway.preparePayment({ order })
 }
 
-// 카드결제 확인 — 클라이언트가 보낸 paymentKey를 그대로 믿지 않고 PG 서버 승인 API로 재확인한다.
-async function confirmPayment(orderNo, memberId, { paymentKey, amount }) {
-  const order = await OrdersRepo.findByOrderNoForMember(orderNo, memberId)
-  if (!order) {
-    throw new UserError('주문을 찾을 수 없습니다.', 404)
-  }
-
-  if (order.paymentStatus === PAYMENT_STATUS.DONE) {
-    return order
-  }
-
-  const result = await PaymentGateway.approvePayment({ paymentKey, orderNo, amount })
-  if (result.amount !== order.price) {
-    console.error(`[confirmPayment] amount mismatch orderNo=${orderNo} expected=${order.price} actual=${result.amount}`)
-    throw new UserError('결제 금액이 일치하지 않습니다.', 400)
-  }
-
-  await OrdersRepo.markPaymentDone(orderNo, { pgTid: result.transactionId })
-  return OrdersRepo.findByOrderNoForMember(orderNo, memberId)
-}
-
 // PG 웹훅(카드 승인·가상계좌 입금) 처리 — 라우트에서 해시 검증을 마친 뒤에만 호출된다.
 // 성공(이미 완료 포함) 시 true — 라우트가 이 값으로 노티 응답(OK/FAIL)을 결정한다.
 async function confirmWebhookPayment({ orderNo, amount, transactionId, pgTid, payerName }) {
@@ -184,7 +163,7 @@ async function attachVirtualAccountFromNoti({ orderNo, accountNo, bankName, expi
 }
 
 // 무통장입금 웹훅이 안 오는 등 예외 상황에서 관리자가 입금을 직접 확인하고 승인하는 경로.
-// 카드결제는 confirmPayment(PG 서버 승인)로만 확정되도록 하고, 이 수동 승인은 무통장에 한정한다.
+// 카드결제는 노티(confirmWebhookPayment)로만 확정되도록 하고, 이 수동 승인은 무통장에 한정한다.
 async function confirmPaymentManually(id, adminId, { memo } = {}) {
   const order = await OrdersRepo.findById(id)
   if (!order) {
@@ -321,7 +300,6 @@ async function updateMemo(id, memo) {
 module.exports = {
   createOrder,
   preparePaymentForMember,
-  confirmPayment,
   confirmWebhookPayment,
   attachVirtualAccountFromNoti,
   confirmPaymentManually,
