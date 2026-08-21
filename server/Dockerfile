@@ -1,4 +1,4 @@
-FROM node:18-alpine
+FROM node:20-alpine
 
 # bcrypt is a native module; node-gyp needs a toolchain to build it on alpine
 RUN apk add --no-cache python3 make g++

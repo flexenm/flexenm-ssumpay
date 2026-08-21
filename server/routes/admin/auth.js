@@ -38,8 +38,11 @@ router.post(
   "/logout",
   wrap(async (_params, ctx) => {
     const refreshToken = getRefreshToken(ctx, "admin");
-    // Redis 폐기가 실패하더라도 쿠키는 정리한다 — 클라이언트를 로그인 상태로 남기지 않는다.
-    if (refreshToken) await adminService.logout({ refreshToken });
+    if (refreshToken) {
+      adminService.logout({ refreshToken }).catch((err) => {
+        console.error("[ERROR] admin logout revoke failed:", err);
+      });
+    }
     clearAuthCookies(ctx, "admin");
     return { message: "로그아웃되었습니다." };
   }),

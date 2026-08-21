@@ -72,6 +72,11 @@ class Orders extends Base {
   async attachVirtualAccount(orderNo, { virtualAccountNo, virtualAccountBank, virtualAccountExpiredAt }) {
     return Order.query().patch({ virtualAccountNo, virtualAccountBank, virtualAccountExpiredAt }).where({ orderNo })
   }
+
+  // 결제 취소 확정. 이미 취소(2)면 덮어쓰지 않도록 현재 상태를 조건에 건다.
+  async markPaymentCancelled(id, fromStatus) {
+    return Order.query().patch({ paymentStatus: 2 }).where({ id, paymentStatus: fromStatus })
+  }
   
   async patchMemo(id, memo) {
     return Order.query().patchAndFetchById(id, { memo })

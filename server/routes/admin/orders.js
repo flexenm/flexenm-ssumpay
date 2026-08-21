@@ -46,6 +46,15 @@ router.patch(
   }),
 );
 
+// 결제 취소 — 카드·결제완료 건은 헥토 승인취소까지 수행한다.
+router.post(
+  "/:id/cancel",
+  wrap(async ({ id }) => {
+    await orderService.cancelPaymentByAdmin(id);
+    return { message: "결제가 취소되었습니다." };
+  })
+);
+
 router.patch(
   "/:id/charge-status",
   wrap(async ({ id, chargeStatus, memo }) => {

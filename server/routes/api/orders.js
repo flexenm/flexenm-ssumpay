@@ -53,13 +53,11 @@ router.post(
   ),
 );
 
+// 카드 표준결제창 전문 발급. 암호화·해시 생성은 서버에서만 한다.
 router.post(
-  "/:orderNo/payment/confirm",
-  wrap(async ({ caller, orderNo, paymentKey, amount }) => {
-    return await orderService.confirmPayment(orderNo, caller, {
-      paymentKey,
-      amount,
-    });
+  "/:orderNo/payment/params",
+  wrap(async ({ caller, orderNo }) => {
+    return await orderService.preparePaymentForMember(orderNo, caller);
   }),
 );
 

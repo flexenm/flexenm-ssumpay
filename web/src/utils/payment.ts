@@ -23,10 +23,18 @@
  * 클라이언트에 노출해서는 안 되므로, 프론트는 받은 전문을 가공하지 않고 그대로 넘긴다.
  */
 
-// 결제창 도메인. 아래 SDK 스크립트 URL 자체가 환경별로 갈려(tbnpg / npg) 프론트가 가진다.
+// 결제창 도메인. SDK 스크립트 URL 자체가 환경별로 갈려(tbnpg / npg) 프론트가 가진다.
+// URL 은 헥토가 정한 고정값이라 코드 상수로 두고, env 에는 환경 이름만 담는다.
+//
+// production 일 때만 운영 도메인을 쓴다 — VITE_ENV 가 비었거나 오타여도 테스트로 떨어지게 해서,
+// 설정 실수가 실결제로 이어지지 않도록 한다.
+//
 // ⚠️ 서버의 HECTO_MCHT_ID 와 같은 환경을 가리켜야 한다 — 어긋나면 헥토가 해시 불일치로 거부한다.
 //    한쪽만 운영으로 바꾸는 실수가 나오기 쉬우니 배포 시 함께 확인할 것.
-const HECTO_ENV = import.meta.env.VITE_HECTO_ENV as string | undefined;
+const HECTO_ORIGIN =
+  import.meta.env.VITE_ENV === "production"
+    ? "https://npg.settlebank.co.kr"
+    : "https://tbnpg.settlebank.co.kr";
 
 // 버전이 URL 에 박혀 있다 — 헥토가 새 버전을 내면 여기를 직접 올려야 한다.
 const SDK_PATH = "/resources/js/v1/SettlePG_v1.2.js";
@@ -66,7 +74,7 @@ function loadPaymentSdk(): Promise<void> {
 
   sdkLoading = new Promise((resolve, reject) => {
     const script = document.createElement("script");
-    script.src = `${HECTO_ENV}${SDK_PATH}`;
+    script.src = `${HECTO_ORIGIN}${SDK_PATH}`;
     script.onload = () => resolve();
     script.onerror = () => {
       // 실패한 Promise 를 남겨두면 다음 시도까지 영구히 실패한다.
@@ -84,8 +92,6 @@ export async function openPaymentWindow(
   params: Record<string, string>,
   uiType: PaymentUiType = "self",
 ) {
-  if (!HECTO_ENV) throw new Error("결제 설정이 없습니다.");
-
   await loadPaymentSdk();
-  window.SETTLE_PG!.pay({ ...params, env: HECTO_ENV, ui: { type: uiType } });
+  window.SETTLE_PG!.pay({ ...params, env: HECTO_ORIGIN, ui: { type: uiType } });
 }

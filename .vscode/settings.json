@@ -1,0 +1,6 @@
+{
+	// flextv-web과 동일한 저장 시 자동 포맷 구성 (esbenp.prettier-vscode 확장 필요)
+	"files.autoSave": "afterDelay",
+	"editor.defaultFormatter": "esbenp.prettier-vscode",
+	"editor.formatOnSave": true
+}
